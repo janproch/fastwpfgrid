@@ -19,9 +19,9 @@ namespace FastWpfGridTest
             get { return 1000; }
         }
 
-        //public override string GetCellText(int row, int column)
-        //{
-        //    return String.Format("{0},{1}", row + 1, column + 1);
-        //}
+        public override string GetCellText(int row, int column)
+        {
+            return String.Format("{0},{1}", row + 1, column + 1);
+        }
     }
 }

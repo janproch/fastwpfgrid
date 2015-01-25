@@ -16,6 +16,8 @@
         </Grid.ColumnDefinitions>
 
         <FastWpfGrid:FastGridCore Grid.Row="0" Grid.Column="0" x:Name="gridCore" />
+        
+        <TextBox x:Name="edText" Visibility="Hidden" />
 
         <ScrollBar Orientation="Horizontal" Grid.Column="0" Grid.Row="1" x:Name="hscroll" Maximum="100" Scroll="hscroll_Scroll"/>
         <ScrollBar Orientation="Vertical" Grid.Column="1" Grid.Row="0" x:Name="vscroll" Maximum="100" Scroll="vscroll_Scroll"/>

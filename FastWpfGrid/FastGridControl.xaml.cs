@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace FastWpfGrid
 {
@@ -27,27 +28,65 @@ namespace FastWpfGrid
         private int _rowCount;
         private int _columnCount;
         //private double[] _columnWidths = new double[0];
-        private int _rowHeight = 22;
-        private int _columnWidth = 150;
+        private int _rowHeight;
+        private int _columnWidth;
         private Color _gridLineColor = Colors.LightGray;
         private int _cellPadding = 1;
+
         private Color[] _alternatingColors = new Color[]
             {
-                Colors.White, 
-                Colors.White, 
-                Color.FromRgb(235, 235, 235), 
-                Colors.White, 
-                Colors.White, 
+                Colors.White,
+                Colors.White,
+                Color.FromRgb(235, 235, 235),
+                Colors.White,
+                Colors.White,
                 Color.FromRgb(235, 245, 255)
             };
-        private Brush[] _alternatingBrushes;
+
         private string _cellFontName = "Arial";
-        private double _cellFontSize = 12;
+        private double _cellFontSize;
+        private int _headerHeight;
+        private int _headerWidth;
+        private Dictionary<Tuple<bool, bool>, GlyphTypeface> _glyphTypeFaces = new Dictionary<Tuple<bool, bool>, GlyphTypeface>();
+        private Dictionary<Color, Brush> _solidBrushes = new Dictionary<Color, Brush>();
+        private Color _cellFontColor = Colors.Black;
+        private double _rowHeightReserve = 5;
+        private Color _headerBackground = Color.FromRgb(0xDD, 0xDD, 0xDD);
+        private Color _selectedColor = Color.FromRgb(51, 153, 255);
+        private Color _selectedTextColor = Colors.White;
+        private Color _mouseOverRowColor = Colors.Beige;
 
         public FastGridControl()
         {
             InitializeComponent();
             gridCore.Grid = this;
+            CellFontSize = 12;
+        }
+
+        public int HeaderHeight
+        {
+            get { return _headerHeight; }
+            set
+            {
+                _headerHeight = value;
+                vscroll.Margin = new Thickness
+                    {
+                        Top = HeaderHeight,
+                    };
+            }
+        }
+
+        public int HeaderWidth
+        {
+            get { return _headerWidth; }
+            set
+            {
+                _headerWidth = value;
+                hscroll.Margin = new Thickness
+                    {
+                        Left = HeaderWidth,
+                    };
+            }
         }
 
         public string CellFontName
@@ -56,6 +95,7 @@ namespace FastWpfGrid
             set
             {
                 _cellFontName = value;
+                RecalculateDefaultCellSize();
                 InvalidateVisual();
             }
         }
@@ -66,8 +106,104 @@ namespace FastWpfGrid
             set
             {
                 _cellFontSize = value;
+                RecalculateDefaultCellSize();
                 InvalidateVisual();
             }
+        }
+
+        public double RowHeightReserve
+        {
+            get { return _rowHeightReserve; }
+            set
+            {
+                _rowHeightReserve = value;
+                RecalculateDefaultCellSize();
+                InvalidateVisual();
+            }
+        }
+
+        public Color CellFontColor
+        {
+            get { return _cellFontColor; }
+            set
+            {
+                _cellFontColor = value;
+                InvalidateVisual();
+            }
+        }
+
+        public Color SelectedColor
+        {
+            get { return _selectedColor; }
+            set
+            {
+                _selectedColor = value;
+                InvalidateVisual();
+            }
+        }
+
+        public Color SelectedTextColor
+        {
+            get { return _selectedTextColor; }
+            set
+            {
+                _selectedTextColor = value;
+                InvalidateVisual();
+            }
+        }
+
+        public Color MouseOverRowColor
+        {
+            get { return _mouseOverRowColor; }
+            set { _mouseOverRowColor = value; }
+        }
+
+        public GlyphTypeface GetGlyphTypeface(bool isBold, bool isItalic)
+        {
+            var key = Tuple.Create(isBold, isItalic);
+            if (!_glyphTypeFaces.ContainsKey(key))
+            {
+                var typeFace = new Typeface(new FontFamily(CellFontName),
+                                            isItalic ? FontStyles.Italic : FontStyles.Normal,
+                                            isBold ? FontWeights.Bold : FontWeights.Normal,
+                                            FontStretches.Normal);
+                GlyphTypeface glyphTypeface;
+                if (!typeFace.TryGetGlyphTypeface(out glyphTypeface))
+                    throw new InvalidOperationException("No glyphtypeface found");
+                _glyphTypeFaces[key] = glyphTypeface;
+            }
+            return _glyphTypeFaces[key];
+        }
+
+        public void ClearCaches()
+        {
+            _glyphTypeFaces.Clear();
+        }
+
+        public int GetTextWidth(string text, bool isBold, bool isItalic)
+        {
+            double size = CellFontSize;
+            int totalWidth = 0;
+            var glyphTypeface = GetGlyphTypeface(isBold, isItalic);
+
+            for (int n = 0; n < text.Length; n++)
+            {
+                ushort glyphIndex = glyphTypeface.CharacterToGlyphMap[text[n]];
+                double width = Math.Round(glyphTypeface.AdvanceWidths[glyphIndex]*size);
+                totalWidth += (int) width;
+            }
+            return totalWidth;
+        }
+
+        private void RecalculateDefaultCellSize()
+        {
+            ClearCaches();
+            _rowHeight = (int) (GetGlyphTypeface(false, false).Height*CellFontSize + CellPadding*2 + 2 + RowHeightReserve);
+            _columnWidth = _rowHeight*4;
+            HeaderWidth = GetTextWidth("0000", false, false);
+            HeaderHeight = _rowHeight;
+            AdjustScrollbars();
+            InvalidateAll();
         }
 
         public int RowHeight
@@ -87,13 +223,9 @@ namespace FastWpfGrid
             gridCore.ScrollContent(rowIndex, columnIndex);
         }
 
-        public Brush GetAlternateBackground(int row)
+        public Color GetAlternateBackground(int row)
         {
-            if (_alternatingBrushes == null)
-            {
-                _alternatingBrushes = _alternatingColors.Select(x => new SolidColorBrush(x)).ToArray();
-            }
-            return _alternatingBrushes[row%_alternatingColors.Length];
+            return _alternatingColors[row%_alternatingColors.Length];
         }
 
         private void hscroll_Scroll(object sender, ScrollEventArgs e)
@@ -143,7 +275,6 @@ namespace FastWpfGrid
             {
                 if (value.Length < 1) throw new Exception("Invalid value");
                 _alternatingColors = value;
-                _alternatingBrushes = null;
                 InvalidateVisual();
             }
         }
@@ -154,6 +285,16 @@ namespace FastWpfGrid
             set
             {
                 _cellPadding = value;
+                InvalidateVisual();
+            }
+        }
+
+        public Color HeaderBackground
+        {
+            get { return _headerBackground; }
+            set
+            {
+                _headerBackground = value;
                 InvalidateVisual();
             }
         }
@@ -170,11 +311,11 @@ namespace FastWpfGrid
         private void AdjustScrollbars()
         {
             hscroll.Minimum = 0;
-            hscroll.Maximum = _columnWidth * _columnCount - gridCore.ActualWidth;
+            hscroll.Maximum = _columnWidth*_columnCount - gridCore.ActualWidth;
             hscroll.ViewportSize = gridCore.ActualWidth;
 
             vscroll.Minimum = 0;
-            vscroll.Maximum = _rowHeight * _rowCount - gridCore.ActualHeight;
+            vscroll.Maximum = _rowHeight*_rowCount - gridCore.ActualHeight;
             vscroll.ViewportSize = gridCore.ActualHeight;
         }
 
@@ -215,6 +356,37 @@ namespace FastWpfGrid
         public void NotifyAddedRows()
         {
             InvalidateAll();
+        }
+
+        public Brush GetSolidBrush(Color color)
+        {
+            if (!_solidBrushes.ContainsKey(color))
+            {
+                _solidBrushes[color] = new SolidColorBrush(color);
+            }
+            return _solidBrushes[color];
+        }
+
+        public void ShowTextEditor(Rect rect, string text)
+        {
+            edText.Margin = new Thickness
+                {
+                    Left = rect.Left,
+                    Top = rect.Top,
+                    Right = gridCore.ActualWidth - rect.Right,
+                    Bottom = gridCore.ActualHeight - rect.Bottom,
+                };
+            edText.Text = text;
+            edText.Visibility = Visibility.Visible;
+            if (edText.IsFocused)
+            {
+                edText.SelectAll();
+            }
+            else
+            {
+                edText.Focus();
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Input, (Action) edText.SelectAll);
+            }
         }
     }
 }

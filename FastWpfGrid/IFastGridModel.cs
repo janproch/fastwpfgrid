@@ -10,9 +10,9 @@ namespace FastWpfGrid
     {
         int ColumnCount { get; }
         int RowCount { get; }
-        string GetCellText(int row, int column);
-        string GetRowHeader(int row);
-        string GetColumnHeader(int column);
+        IFastGridCell GetCell(int row, int column);
+        IFastGridCell GetRowHeader(int row);
+        IFastGridCell GetColumnHeader(int column);
         void AttachView(IFastGridView view);
         void DetachView(IFastGridView view);
     }

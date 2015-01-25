@@ -43,11 +43,14 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FastGridCellAddress.cs" />
     <Compile Include="FastGridControl.xaml.cs">
       <DependentUpon>FastGridControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="FastGridCore.cs" />
     <Compile Include="FastGridModelBase.cs" />
+    <Compile Include="IFastGridCell.cs" />
+    <Compile Include="IFastGridCellBlock.cs" />
     <Compile Include="IFastGridModel.cs" />
     <Compile Include="IFastGridView.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
