@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,6 +27,8 @@ namespace FastWpfGrid
         //private double _lastvscroll;
         private IFastGridModel _model;
 
+        public int FirstVisibleColumn;
+        public int FirstVisibleRow;
         private int _rowCount;
         private int _columnCount;
         //private double[] _columnWidths = new double[0];
@@ -32,6 +36,10 @@ namespace FastWpfGrid
         private int _columnWidth;
         private Color _gridLineColor = Colors.LightGray;
         private int _cellPadding = 1;
+
+        private FastGridCellAddress _currentCell;
+        private bool _isLeftMouseDown;
+        private int? _mouseOverRow;
 
         private Color[] _alternatingColors = new Color[]
             {
@@ -47,7 +55,7 @@ namespace FastWpfGrid
         private double _cellFontSize;
         private int _headerHeight;
         private int _headerWidth;
-        private Dictionary<Tuple<bool, bool>, GlyphTypeface> _glyphTypeFaces = new Dictionary<Tuple<bool, bool>, GlyphTypeface>();
+        private Dictionary<Tuple<bool, bool>, GlyphFont> _glyphFonts = new Dictionary<Tuple<bool, bool>, GlyphFont>();
         private Dictionary<Color, Brush> _solidBrushes = new Dictionary<Color, Brush>();
         private Color _cellFontColor = Colors.Black;
         private double _rowHeightReserve = 5;
@@ -55,11 +63,19 @@ namespace FastWpfGrid
         private Color _selectedColor = Color.FromRgb(51, 153, 255);
         private Color _selectedTextColor = Colors.White;
         private Color _mouseOverRowColor = Colors.Beige;
+        private WriteableBitmap _drawBuffer;
+
+        private bool _isInvalidated;
+        private List<int> _invalidatedRows = new List<int>();
+        private List<int> _invalidatedColumns = new List<int>();
+        private List<Tuple<int, int>> _invalidatedCells = new List<Tuple<int, int>>();
+        private List<int> _invalidatedRowHeaders = new List<int>();
+        private List<int> _invalidatedColumnHeaders = new List<int>();
 
         public FastGridControl()
         {
             InitializeComponent();
-            gridCore.Grid = this;
+            //gridCore.Grid = this;
             CellFontSize = 12;
         }
 
@@ -158,48 +174,48 @@ namespace FastWpfGrid
             set { _mouseOverRowColor = value; }
         }
 
-        public GlyphTypeface GetGlyphTypeface(bool isBold, bool isItalic)
+        public GlyphFont GetFont(bool isBold, bool isItalic)
         {
             var key = Tuple.Create(isBold, isItalic);
-            if (!_glyphTypeFaces.ContainsKey(key))
+            if (!_glyphFonts.ContainsKey(key))
             {
                 var typeFace = new Typeface(new FontFamily(CellFontName),
                                             isItalic ? FontStyles.Italic : FontStyles.Normal,
                                             isBold ? FontWeights.Bold : FontWeights.Normal,
                                             FontStretches.Normal);
-                GlyphTypeface glyphTypeface;
-                if (!typeFace.TryGetGlyphTypeface(out glyphTypeface))
-                    throw new InvalidOperationException("No glyphtypeface found");
-                _glyphTypeFaces[key] = glyphTypeface;
+
+                var font = LetterGlyphTool.GetFont(typeFace, CellFontSize);
+                _glyphFonts[key] = font;
             }
-            return _glyphTypeFaces[key];
+            return _glyphFonts[key];
         }
 
         public void ClearCaches()
         {
-            _glyphTypeFaces.Clear();
+            _glyphFonts.Clear();
         }
 
         public int GetTextWidth(string text, bool isBold, bool isItalic)
         {
-            double size = CellFontSize;
-            int totalWidth = 0;
-            var glyphTypeface = GetGlyphTypeface(isBold, isItalic);
+            return GetFont(isBold, isItalic).GetTextWidth(text);
+            //double size = CellFontSize;
+            //int totalWidth = 0;
+            //var glyphTypeface = GetFont(isBold, isItalic);
 
-            for (int n = 0; n < text.Length; n++)
-            {
-                ushort glyphIndex = glyphTypeface.CharacterToGlyphMap[text[n]];
-                double width = Math.Round(glyphTypeface.AdvanceWidths[glyphIndex]*size);
-                totalWidth += (int) width;
-            }
-            return totalWidth;
+            //for (int n = 0; n < text.Length; n++)
+            //{
+            //    ushort glyphIndex = glyphTypeface.CharacterToGlyphMap[text[n]];
+            //    double width = Math.Round(glyphTypeface.AdvanceWidths[glyphIndex] * size);
+            //    totalWidth += (int)width;
+            //}
+            //return totalWidth;
         }
 
         private void RecalculateDefaultCellSize()
         {
             ClearCaches();
-            _rowHeight = (int) (GetGlyphTypeface(false, false).Height*CellFontSize + CellPadding*2 + 2 + RowHeightReserve);
-            _columnWidth = _rowHeight*4;
+            _rowHeight = (int)(GetFont(false, false).TextHeight + CellPadding * 2 + 2 + RowHeightReserve);
+            _columnWidth = _rowHeight * 4;
             HeaderWidth = GetTextWidth("0000", false, false);
             HeaderHeight = _rowHeight;
             AdjustScrollbars();
@@ -218,32 +234,27 @@ namespace FastWpfGrid
 
         private void ScrollChanged()
         {
-            int rowIndex = (int) ((vscroll.Value + _rowHeight/2.0)/_rowHeight);
-            int columnIndex = (int) ((hscroll.Value + _columnWidth/2.0)/_columnWidth);
-            gridCore.ScrollContent(rowIndex, columnIndex);
+            int rowIndex = (int)((vscroll.Value + _rowHeight / 2.0) / _rowHeight);
+            int columnIndex = (int)((hscroll.Value + _columnWidth / 2.0) / _columnWidth);
+            FirstVisibleRow = rowIndex;
+            FirstVisibleColumn = columnIndex;
+            RenderGrid();
+            //gridCore.ScrollContent(rowIndex, columnIndex);
         }
 
         public Color GetAlternateBackground(int row)
         {
-            return _alternatingColors[row%_alternatingColors.Length];
+            return _alternatingColors[row % _alternatingColors.Length];
         }
 
         private void hscroll_Scroll(object sender, ScrollEventArgs e)
         {
             ScrollChanged();
-            //gridCore.FirstVisibleColumn = (int)hscroll.Value;
-            //gridCore.InvalidateVisual();
         }
 
         private void vscroll_Scroll(object sender, ScrollEventArgs e)
         {
             ScrollChanged();
-            //gridCore.ScrollContent(0, vscroll.Value - _lastvscroll);
-            //_lastvscroll = vscroll.Value;
-
-
-            //gridCore.FirstVisibleRow = (int)vscroll.Value;
-            //gridCore.InvalidateVisual();
         }
 
         public IFastGridModel Model
@@ -299,24 +310,33 @@ namespace FastWpfGrid
             }
         }
 
-        //private void CreateColumnWidths()
-        //{
-        //    _columnWidths = new double[_columnCount];
-        //    for (int i = 0; i < _columnCount; i++)
-        //    {
-        //        _columnWidths[i] = 200;
-        //    }
-        //}
+        public int GridScrollAreaWidth
+        {
+            get
+            {
+                if (_drawBuffer == null) return 1;
+                return _drawBuffer.PixelWidth - HeaderWidth;
+            }
+        }
+
+        public int GridScrollAreaHeight
+        {
+            get
+            {
+                if (_drawBuffer == null) return 1;
+                return _drawBuffer.PixelHeight - HeaderHeight;
+            }
+        }
 
         private void AdjustScrollbars()
         {
             hscroll.Minimum = 0;
-            hscroll.Maximum = _columnWidth*_columnCount - gridCore.ActualWidth;
-            hscroll.ViewportSize = gridCore.ActualWidth;
+            hscroll.Maximum = _columnWidth * _columnCount - GridScrollAreaWidth;
+            hscroll.ViewportSize = GridScrollAreaWidth;
 
             vscroll.Minimum = 0;
-            vscroll.Maximum = _rowHeight*_rowCount - gridCore.ActualHeight;
-            vscroll.ViewportSize = gridCore.ActualHeight;
+            vscroll.Maximum = _rowHeight * _rowCount - GridScrollAreaHeight;
+            vscroll.ViewportSize = GridScrollAreaHeight;
         }
 
         protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
@@ -353,6 +373,32 @@ namespace FastWpfGrid
             InvalidateAll();
         }
 
+        //private void InvalidateColumn(int column)
+        //{
+        //    _isInvalidated = true;
+        //    _invalidatedColumns.Add(column);
+        //    _invalidatedColumnHeaders.Add(column);
+        //}
+
+        //private void InvalidateRow(int row)
+        //{
+        //    _isInvalidated = true;
+        //    _invalidatedRows.Add(row);
+        //    _invalidatedRowHeaders.Add(row);
+        //}
+
+        //private void InvalidateCell(int row, int column)
+        //{
+        //    _isInvalidated = true;
+        //    _invalidatedCells.Add(Tuple.Create(row, column));
+        //}
+
+        //private void FinishInvalidate()
+        //{
+        //    _scrollBuffer.Render(this);
+        //    InvalidateVisual();
+        //}
+
         public void NotifyAddedRows()
         {
             InvalidateAll();
@@ -367,14 +413,14 @@ namespace FastWpfGrid
             return _solidBrushes[color];
         }
 
-        public void ShowTextEditor(Rect rect, string text)
+        public void ShowTextEditor(IntRect rect, string text)
         {
             edText.Margin = new Thickness
                 {
                     Left = rect.Left,
                     Top = rect.Top,
-                    Right = gridCore.ActualWidth - rect.Right,
-                    Bottom = gridCore.ActualHeight - rect.Bottom,
+                    Right = imageGrid.ActualWidth - rect.Right,
+                    Bottom = imageGrid.ActualHeight - rect.Bottom,
                 };
             edText.Text = text;
             edText.Visibility = Visibility.Visible;
@@ -385,8 +431,487 @@ namespace FastWpfGrid
             else
             {
                 edText.Focus();
-                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Input, (Action) edText.SelectAll);
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Input, (Action)edText.SelectAll);
             }
+        }
+
+        //int x()
+        //{
+        //    base.OnRender(dc);
+
+        //    if (Grid == null) return;
+
+        //    var emptyPen = new Pen();
+        //    var cellPen = new Pen(new SolidColorBrush(Grid.GridLineColor), 1);
+
+        //    var start = DateTime.Now;
+
+        //    try
+        //    {
+        //        dc.DrawRectangle(Brushes.White, emptyPen, new Rect(Grid.HeaderWidth, Grid.HeaderHeight,
+        //                                                           (int) ActualWidth - Grid.HeaderWidth, (int) ActualHeight - Grid.HeaderHeight));
+
+        //        if (_scrollY != 0)
+        //        {
+        //            dc.PushClip(new RectangleGeometry(new Rect(0, Grid.HeaderHeight,
+        //                                                       (int) ActualWidth, (int) ActualHeight - Grid.HeaderHeight)));
+        //            dc.DrawImage(_scrollBuffer, new Rect(0, _scrollY, (int) ActualWidth, (int) ActualHeight));
+        //            dc.Pop();
+        //        }
+
+        //        if (_scrollX != 0)
+        //        {
+        //            dc.PushClip(new RectangleGeometry(new Rect(Grid.HeaderWidth, 0,
+        //                                                       (int) ActualWidth - Grid.HeaderWidth, (int) ActualHeight)));
+        //            dc.DrawImage(_scrollBuffer, new Rect(_scrollX, 0, (int) ActualWidth, (int) ActualHeight));
+        //            dc.Pop();
+        //        }
+
+        //        if (_scrollX == 0 && _scrollY == 0 && _isInvalidated)
+        //        {
+        //            dc.DrawImage(_scrollBuffer, new Rect(0, 0, (int) ActualWidth, (int) ActualHeight));
+        //        }
+
+        //        if (Grid == null || Grid.Model == null) return;
+        //        int colsToRender = VisibleColumnCount;
+        //        int rowsToRender = VisibleRowCount;
+
+        //        dc.PushClip(new RectangleGeometry(new Rect(Grid.HeaderWidth, Grid.HeaderHeight,
+        //                                                   (int) ActualWidth - Grid.HeaderWidth, (int) ActualHeight - Grid.HeaderHeight)));
+
+        //        for (int row = FirstVisibleRow; row < FirstVisibleRow + rowsToRender; row++)
+        //        {
+        //            for (int col = FirstVisibleColumn; col < FirstVisibleColumn + colsToRender; col++)
+        //            {
+        //                if (!ShouldDrawCell(row, col)) continue;
+        //                var rect = GetCellRect(row, col);
+        //                var cell = Grid.Model.GetCell(row, col);
+        //                Color? selectedBgColor = null;
+        //                Color? selectedTextColor = null;
+        //                Color? hoverRowColor = null;
+        //                if (_currentCell.TestCell(row, col))
+        //                {
+        //                    selectedBgColor = Grid.SelectedColor;
+        //                    selectedTextColor = Grid.SelectedTextColor;
+        //                }
+        //                if (row == _mouseOverRow)
+        //                {
+        //                    hoverRowColor = Grid.MouseOverRowColor;
+        //                }
+
+        //                dc.DrawRectangle(Grid.GetSolidBrush(selectedBgColor
+        //                                                    ?? hoverRowColor
+        //                                                    ?? cell.BackgroundColor
+        //                                                    ?? Grid.GetAlternateBackground(row)),
+        //                                 cellPen, rect);
+
+        //                var rectContent = GetContentRect(rect);
+
+        //                RenderCell(cell, rectContent, dc, selectedTextColor);
+        //            }
+        //        }
+        //        dc.Pop();
+
+        //        for (int row = FirstVisibleRow; row < FirstVisibleRow + rowsToRender; row++)
+        //        {
+        //            var cell = Grid.Model.GetRowHeader(row);
+        //            if (!ShouldDrawRowHeader(row)) continue;
+
+        //            var rect = GetRowHeaderRect(row);
+
+        //            dc.DrawRectangle(Grid.GetSolidBrush(cell.BackgroundColor ?? Grid.HeaderBackground), cellPen, rect);
+        //            var rectContent = GetContentRect(rect);
+        //            RenderCell(cell, rectContent, dc, null);
+        //        }
+
+        //        for (int col = FirstVisibleColumn; col < FirstVisibleColumn + colsToRender; col++)
+        //        {
+        //            var cell = Grid.Model.GetColumnHeader(col);
+        //            if (!ShouldDrawColumnHeader(col)) continue;
+
+        //            var rect = GetColumnHeaderRect(col);
+
+        //            dc.DrawRectangle(Grid.GetSolidBrush(cell.BackgroundColor ?? Grid.HeaderBackground), cellPen, rect);
+        //            var rectContent = GetContentRect(rect);
+        //            RenderCell(cell, rectContent, dc, null);
+        //        }
+
+        //        RenderCell00(dc);
+        //    }
+        //    finally
+        //    {
+        //        ClearInvalidation();
+        //    }
+
+        //    Debug.WriteLine((DateTime.Now - start).TotalMilliseconds);
+        //}
+
+        private void ClearInvalidation()
+        {
+            _invalidatedRows.Clear();
+            _invalidatedColumns.Clear();
+            _invalidatedCells.Clear();
+            _invalidatedColumnHeaders.Clear();
+            _invalidatedRowHeaders.Clear();
+            _isInvalidated = false;
+            //_scrollX = 0;
+            //_scrollY = 0;
+        }
+
+        private bool ShouldDrawCell(int row, int column)
+        {
+            if (!_isInvalidated) return true;
+
+            if (_invalidatedRows.Contains(row)) return true;
+            if (_invalidatedColumns.Contains(column)) return true;
+            if (_invalidatedCells.Contains(Tuple.Create(row, column))) return true;
+            return false;
+        }
+
+        private bool ShouldDrawRowHeader(int row)
+        {
+            if (!_isInvalidated) return true;
+
+            if (_invalidatedRows.Contains(row)) return true;
+            if (_invalidatedRowHeaders.Contains(row)) return true;
+            return false;
+        }
+
+        private bool ShouldDrawColumnHeader(int column)
+        {
+            if (!_isInvalidated) return true;
+
+            if (_invalidatedColumns.Contains(column)) return true;
+            if (_invalidatedColumnHeaders.Contains(column)) return true;
+            return false;
+        }
+
+        private int VisibleRowCount
+        {
+            get { return (int)((ActualHeight - HeaderHeight) / RowHeight) + 1; }
+        }
+
+        private int VisibleColumnCount
+        {
+            get { return (int)((ActualWidth - HeaderWidth) / ColumnWidth) + 1; }
+        }
+
+        private int GetRowTop(int row)
+        {
+            return (row - FirstVisibleRow) * RowHeight + HeaderHeight;
+        }
+
+        private int GetColumnLeft(int column)
+        {
+            return (column - FirstVisibleColumn) * ColumnWidth + HeaderWidth;
+        }
+
+        private IntRect GetCellRect(int row, int column)
+        {
+            return new IntRect(new IntPoint(GetColumnLeft(column), GetRowTop(row)), new IntSize(ColumnWidth + 1, RowHeight + 1));
+        }
+
+        private IntRect GetContentRect(IntRect rect)
+        {
+            return new IntRect(
+                new IntPoint(rect.Left + CellPadding, rect.Top + CellPadding),
+                new IntSize(rect.Width - 2*CellPadding, rect.Height - 2*CellPadding)
+                );
+        }
+
+        private IntRect GetRowHeaderRect(int row)
+        {
+            return new IntRect(new IntPoint(0, GetRowTop(row)), new IntSize(HeaderWidth + 1, RowHeight + 1));
+        }
+
+        private IntRect GetColumnHeaderRect(int column)
+        {
+            return new IntRect(new IntPoint(GetColumnLeft(column), 0), new IntSize(ColumnWidth + 1, HeaderHeight + 1));
+        }
+
+        private void RenderGrid()
+        {
+            if (_drawBuffer == null) return;
+            using (_drawBuffer.GetBitmapContext())
+            {
+                int colsToRender = VisibleColumnCount;
+                int rowsToRender = VisibleRowCount;
+
+                _drawBuffer.Clear(Colors.White);
+
+                for (int row = FirstVisibleRow; row < FirstVisibleRow + rowsToRender; row++)
+                {
+                    for (int col = FirstVisibleColumn; col < FirstVisibleColumn + colsToRender; col++)
+                    {
+                        if (!ShouldDrawCell(row, col)) continue;
+                        var rect = GetCellRect(row, col);
+                        var cell = Model.GetCell(row, col);
+                        Color? selectedBgColor = null;
+                        Color? selectedTextColor = null;
+                        Color? hoverRowColor = null;
+                        if (_currentCell.TestCell(row, col))
+                        {
+                            selectedBgColor = SelectedColor;
+                            selectedTextColor = SelectedTextColor;
+                        }
+                        if (row == _mouseOverRow)
+                        {
+                            hoverRowColor = MouseOverRowColor;
+                        }
+
+
+
+                        var rectContent = GetContentRect(rect);
+                        _drawBuffer.DrawRectangle(rect, GridLineColor);
+                        _drawBuffer.FillRectangle(rectContent, selectedBgColor
+                                                            ?? hoverRowColor
+                                                            ?? cell.BackgroundColor
+                                                            ?? GetAlternateBackground(row));
+
+                        RenderCell(cell, rectContent, selectedTextColor);
+                    }
+                }
+
+                for (int row = FirstVisibleRow; row < FirstVisibleRow + rowsToRender; row++)
+                {
+                    var cell = Model.GetRowHeader(row);
+                    if (!ShouldDrawRowHeader(row)) continue;
+
+                    var rect = GetRowHeaderRect(row);
+                    var rectContent = GetContentRect(rect);
+
+                    _drawBuffer.DrawRectangle(rect, GridLineColor);
+                    _drawBuffer.FillRectangle(rectContent, cell.BackgroundColor ?? HeaderBackground);
+                    RenderCell(cell, rectContent, null);
+                }
+
+                for (int col = FirstVisibleColumn; col < FirstVisibleColumn + colsToRender; col++)
+                {
+                    var cell = Model.GetColumnHeader(col);
+                    if (!ShouldDrawColumnHeader(col)) continue;
+
+                    var rect = GetColumnHeaderRect(col);
+                    var rectContent = GetContentRect(rect);
+
+                    _drawBuffer.DrawRectangle(rect, GridLineColor);
+                    _drawBuffer.FillRectangle(rectContent, cell.BackgroundColor ?? HeaderBackground);
+                    RenderCell(cell, rectContent, null);
+                }
+
+            }
+        }
+
+        private void RenderCell00()
+        {
+            //dc.DrawRectangle(Brushes.White, new Pen(), new Rect(0, 0, Grid.HeaderWidth, Grid.HeaderHeight));
+        }
+
+        protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonUp(e);
+            _isLeftMouseDown = false;
+        }
+
+        protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonDown(e);
+            _isLeftMouseDown = true;
+            var pt = e.GetPosition(this);
+            HandleLeftButtonDownMove(pt);
+            var cell = GetCellAddress(pt);
+            if (cell.IsCell) ShowTextEditor(
+                GetCellRect(cell.Row.Value, cell.Column.Value),
+                Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText());
+        }
+
+
+        public FastGridCellAddress GetCellAddress(Point pt)
+        {
+            if (pt.X <= HeaderWidth && pt.Y < HeaderHeight)
+            {
+                return new FastGridCellAddress();
+            }
+            if (pt.X < HeaderWidth)
+            {
+                return new FastGridCellAddress
+                {
+                    Row = (int)((pt.Y - HeaderHeight) / RowHeight) + FirstVisibleRow,
+                };
+            }
+            if (pt.Y < HeaderHeight)
+            {
+                return new FastGridCellAddress
+                {
+                    Column = (int)((pt.X - HeaderWidth) / ColumnWidth) + FirstVisibleColumn,
+                };
+            }
+            return new FastGridCellAddress
+            {
+                Row = (int)((pt.Y - HeaderHeight) / RowHeight) + FirstVisibleRow,
+                Column = (int)((pt.X - HeaderWidth) / ColumnWidth) + FirstVisibleColumn,
+            };
+        }
+
+        private void HandleLeftButtonDownMove(Point pt)
+        {
+            var cell = GetCellAddress(pt);
+            if (cell.IsCell)
+            {
+                if (_currentCell.IsCell) InvalidateCell(_currentCell.Row.Value, _currentCell.Column.Value);
+                _currentCell = cell;
+                InvalidateCell(_currentCell.Row.Value, _currentCell.Column.Value);
+                //FinishInvalidate();
+            }
+        }
+
+
+        protected override void OnMouseMove(System.Windows.Input.MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            var pt = e.GetPosition(this);
+            if (_isLeftMouseDown) HandleLeftButtonDownMove(pt);
+            var cell = GetCellAddress(pt);
+            SetHoverRow(cell.IsCell ? cell.Row.Value : (int?)null);
+        }
+
+        private void SetHoverRow(int? row)
+        {
+            if (row == _mouseOverRow) return;
+            //if (_mouseOverRow.HasValue) InvalidateRow(_mouseOverRow.Value);
+            _mouseOverRow = row;
+            //if (_mouseOverRow.HasValue) InvalidateRow(_mouseOverRow.Value);
+            //FinishInvalidate();
+            RenderGrid();
+        }
+
+
+        private void RenderCell(IFastGridCell cell, IntRect rect, Color? selectedTextColor)
+        {
+            int count = cell.BlockCount;
+            int rightCount = cell.RightAlignBlockCount;
+            int leftCount = count - rightCount;
+            int leftPos = rect.Left;
+            int rightPos = rect.Right;
+
+            for (int i = 0; i < leftCount && leftPos < rightPos; i++)
+            {
+                var block = cell.GetBlock(i);
+                string text = block.TextData;
+                bool isBold = block.IsBold;
+                bool isItalic = block.IsItalic;
+                var color = block.FontColor;
+                var font = GetFont(isBold, isItalic);
+                //var glyphTypeface = GetGlyphTypeface(isBold, isItalic);
+                int textHeight = font.TextHeight;
+                var origin = new IntPoint(leftPos, rect.Top + (int) Math.Round(rect.Height/2.0 - textHeight/2.0));
+                //int maxWidth = rect.Right - origin.X;
+                int width = _drawBuffer.DrawString(origin.X, origin.Y, rect, selectedTextColor ?? color ?? CellFontColor, font, text);
+                leftPos += width;
+            }
+        }
+
+
+        private void imageGridResized(object sender, SizeChangedEventArgs e)
+        {
+            //var vis = new DrawingVisual();
+            //var rdp=new Ren
+            //var tb = new TextBlock {Text = "Ahoj"};
+            //var bmp = new RenderTargetBitmap((int)tb.ActualWidth, (int)tb.ActualHeight, 92, 92, PixelFormats.Pbgra32);
+
+            //var bmp2 = new WriteableBitmap(bmp);
+
+            //var typeface = new Typeface(this.FontFamily, FontStyles.Normal, FontWeights.Normal, new FontStretch());
+
+            //FormattedText text = new FormattedText("Grid 1",
+            //            new CultureInfo("en-us"),
+            //            FlowDirection.LeftToRight,
+            //            typeface,
+            //            this.FontSize,
+            //            Brushes.White);
+
+            //DrawingVisual drawingVisual = new DrawingVisual();
+            //DrawingContext drawingContext = drawingVisual.RenderOpen();
+            //drawingContext.DrawRectangle(Brushes.Black, new Pen(), new Rect(0, 0, 180, 180));
+            //drawingContext.DrawText(text, new Point(2, 2));
+            //drawingContext.Close();
+
+            //RenderTargetBitmap bmp = new RenderTargetBitmap(180, 180, 96, 96, PixelFormats.Pbgra32);
+            //bmp.Render(drawingVisual);
+
+
+            //var bmp2 = new WriteableBitmap(bmp);
+
+            int width = (int)imageGrid.ActualWidth - 2;
+            int height = (int)imageGrid.ActualHeight - 2;
+            if (width > 0 && height > 0)
+            {
+                //_drawBuffer = new WriteableBitmap(width, height, 96.0, 96.0, PixelFormats.Pbgra32, null);
+                _drawBuffer = BitmapFactory.New(width, height);
+            }
+            else
+            {
+                _drawBuffer = null;
+            }
+            image.Source = _drawBuffer;
+            image.Width = width;
+            image.Height = height;
+
+            //image.Source = bmp2;
+            //image.Width = bmp2.Width;
+            //image.Height = bmp2.Height;
+            //image.HorizontalAlignment = HorizontalAlignment.Left;
+            //image.VerticalAlignment = VerticalAlignment.Top;
+            //image.Margin = new Thickness(0, 30, 0, 0);
+
+            AdjustScrollbars();
+            RenderGrid();
+
+
+            //if (_drawBuffer != null)
+            //{
+            //    //var start = DateTime.Now;
+            //    //for (int i = 0; i < 2700; i++)
+            //    //{
+            //    //    var g = LetterGlyph.CreateGlyph(typeface, 12, 'G');
+            //    //}
+            //    //Debug.WriteLine((DateTime.Now - start).TotalMilliseconds);
+            //    //var glyph = LetterGlyph.CreateGlyph(typeface, 12, 'G');
+
+            //    using (_drawBuffer.GetBitmapContext())
+            //    {
+            //        _drawBuffer.Clear(Colors.White);
+            //        _drawBuffer.DrawString(0, 40, Colors.Red, new Typeface(this.FontFamily, FontStyles.Normal, FontWeights.Normal, new FontStretch()), 12, "Pokusny_text");
+            //        _drawBuffer.DrawString(0, 80, Colors.Blue, new Typeface(this.FontFamily, FontStyles.Normal, FontWeights.Normal, new FontStretch()), 12, "Pokusny_text");
+
+            //        //int count = 0;
+            //        //for (int x = 0; x < _drawBuffer.PixelWidth / glyph.Width; x++)
+            //        //{
+            //        //    for (int y = 0; y < _drawBuffer.PixelHeight / glyph.Height; y++)
+            //        //    {
+            //        //        _drawBuffer.DrawLetter(x * glyph.Width, y * glyph.Height + 30, Colors.Black, glyph);
+            //        //        count++;
+            //        //    }
+            //        //}
+
+
+            //        //_drawBuffer.Blit(new Point(100, 50), bmp2, new Rect(0, 0, 100, 30), Colors.White, WriteableBitmapExtensions.BlendMode.Alpha);
+            //    }
+
+            //    //_drawBuffer.DrawLetter(100, 140, Colors.Black, glyph);
+
+
+            //    //try
+            //    //{
+            //    //    //_drawBuffer.DrawQuad();
+            //    //    _drawBuffer.Lock();
+            //    //    _drawBuffer.Clear(Colors.White);
+            //    //    _drawBuffer.AddDirtyRect(new Int32Rect(0, 0, _drawBuffer.PixelWidth, _drawBuffer.PixelHeight));
+            //    //}
+            //    //finally
+            //    //{
+            //    //    _drawBuffer.Unlock();
+            //    //}
+            //}
         }
     }
 }

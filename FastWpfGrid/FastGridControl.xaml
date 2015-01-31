@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:FastWpfGrid="clr-namespace:FastWpfGrid"
              mc:Ignorable="d" 
-             d:DesignHeight="300" d:DesignWidth="300">
+             d:DesignHeight="300" d:DesignWidth="300" >
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
@@ -15,9 +15,11 @@
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <FastWpfGrid:FastGridCore Grid.Row="0" Grid.Column="0" x:Name="gridCore" />
+        <Grid x:Name="imageGrid" Grid.Row="0" Grid.Column="0" SizeChanged="imageGridResized">
+            <Image x:Name="image"  />
+            <TextBox x:Name="edText" Visibility="Hidden" />
+        </Grid>
         
-        <TextBox x:Name="edText" Visibility="Hidden" />
 
         <ScrollBar Orientation="Horizontal" Grid.Column="0" Grid.Row="1" x:Name="hscroll" Maximum="100" Scroll="hscroll_Scroll"/>
         <ScrollBar Orientation="Vertical" Grid.Column="1" Grid.Row="0" x:Name="vscroll" Maximum="100" Scroll="vscroll_Scroll"/>

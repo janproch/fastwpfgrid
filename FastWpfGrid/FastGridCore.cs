@@ -190,14 +190,14 @@ namespace FastWpfGrid
 
         protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
         {
-            base.OnMouseLeftButtonDown(e);
-            _isLeftMouseDown = true;
-            var pt = e.GetPosition(this);
-            HandleLeftButtonDownMove(pt);
-            var cell = GetCellAddress(pt);
-            if (cell.IsCell) Grid.ShowTextEditor(
-                GetCellRect(cell.Row.Value, cell.Column.Value), 
-                Grid.Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText());
+            //base.OnMouseLeftButtonDown(e);
+            //_isLeftMouseDown = true;
+            //var pt = e.GetPosition(this);
+            //HandleLeftButtonDownMove(pt);
+            //var cell = GetCellAddress(pt);
+            //if (cell.IsCell) Grid.ShowTextEditor(
+            //    GetCellRect(cell.Row.Value, cell.Column.Value), 
+            //    Grid.Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText());
         }
 
         protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
@@ -231,26 +231,26 @@ namespace FastWpfGrid
 
         private void RenderCell(IFastGridCell cell, Rect rect, DrawingContext dc, Color? selectedTextColor)
         {
-            int count = cell.BlockCount;
-            int rightCount = cell.RightAlignBlockCount;
-            int leftCount = count - rightCount;
-            double leftPos = rect.Left;
-            double rightPos = rect.Right;
+            //int count = cell.BlockCount;
+            //int rightCount = cell.RightAlignBlockCount;
+            //int leftCount = count - rightCount;
+            //double leftPos = rect.Left;
+            //double rightPos = rect.Right;
 
-            for (int i = 0; i < leftCount && leftPos < rightPos; i++)
-            {
-                var block = cell.GetBlock(i);
-                string text = block.TextData;
-                bool isBold = block.IsBold;
-                bool isItalic = block.IsItalic;
-                var color = block.FontColor;
-                var glyphTypeface = Grid.GetGlyphTypeface(isBold, isItalic);
-                double textHeight = glyphTypeface.Height*Grid.CellFontSize;
-                var origin = new Point(leftPos, rect.Top + (int) (rect.Height/2 - textHeight/2));
-                int maxWidth = (int) (rect.Right - origin.X);
-                int width = RenderText(glyphTypeface, text, dc, origin, maxWidth, selectedTextColor ?? color ?? Grid.CellFontColor);
-                leftPos += width;
-            }
+            //for (int i = 0; i < leftCount && leftPos < rightPos; i++)
+            //{
+            //    var block = cell.GetBlock(i);
+            //    string text = block.TextData;
+            //    bool isBold = block.IsBold;
+            //    bool isItalic = block.IsItalic;
+            //    var color = block.FontColor;
+            //    var glyphTypeface = Grid.GetGlyphTypeface(isBold, isItalic);
+            //    double textHeight = glyphTypeface.Height*Grid.CellFontSize;
+            //    var origin = new Point(leftPos, rect.Top + (int) (rect.Height/2 - textHeight/2));
+            //    int maxWidth = (int) (rect.Right - origin.X);
+            //    int width = RenderText(glyphTypeface, text, dc, origin, maxWidth, selectedTextColor ?? color ?? Grid.CellFontColor);
+            //    leftPos += width;
+            //}
         }
 
         private int RenderText(GlyphTypeface glyphTypeface, string text, DrawingContext dc, Point origin, int maxWidth, Color fontColor)
