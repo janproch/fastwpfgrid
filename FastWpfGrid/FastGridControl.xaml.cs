@@ -310,7 +310,6 @@ namespace FastWpfGrid
             FirstVisibleRow = row;
             FirstVisibleColumn = column;
             RenderGrid();
-            //InvalidateVisual();
         }
 
 
@@ -462,12 +461,6 @@ namespace FastWpfGrid
             _invalidatedCells.Add(Tuple.Create(row, column));
         }
 
-        //private void FinishInvalidate()
-        //{
-        //    _scrollBuffer.Render(this);
-        //    InvalidateVisual();
-        //}
-
         public void NotifyAddedRows()
         {
             InvalidateAll();
@@ -504,117 +497,6 @@ namespace FastWpfGrid
             }
         }
 
-        //int x()
-        //{
-        //    base.OnRender(dc);
-
-        //    if (Grid == null) return;
-
-        //    var emptyPen = new Pen();
-        //    var cellPen = new Pen(new SolidColorBrush(Grid.GridLineColor), 1);
-
-        //    var start = DateTime.Now;
-
-        //    try
-        //    {
-        //        dc.DrawRectangle(Brushes.White, emptyPen, new Rect(Grid.HeaderWidth, Grid.HeaderHeight,
-        //                                                           (int) ActualWidth - Grid.HeaderWidth, (int) ActualHeight - Grid.HeaderHeight));
-
-        //        if (_scrollY != 0)
-        //        {
-        //            dc.PushClip(new RectangleGeometry(new Rect(0, Grid.HeaderHeight,
-        //                                                       (int) ActualWidth, (int) ActualHeight - Grid.HeaderHeight)));
-        //            dc.DrawImage(_scrollBuffer, new Rect(0, _scrollY, (int) ActualWidth, (int) ActualHeight));
-        //            dc.Pop();
-        //        }
-
-        //        if (_scrollX != 0)
-        //        {
-        //            dc.PushClip(new RectangleGeometry(new Rect(Grid.HeaderWidth, 0,
-        //                                                       (int) ActualWidth - Grid.HeaderWidth, (int) ActualHeight)));
-        //            dc.DrawImage(_scrollBuffer, new Rect(_scrollX, 0, (int) ActualWidth, (int) ActualHeight));
-        //            dc.Pop();
-        //        }
-
-        //        if (_scrollX == 0 && _scrollY == 0 && _isInvalidated)
-        //        {
-        //            dc.DrawImage(_scrollBuffer, new Rect(0, 0, (int) ActualWidth, (int) ActualHeight));
-        //        }
-
-        //        if (Grid == null || Grid.Model == null) return;
-        //        int colsToRender = VisibleColumnCount;
-        //        int rowsToRender = VisibleRowCount;
-
-        //        dc.PushClip(new RectangleGeometry(new Rect(Grid.HeaderWidth, Grid.HeaderHeight,
-        //                                                   (int) ActualWidth - Grid.HeaderWidth, (int) ActualHeight - Grid.HeaderHeight)));
-
-        //        for (int row = FirstVisibleRow; row < FirstVisibleRow + rowsToRender; row++)
-        //        {
-        //            for (int col = FirstVisibleColumn; col < FirstVisibleColumn + colsToRender; col++)
-        //            {
-        //                if (!ShouldDrawCell(row, col)) continue;
-        //                var rect = GetCellRect(row, col);
-        //                var cell = Grid.Model.GetCell(row, col);
-        //                Color? selectedBgColor = null;
-        //                Color? selectedTextColor = null;
-        //                Color? hoverRowColor = null;
-        //                if (_currentCell.TestCell(row, col))
-        //                {
-        //                    selectedBgColor = Grid.SelectedColor;
-        //                    selectedTextColor = Grid.SelectedTextColor;
-        //                }
-        //                if (row == _mouseOverRow)
-        //                {
-        //                    hoverRowColor = Grid.MouseOverRowColor;
-        //                }
-
-        //                dc.DrawRectangle(Grid.GetSolidBrush(selectedBgColor
-        //                                                    ?? hoverRowColor
-        //                                                    ?? cell.BackgroundColor
-        //                                                    ?? Grid.GetAlternateBackground(row)),
-        //                                 cellPen, rect);
-
-        //                var rectContent = GetContentRect(rect);
-
-        //                RenderCell(cell, rectContent, dc, selectedTextColor);
-        //            }
-        //        }
-        //        dc.Pop();
-
-        //        for (int row = FirstVisibleRow; row < FirstVisibleRow + rowsToRender; row++)
-        //        {
-        //            var cell = Grid.Model.GetRowHeader(row);
-        //            if (!ShouldDrawRowHeader(row)) continue;
-
-        //            var rect = GetRowHeaderRect(row);
-
-        //            dc.DrawRectangle(Grid.GetSolidBrush(cell.BackgroundColor ?? Grid.HeaderBackground), cellPen, rect);
-        //            var rectContent = GetContentRect(rect);
-        //            RenderCell(cell, rectContent, dc, null);
-        //        }
-
-        //        for (int col = FirstVisibleColumn; col < FirstVisibleColumn + colsToRender; col++)
-        //        {
-        //            var cell = Grid.Model.GetColumnHeader(col);
-        //            if (!ShouldDrawColumnHeader(col)) continue;
-
-        //            var rect = GetColumnHeaderRect(col);
-
-        //            dc.DrawRectangle(Grid.GetSolidBrush(cell.BackgroundColor ?? Grid.HeaderBackground), cellPen, rect);
-        //            var rectContent = GetContentRect(rect);
-        //            RenderCell(cell, rectContent, dc, null);
-        //        }
-
-        //        RenderCell00(dc);
-        //    }
-        //    finally
-        //    {
-        //        ClearInvalidation();
-        //    }
-
-        //    Debug.WriteLine((DateTime.Now - start).TotalMilliseconds);
-        //}
-
         private void ClearInvalidation()
         {
             _invalidatedRows.Clear();
@@ -623,8 +505,6 @@ namespace FastWpfGrid
             _invalidatedColumnHeaders.Clear();
             _invalidatedRowHeaders.Clear();
             _isInvalidated = false;
-            //_scrollX = 0;
-            //_scrollY = 0;
         }
 
         private bool ShouldDrawCell(int row, int column)
@@ -870,8 +750,6 @@ namespace FastWpfGrid
             _mouseOverRow = row;
             if (_mouseOverRow.HasValue) InvalidateRow(_mouseOverRow.Value);
             RenderGrid();
-            //FinishInvalidate();
-            
         }
 
 
@@ -903,39 +781,10 @@ namespace FastWpfGrid
 
         private void imageGridResized(object sender, SizeChangedEventArgs e)
         {
-            //var vis = new DrawingVisual();
-            //var rdp=new Ren
-            //var tb = new TextBlock {Text = "Ahoj"};
-            //var bmp = new RenderTargetBitmap((int)tb.ActualWidth, (int)tb.ActualHeight, 92, 92, PixelFormats.Pbgra32);
-
-            //var bmp2 = new WriteableBitmap(bmp);
-
-            //var typeface = new Typeface(this.FontFamily, FontStyles.Normal, FontWeights.Normal, new FontStretch());
-
-            //FormattedText text = new FormattedText("Grid 1",
-            //            new CultureInfo("en-us"),
-            //            FlowDirection.LeftToRight,
-            //            typeface,
-            //            this.FontSize,
-            //            Brushes.White);
-
-            //DrawingVisual drawingVisual = new DrawingVisual();
-            //DrawingContext drawingContext = drawingVisual.RenderOpen();
-            //drawingContext.DrawRectangle(Brushes.Black, new Pen(), new Rect(0, 0, 180, 180));
-            //drawingContext.DrawText(text, new Point(2, 2));
-            //drawingContext.Close();
-
-            //RenderTargetBitmap bmp = new RenderTargetBitmap(180, 180, 96, 96, PixelFormats.Pbgra32);
-            //bmp.Render(drawingVisual);
-
-
-            //var bmp2 = new WriteableBitmap(bmp);
-
             int width = (int)imageGrid.ActualWidth - 2;
             int height = (int)imageGrid.ActualHeight - 2;
             if (width > 0 && height > 0)
             {
-                //_drawBuffer = new WriteableBitmap(width, height, 96.0, 96.0, PixelFormats.Pbgra32, null);
                 _drawBuffer = BitmapFactory.New(width, height);
             }
             else
@@ -946,62 +795,8 @@ namespace FastWpfGrid
             image.Width = width;
             image.Height = height;
 
-            //image.Source = bmp2;
-            //image.Width = bmp2.Width;
-            //image.Height = bmp2.Height;
-            //image.HorizontalAlignment = HorizontalAlignment.Left;
-            //image.VerticalAlignment = VerticalAlignment.Top;
-            //image.Margin = new Thickness(0, 30, 0, 0);
-
             AdjustScrollbars();
             RenderGrid();
-
-
-            //if (_drawBuffer != null)
-            //{
-            //    //var start = DateTime.Now;
-            //    //for (int i = 0; i < 2700; i++)
-            //    //{
-            //    //    var g = LetterGlyph.CreateGlyph(typeface, 12, 'G');
-            //    //}
-            //    //Debug.WriteLine((DateTime.Now - start).TotalMilliseconds);
-            //    //var glyph = LetterGlyph.CreateGlyph(typeface, 12, 'G');
-
-            //    using (_drawBuffer.GetBitmapContext())
-            //    {
-            //        _drawBuffer.Clear(Colors.White);
-            //        _drawBuffer.DrawString(0, 40, Colors.Red, new Typeface(this.FontFamily, FontStyles.Normal, FontWeights.Normal, new FontStretch()), 12, "Pokusny_text");
-            //        _drawBuffer.DrawString(0, 80, Colors.Blue, new Typeface(this.FontFamily, FontStyles.Normal, FontWeights.Normal, new FontStretch()), 12, "Pokusny_text");
-
-            //        //int count = 0;
-            //        //for (int x = 0; x < _drawBuffer.PixelWidth / glyph.Width; x++)
-            //        //{
-            //        //    for (int y = 0; y < _drawBuffer.PixelHeight / glyph.Height; y++)
-            //        //    {
-            //        //        _drawBuffer.DrawLetter(x * glyph.Width, y * glyph.Height + 30, Colors.Black, glyph);
-            //        //        count++;
-            //        //    }
-            //        //}
-
-
-            //        //_drawBuffer.Blit(new Point(100, 50), bmp2, new Rect(0, 0, 100, 30), Colors.White, WriteableBitmapExtensions.BlendMode.Alpha);
-            //    }
-
-            //    //_drawBuffer.DrawLetter(100, 140, Colors.Black, glyph);
-
-
-            //    //try
-            //    //{
-            //    //    //_drawBuffer.DrawQuad();
-            //    //    _drawBuffer.Lock();
-            //    //    _drawBuffer.Clear(Colors.White);
-            //    //    _drawBuffer.AddDirtyRect(new Int32Rect(0, 0, _drawBuffer.PixelWidth, _drawBuffer.PixelHeight));
-            //    //}
-            //    //finally
-            //    //{
-            //    //    _drawBuffer.Unlock();
-            //    //}
-            //}
         }
     }
 }

@@ -48,8 +48,6 @@
     <Compile Include="FastGridControl.xaml.cs">
       <DependentUpon>FastGridControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="FastGridCore.cs" />
-    <Compile Include="FastGridImage.cs" />
     <Compile Include="FastGridModelBase.cs" />
     <Compile Include="IFastGridCell.cs" />
     <Compile Include="IFastGridCellBlock.cs" />
