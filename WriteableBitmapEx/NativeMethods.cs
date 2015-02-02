@@ -24,9 +24,9 @@ namespace System.Windows.Media.Imaging
         // Win32 memory copy function
         //[DllImport("ntdll.dll")]
         [DllImport("msvcrt.dll", EntryPoint = "memcpy", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-        private static extern unsafe byte* memcpy(
-            byte* dst,
-            byte* src,
+        public static extern unsafe void* memcpy(
+            void* dst,
+            void* src,
             int count);
         
         // Win32 memory set function

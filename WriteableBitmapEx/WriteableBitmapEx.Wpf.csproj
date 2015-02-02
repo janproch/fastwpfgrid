@@ -8,7 +8,7 @@
     <ProjectGuid>{B0AA6A94-6784-4221-81F0-244A68C374C0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WriteableBitmapEx.Wpf</RootNamespace>
+    <RootNamespace>System.Windows.Media.Imaging</RootNamespace>
     <AssemblyName>WriteableBitmapEx.Wpf</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -60,6 +60,7 @@
     <Compile Include="LetterGlyphTool.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ScrollingTool.cs" />
     <Compile Include="WriteableBitmapBaseExtensions.cs" />
     <Compile Include="WriteableBitmapBlitExtensions.cs" />
     <Compile Include="WriteableBitmapContextExtensions.cs" />

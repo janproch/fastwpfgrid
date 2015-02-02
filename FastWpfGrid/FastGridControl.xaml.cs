@@ -236,11 +236,83 @@ namespace FastWpfGrid
         {
             int rowIndex = (int)((vscroll.Value + _rowHeight / 2.0) / _rowHeight);
             int columnIndex = (int)((hscroll.Value + _columnWidth / 2.0) / _columnWidth);
-            FirstVisibleRow = rowIndex;
-            FirstVisibleColumn = columnIndex;
-            RenderGrid();
-            //gridCore.ScrollContent(rowIndex, columnIndex);
+            //FirstVisibleRow = rowIndex;
+            //FirstVisibleColumn = columnIndex;
+            //RenderGrid();
+            ScrollContent(rowIndex, columnIndex);
         }
+
+        private IntRect GetScrollRect()
+        {
+            return new IntRect(new IntPoint(HeaderWidth, HeaderHeight), new IntSize(GridScrollAreaWidth, GridScrollAreaHeight));
+        }
+
+        private void ScrollContent(int row, int column)
+        {
+            if (row == FirstVisibleRow && column == FirstVisibleColumn)
+            {
+                return;
+            }
+
+            if (row != FirstVisibleRow && !_isInvalidated && column == FirstVisibleColumn
+                && Math.Abs(row - FirstVisibleRow) * 2 < VisibleRowCount)
+            {
+                int scrollY = (FirstVisibleRow - row) * RowHeight;
+                if (row > FirstVisibleRow)
+                {
+                    for (int i = row + VisibleRowCount; i >= FirstVisibleRow + VisibleRowCount - 1; i--)
+                    {
+                        InvalidateRow(i);
+                    }
+                }
+                else
+                {
+                    for (int i = row; i <= FirstVisibleRow; i++)
+                    {
+                        InvalidateRow(i);
+                    }
+                }
+                FirstVisibleRow = row;
+                _drawBuffer.ScrollY(scrollY, GetScrollRect());
+                _drawBuffer.ScrollY(scrollY, GetRowHeadersRect());
+                RenderGrid();
+                return;
+            }
+
+            if (column != FirstVisibleColumn && !_isInvalidated && row == FirstVisibleRow
+                && Math.Abs(column - FirstVisibleColumn) * 2 < VisibleColumnCount)
+            {
+                int scrollX = (FirstVisibleColumn - column) * ColumnWidth;
+                if (column > FirstVisibleColumn)
+                {
+                    for (int i = column + VisibleColumnCount; i >= FirstVisibleColumn + VisibleColumnCount - 1; i--)
+                    {
+                        InvalidateColumn(i);
+                    }
+                }
+                else
+                {
+                    for (int i = column; i <= FirstVisibleColumn; i++)
+                    {
+                        InvalidateColumn(i);
+                    }
+                }
+                FirstVisibleColumn = column;
+                _drawBuffer.ScrollX(scrollX, GetScrollRect());
+                _drawBuffer.ScrollX(scrollX, GetColumnHeadersRect());
+                RenderGrid();
+                return;
+            }
+
+
+            // render all
+            ClearInvalidation();
+            FirstVisibleRow = row;
+            FirstVisibleColumn = column;
+            RenderGrid();
+            //InvalidateVisual();
+        }
+
 
         public Color GetAlternateBackground(int row)
         {
@@ -358,40 +430,37 @@ namespace FastWpfGrid
             InvalidateVisual();
         }
 
-        public void InvalidateCell(int row, int column)
-        {
-            InvalidateAll();
-        }
-
         public void InvalidateRowHeader(int row)
         {
-            InvalidateAll();
+            _isInvalidated = true;
+            _invalidatedRowHeaders.Add(row);
         }
 
         public void InvalidateColumnHeader(int column)
         {
-            InvalidateAll();
+            _isInvalidated = true;
+            _invalidatedColumnHeaders.Add(column);
         }
 
-        //private void InvalidateColumn(int column)
-        //{
-        //    _isInvalidated = true;
-        //    _invalidatedColumns.Add(column);
-        //    _invalidatedColumnHeaders.Add(column);
-        //}
+        public void InvalidateColumn(int column)
+        {
+            _isInvalidated = true;
+            _invalidatedColumns.Add(column);
+            _invalidatedColumnHeaders.Add(column);
+        }
 
-        //private void InvalidateRow(int row)
-        //{
-        //    _isInvalidated = true;
-        //    _invalidatedRows.Add(row);
-        //    _invalidatedRowHeaders.Add(row);
-        //}
+        public void InvalidateRow(int row)
+        {
+            _isInvalidated = true;
+            _invalidatedRows.Add(row);
+            _invalidatedRowHeaders.Add(row);
+        }
 
-        //private void InvalidateCell(int row, int column)
-        //{
-        //    _isInvalidated = true;
-        //    _invalidatedCells.Add(Tuple.Create(row, column));
-        //}
+        public void InvalidateCell(int row, int column)
+        {
+            _isInvalidated = true;
+            _invalidatedCells.Add(Tuple.Create(row, column));
+        }
 
         //private void FinishInvalidate()
         //{
@@ -629,20 +698,38 @@ namespace FastWpfGrid
             return new IntRect(new IntPoint(GetColumnLeft(column), 0), new IntSize(ColumnWidth + 1, HeaderHeight + 1));
         }
 
+        private IntRect GetColumnHeadersRect()
+        {
+            return new IntRect(new IntPoint(HeaderWidth, 0), new IntSize(GridScrollAreaWidth, HeaderHeight + 1));
+        }
+
+        private IntRect GetRowHeadersRect()
+        {
+            return new IntRect(new IntPoint(0, HeaderHeight), new IntSize(HeaderWidth + 1, GridScrollAreaHeight));
+        }
+
         private void RenderGrid()
         {
-            if (_drawBuffer == null) return;
+            if (_drawBuffer == null)
+            {
+                ClearInvalidation();
+                return;
+            }
             using (_drawBuffer.GetBitmapContext())
             {
                 int colsToRender = VisibleColumnCount;
                 int rowsToRender = VisibleRowCount;
 
-                _drawBuffer.Clear(Colors.White);
+                if (!_isInvalidated)
+                {
+                    _drawBuffer.Clear(Colors.White);
+                }
 
                 for (int row = FirstVisibleRow; row < FirstVisibleRow + rowsToRender; row++)
                 {
                     for (int col = FirstVisibleColumn; col < FirstVisibleColumn + colsToRender; col++)
                     {
+                        if (row < 0 || col < 0 || row >= _rowCount || col >= _columnCount) continue;
                         if (!ShouldDrawCell(row, col)) continue;
                         var rect = GetCellRect(row, col);
                         var cell = Model.GetCell(row, col);
@@ -674,6 +761,7 @@ namespace FastWpfGrid
 
                 for (int row = FirstVisibleRow; row < FirstVisibleRow + rowsToRender; row++)
                 {
+                    if (row < 0 || row >= _rowCount) continue;
                     var cell = Model.GetRowHeader(row);
                     if (!ShouldDrawRowHeader(row)) continue;
 
@@ -687,6 +775,7 @@ namespace FastWpfGrid
 
                 for (int col = FirstVisibleColumn; col < FirstVisibleColumn + colsToRender; col++)
                 {
+                    if (col < 0 || col >= _columnCount) continue;
                     var cell = Model.GetColumnHeader(col);
                     if (!ShouldDrawColumnHeader(col)) continue;
 
@@ -697,8 +786,8 @@ namespace FastWpfGrid
                     _drawBuffer.FillRectangle(rectContent, cell.BackgroundColor ?? HeaderBackground);
                     RenderCell(cell, rectContent, null);
                 }
-
             }
+            ClearInvalidation();
         }
 
         private void RenderCell00()
@@ -777,11 +866,12 @@ namespace FastWpfGrid
         private void SetHoverRow(int? row)
         {
             if (row == _mouseOverRow) return;
-            //if (_mouseOverRow.HasValue) InvalidateRow(_mouseOverRow.Value);
+            if (_mouseOverRow.HasValue) InvalidateRow(_mouseOverRow.Value);
             _mouseOverRow = row;
-            //if (_mouseOverRow.HasValue) InvalidateRow(_mouseOverRow.Value);
-            //FinishInvalidate();
+            if (_mouseOverRow.HasValue) InvalidateRow(_mouseOverRow.Value);
             RenderGrid();
+            //FinishInvalidate();
+            
         }
 
 
