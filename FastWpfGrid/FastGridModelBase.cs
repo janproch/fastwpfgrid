@@ -23,6 +23,10 @@ namespace FastWpfGrid
             return String.Format("Row={0}, Column={1}", row + 1, column + 1);
         }
 
+        public virtual void SetCellText(int row, int column, string value)
+        {
+        }
+
         public virtual IFastGridCell GetCell(int row, int column)
         {
             _requestedRow = row;
@@ -116,6 +120,7 @@ namespace FastWpfGrid
 
         public virtual void SetEditText(string value)
         {
+            SetCellText(_requestedRow.Value, _requestedColumn.Value, value);
         }
 
         public virtual FastGridBlockType BlockType

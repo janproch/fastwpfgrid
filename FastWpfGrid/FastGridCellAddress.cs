@@ -8,8 +8,35 @@ namespace FastWpfGrid
 {
     public struct FastGridCellAddress
     {
-        public int? Row;
-        public int? Column;
+        public static readonly FastGridCellAddress Empty = new FastGridCellAddress();
+
+        public bool Equals(FastGridCellAddress other)
+        {
+            return Row == other.Row && Column == other.Column;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            return obj is FastGridCellAddress && Equals((FastGridCellAddress) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (Row.GetHashCode()*397) ^ Column.GetHashCode();
+            }
+        }
+
+        public readonly int? Row;
+        public readonly int? Column;
+
+        public FastGridCellAddress(int? row, int? col)
+        {
+            Row = row;
+            Column = col;
+        }
 
         public bool IsCell
         {
@@ -34,6 +61,16 @@ namespace FastWpfGrid
         public bool TestCell(int row, int col)
         {
             return row == Row && col == Column;
+        }
+
+        public static bool operator ==(FastGridCellAddress a, FastGridCellAddress b)
+        {
+            return a.Row == b.Row && a.Column == b.Column;
+        }
+
+        public static bool operator !=(FastGridCellAddress a, FastGridCellAddress b)
+        {
+            return !(a == b);
         }
     }
 }

@@ -38,8 +38,10 @@ namespace FastWpfGrid
         private int _cellPadding = 1;
 
         private FastGridCellAddress _currentCell;
-        private bool _isLeftMouseDown;
+        private HashSet<FastGridCellAddress> _selectedCells = new HashSet<FastGridCellAddress>();
+        private FastGridCellAddress _dragStartCell;
         private int? _mouseOverRow;
+        private FastGridCellAddress _inplaceEditorCell;
 
         private Color[] _alternatingColors = new Color[]
             {
@@ -71,6 +73,44 @@ namespace FastWpfGrid
         private List<Tuple<int, int>> _invalidatedCells = new List<Tuple<int, int>>();
         private List<int> _invalidatedRowHeaders = new List<int>();
         private List<int> _invalidatedColumnHeaders = new List<int>();
+
+        private class InvalidationContext : IDisposable
+        {
+            private FastGridControl _grid;
+            internal InvalidationContext(FastGridControl grid)
+            {
+                _grid = grid;
+                _grid.EnterInvalidation();
+            }
+
+            public void Dispose()
+            {
+                _grid.LeaveInvalidation();
+            }
+        }
+
+        private int _invalidationCount;
+        private void LeaveInvalidation()
+        {
+            _invalidationCount--;
+            if (_invalidationCount == 0)
+            {
+                if (_isInvalidated)
+                {
+                    RenderGrid();
+                }
+            }
+        }
+
+        private void EnterInvalidation()
+        {
+            _invalidationCount++;
+        }
+
+        private InvalidationContext CreateInvalidationContext()
+        {
+            return new InvalidationContext(this);
+        }
 
         public FastGridControl()
         {
@@ -112,7 +152,7 @@ namespace FastWpfGrid
             {
                 _cellFontName = value;
                 RecalculateDefaultCellSize();
-                InvalidateVisual();
+                RenderGrid();
             }
         }
 
@@ -123,7 +163,7 @@ namespace FastWpfGrid
             {
                 _cellFontSize = value;
                 RecalculateDefaultCellSize();
-                InvalidateVisual();
+                RenderGrid();
             }
         }
 
@@ -134,7 +174,7 @@ namespace FastWpfGrid
             {
                 _rowHeightReserve = value;
                 RecalculateDefaultCellSize();
-                InvalidateVisual();
+                RenderGrid();
             }
         }
 
@@ -144,7 +184,7 @@ namespace FastWpfGrid
             set
             {
                 _cellFontColor = value;
-                InvalidateVisual();
+                RenderGrid();
             }
         }
 
@@ -154,7 +194,7 @@ namespace FastWpfGrid
             set
             {
                 _selectedColor = value;
-                InvalidateVisual();
+                RenderGrid();
             }
         }
 
@@ -164,7 +204,7 @@ namespace FastWpfGrid
             set
             {
                 _selectedTextColor = value;
-                InvalidateVisual();
+                RenderGrid();
             }
         }
 
@@ -240,6 +280,7 @@ namespace FastWpfGrid
             //FirstVisibleColumn = columnIndex;
             //RenderGrid();
             ScrollContent(rowIndex, columnIndex);
+            AdjustInlineEditorPosition();
         }
 
         private IntRect GetScrollRect()
@@ -461,6 +502,26 @@ namespace FastWpfGrid
             _invalidatedCells.Add(Tuple.Create(row, column));
         }
 
+        public void InvalidateCell(FastGridCellAddress cell)
+        {
+            if (cell.Column == null && cell.Row == null)
+            {
+                // invalidate cell 00
+                return;
+            }
+            if (cell.Column == null)
+            {
+                InvalidateRowHeader(cell.Row.Value);
+                return;
+            }
+            if (cell.Row == null)
+            {
+                InvalidateColumnHeader(cell.Column.Value);
+                return;
+            }
+            InvalidateCell(cell.Row.Value, cell.Column.Value);
+        }
+
         public void NotifyAddedRows()
         {
             InvalidateAll();
@@ -473,28 +534,6 @@ namespace FastWpfGrid
                 _solidBrushes[color] = new SolidColorBrush(color);
             }
             return _solidBrushes[color];
-        }
-
-        public void ShowTextEditor(IntRect rect, string text)
-        {
-            edText.Margin = new Thickness
-                {
-                    Left = rect.Left,
-                    Top = rect.Top,
-                    Right = imageGrid.ActualWidth - rect.Right,
-                    Bottom = imageGrid.ActualHeight - rect.Bottom,
-                };
-            edText.Text = text;
-            edText.Visibility = Visibility.Visible;
-            if (edText.IsFocused)
-            {
-                edText.SelectAll();
-            }
-            else
-            {
-                edText.Focus();
-                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Input, (Action)edText.SelectAll);
-            }
         }
 
         private void ClearInvalidation()
@@ -616,7 +655,7 @@ namespace FastWpfGrid
                         Color? selectedBgColor = null;
                         Color? selectedTextColor = null;
                         Color? hoverRowColor = null;
-                        if (_currentCell.TestCell(row, col))
+                        if (_currentCell.TestCell(row, col) || _selectedCells.Contains(new FastGridCellAddress(row, col)))
                         {
                             selectedBgColor = SelectedColor;
                             selectedTextColor = SelectedTextColor;
@@ -678,19 +717,90 @@ namespace FastWpfGrid
         protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
         {
             base.OnMouseLeftButtonUp(e);
-            _isLeftMouseDown = false;
+            _dragStartCell = new FastGridCellAddress();
         }
 
         protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
         {
             base.OnMouseLeftButtonDown(e);
-            _isLeftMouseDown = true;
-            var pt = e.GetPosition(this);
-            HandleLeftButtonDownMove(pt);
+            var pt = e.GetPosition(image);
             var cell = GetCellAddress(pt);
-            if (cell.IsCell) ShowTextEditor(
-                GetCellRect(cell.Row.Value, cell.Column.Value),
-                Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText());
+
+            using (var ctx = CreateInvalidationContext())
+            {
+                if (cell.IsCell)
+                {
+                    _selectedCells.ToList().ForEach(InvalidateCell);
+                    _selectedCells.Clear();
+                    if (_currentCell == cell)
+                    {
+                        ShowInlineEditor(_currentCell);
+                    }
+                    else
+                    {
+                        HideInlinEditor();
+                        SetCurrentCell(cell);
+                    }
+                    _dragStartCell = cell;
+                }
+            }
+
+            //if (cell.IsCell) ShowTextEditor(
+            //    GetCellRect(cell.Row.Value, cell.Column.Value),
+            //    Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText());
+        }
+
+        private void HideInlinEditor()
+        {
+            using (var ctx = CreateInvalidationContext())
+            {
+                if (_inplaceEditorCell.IsCell)
+                {
+                    var cell = Model.GetCell(_inplaceEditorCell.Row.Value, _inplaceEditorCell.Column.Value);
+                    cell.SetEditText(edText.Text);
+                    InvalidateCell(_inplaceEditorCell);
+                }
+                _inplaceEditorCell = new FastGridCellAddress();
+                edText.Text = "";
+                edText.Visibility = Visibility.Hidden;
+            }
+        }
+
+        private void ShowInlineEditor(FastGridCellAddress cell)
+        {
+            _inplaceEditorCell = cell;
+
+            string text = Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText();
+
+            edText.Text = text;
+            edText.Visibility = Visibility.Visible;
+            AdjustInlineEditorPosition();
+
+            if (edText.IsFocused)
+            {
+                edText.SelectAll();
+            }
+            else
+            {
+                edText.Focus();
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Input, (Action)edText.SelectAll);
+            }
+        }
+
+        private void AdjustInlineEditorPosition()
+        {
+            if (_inplaceEditorCell.IsCell)
+            {
+                edText.Visibility = _inplaceEditorCell.Row.Value - FirstVisibleRow >= 0 ? Visibility.Visible : Visibility.Hidden;
+                var rect = GetCellRect(_inplaceEditorCell.Row.Value, _inplaceEditorCell.Column.Value);
+                edText.Margin = new Thickness
+                {
+                    Left = rect.Left,
+                    Top = rect.Top,
+                    Right = imageGrid.ActualWidth - rect.Right,
+                    Bottom = imageGrid.ActualHeight - rect.Bottom,
+                };
+            }
         }
 
 
@@ -698,58 +808,102 @@ namespace FastWpfGrid
         {
             if (pt.X <= HeaderWidth && pt.Y < HeaderHeight)
             {
-                return new FastGridCellAddress();
+                return FastGridCellAddress.Empty;
+            }
+            if (pt.X >= GridScrollAreaWidth + HeaderWidth)
+            {
+                return FastGridCellAddress.Empty;
+            }
+            if (pt.Y >= GridScrollAreaHeight + HeaderHeight)
+            {
+                return FastGridCellAddress.Empty;
             }
             if (pt.X < HeaderWidth)
             {
-                return new FastGridCellAddress
-                {
-                    Row = (int)((pt.Y - HeaderHeight) / RowHeight) + FirstVisibleRow,
-                };
+                return new FastGridCellAddress((int) ((pt.Y - HeaderHeight)/RowHeight) + FirstVisibleRow, null);
             }
             if (pt.Y < HeaderHeight)
             {
-                return new FastGridCellAddress
-                {
-                    Column = (int)((pt.X - HeaderWidth) / ColumnWidth) + FirstVisibleColumn,
-                };
+                return new FastGridCellAddress(null, (int) ((pt.X - HeaderWidth)/ColumnWidth) + FirstVisibleColumn);
             }
-            return new FastGridCellAddress
-            {
-                Row = (int)((pt.Y - HeaderHeight) / RowHeight) + FirstVisibleRow,
-                Column = (int)((pt.X - HeaderWidth) / ColumnWidth) + FirstVisibleColumn,
-            };
+            return new FastGridCellAddress((int) ((pt.Y - HeaderHeight)/RowHeight) + FirstVisibleRow, (int) ((pt.X - HeaderWidth)/ColumnWidth) + FirstVisibleColumn);
         }
 
-        private void HandleLeftButtonDownMove(Point pt)
+        private void SetCurrentCell(FastGridCellAddress cell)
         {
-            var cell = GetCellAddress(pt);
-            if (cell.IsCell)
+            using (var ctx = CreateInvalidationContext())
             {
-                if (_currentCell.IsCell) InvalidateCell(_currentCell.Row.Value, _currentCell.Column.Value);
+                if (_currentCell.IsCell) InvalidateCell(_currentCell);
                 _currentCell = cell;
-                InvalidateCell(_currentCell.Row.Value, _currentCell.Column.Value);
-                //FinishInvalidate();
+                if (_currentCell.IsCell) InvalidateCell(_currentCell);
             }
         }
 
+        private HashSet<FastGridCellAddress> GetCellRange(FastGridCellAddress a, FastGridCellAddress b)
+        {
+            var res = new HashSet<FastGridCellAddress>();
+            int minrow = Math.Min(a.Row.Value, b.Row.Value);
+            int maxrow = Math.Max(a.Row.Value, b.Row.Value);
+            int mincol = Math.Min(a.Column.Value, b.Column.Value);
+            int maxcol = Math.Max(a.Column.Value, b.Column.Value);
+
+            for (int row = minrow; row <= maxrow; row++)
+            {
+                for (int col = mincol; col <= maxcol; col++)
+                {
+                    res.Add(new FastGridCellAddress(row, col));
+                }
+            }
+            return res;
+        }
 
         protected override void OnMouseMove(System.Windows.Input.MouseEventArgs e)
         {
             base.OnMouseMove(e);
-            var pt = e.GetPosition(this);
-            if (_isLeftMouseDown) HandleLeftButtonDownMove(pt);
-            var cell = GetCellAddress(pt);
-            SetHoverRow(cell.IsCell ? cell.Row.Value : (int?)null);
+            using (var ctx = CreateInvalidationContext())
+            {
+                var pt = e.GetPosition(image);
+                var cell = GetCellAddress(pt);
+                if (_dragStartCell.IsCell && cell.IsCell)
+                {
+                    _isInvalidated = true;
+                    var newSelected = GetCellRange(_dragStartCell, cell);
+                    foreach (var added in newSelected)
+                    {
+                        if (_selectedCells.Contains(added)) continue;
+                        InvalidateCell(added);
+                    }
+                    foreach (var removed in _selectedCells)
+                    {
+                        if (newSelected.Contains(removed)) continue;
+                        InvalidateCell(removed);
+                    }
+                    _selectedCells = newSelected;
+                    SetCurrentCell(cell);
+                }
+
+                SetHoverRow(cell.IsCell ? cell.Row.Value : (int?) null);
+            }
+        }
+
+        protected override void OnMouseLeave(MouseEventArgs e)
+        {
+            base.OnMouseLeave(e);
+            using (var ctx = CreateInvalidationContext())
+            {
+                SetHoverRow(null);
+            }
         }
 
         private void SetHoverRow(int? row)
         {
-            if (row == _mouseOverRow) return;
-            if (_mouseOverRow.HasValue) InvalidateRow(_mouseOverRow.Value);
-            _mouseOverRow = row;
-            if (_mouseOverRow.HasValue) InvalidateRow(_mouseOverRow.Value);
-            RenderGrid();
+            using (var ctx = CreateInvalidationContext())
+            {
+                if (row == _mouseOverRow) return;
+                if (_mouseOverRow.HasValue) InvalidateRow(_mouseOverRow.Value);
+                _mouseOverRow = row;
+                if (_mouseOverRow.HasValue) InvalidateRow(_mouseOverRow.Value);
+            }
         }
 
 

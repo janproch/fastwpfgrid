@@ -17,7 +17,7 @@
 
         <Grid x:Name="imageGrid" Grid.Row="0" Grid.Column="0" SizeChanged="imageGridResized">
             <Image x:Name="image" SnapsToDevicePixels="True"  />
-            <TextBox x:Name="edText" Visibility="Hidden" />
+            <TextBox x:Name="edText" Visibility="Hidden" SnapsToDevicePixels="True"  />
         </Grid>
         
 
