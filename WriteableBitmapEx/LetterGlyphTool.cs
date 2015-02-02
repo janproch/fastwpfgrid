@@ -43,7 +43,7 @@ namespace System.Windows.Media.Imaging
                         int x = x0 + currentItem->X;
                         int y = y0 + currentItem->Y;
                         int alpha = currentItem->Alpha;
-                        if (x < xmin || y < ymin && x > xmax || y > ymax) continue;
+                        if (x < xmin || y < ymin || x > xmax || y > ymax) continue;
 
                         int color = pixels[y*w + x];
                         int r = ((color >> 16) & 0xFF);
@@ -78,6 +78,12 @@ namespace System.Windows.Media.Imaging
         {
             var font = GetFont(typeface, emsize);
             return bmp.DrawString(x0, y0, cliprect, fontColor, font, text);
+        }
+
+        public static int DrawString(this WriteableBitmap bmp, int x0, int y0, Color fontColor, Typeface typeface, double emsize, string text)
+        {
+            var font = GetFont(typeface, emsize);
+            return bmp.DrawString(x0, y0, new IntRect(new IntPoint(0, 0), new IntSize(bmp.PixelWidth, bmp.PixelHeight)), fontColor, font, text);
         }
 
         public static GlyphFont GetFont(Typeface typeface, double emsize)
