@@ -451,6 +451,12 @@ namespace FastWpfGrid
             vscroll.ViewportSize = GridScrollAreaHeight;
         }
 
+        private void AdjustScrollBarPositions()
+        {
+            hscroll.Value = FirstVisibleColumn*ColumnWidth;
+            vscroll.Value = FirstVisibleRow*RowHeight;
+        }
+
         protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
         {
             base.OnRenderSizeChanged(sizeInfo);
@@ -951,6 +957,80 @@ namespace FastWpfGrid
 
             AdjustScrollbars();
             RenderGrid();
+        }
+
+        private void MoveCurrentCell(int? row, int? col)
+        {
+            InvalidateCell(_currentCell);
+
+            if (row < 0) row = 0;
+            if (row >= _rowCount) row = _rowCount - 1;
+            if (col < 0) col = 0;
+            if (col >= _columnCount) col = _columnCount - 1;
+
+            _currentCell = new FastGridCellAddress(row, col);
+            InvalidateCell(_currentCell);
+            ScrollCurrentCellIntoView();
+        }
+
+        public void ScrollCurrentCellIntoView()
+        {
+            ScrollIntoView(_currentCell);
+        }
+
+        public void ScrollIntoView(FastGridCellAddress cell)
+        {
+            int vrows = VisibleRowCount;
+            int vcols = VisibleColumnCount;
+
+            if (cell.Row < FirstVisibleRow)
+            {
+                ScrollContent(cell.Row.Value, FirstVisibleColumn);
+            }
+            if (cell.Row > FirstVisibleRow + vrows - 2)
+            {
+                ScrollContent(cell.Row.Value - vrows+2, FirstVisibleColumn);
+            }
+
+            if (cell.Column < FirstVisibleColumn)
+            {
+                ScrollContent(FirstVisibleRow, cell.Column.Value);
+            }
+            if (cell.Column > FirstVisibleColumn + vcols - 2)
+            {
+                ScrollContent(FirstVisibleRow, cell.Column.Value - vcols+2);
+            }
+            AdjustScrollBarPositions();
+        }
+
+        private static bool ControlPressed
+        {
+            get { return (Keyboard.Modifiers & ModifierKeys.Control) != 0; }
+        }
+
+        private void imageKeyDown(object sender, KeyEventArgs e)
+        {
+            using (var ctx = CreateInvalidationContext())
+            {
+                if (e.Key == Key.Up && _currentCell.Row > 0) MoveCurrentCell(_currentCell.Row - 1, _currentCell.Column);
+                else if (e.Key == Key.Down && _currentCell.Row < _rowCount - 1) MoveCurrentCell(_currentCell.Row + 1, _currentCell.Column);
+                else if (e.Key == Key.Left && _currentCell.Column > 0) MoveCurrentCell(_currentCell.Row, _currentCell.Column - 1);
+                else if (e.Key == Key.Right && _currentCell.Column < _columnCount - 1) MoveCurrentCell(_currentCell.Row, _currentCell.Column + 1);
+
+                else if (e.Key == Key.Home && ControlPressed) MoveCurrentCell(0, 0);
+                else if (e.Key == Key.End && ControlPressed) MoveCurrentCell(_rowCount - 1, _columnCount - 1);
+                else if (e.Key == Key.PageDown && ControlPressed) MoveCurrentCell(_rowCount - 1, _currentCell.Column);
+                else if (e.Key == Key.PageUp && ControlPressed) MoveCurrentCell(0, _currentCell.Column);
+                else if (e.Key == Key.Home) MoveCurrentCell(_currentCell.Row, 0);
+                else if (e.Key == Key.End) MoveCurrentCell(_currentCell.Row, _columnCount - 1);
+                else if (e.Key == Key.PageDown) MoveCurrentCell(_currentCell.Row + VisibleRowCount, _currentCell.Column);
+                else if (e.Key == Key.PageUp) MoveCurrentCell(_currentCell.Row - VisibleRowCount, _currentCell.Column);
+            }
+        }
+
+        private void imageMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            Keyboard.Focus(image);
         }
     }
 }
