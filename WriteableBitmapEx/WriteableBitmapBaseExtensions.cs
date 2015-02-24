@@ -43,7 +43,7 @@ namespace System.Windows.Media.Imaging
 
       #region General
 
-      private static int ConvertColor(Color color)
+      public static int ConvertColor(Color color)
       {
          var a = color.A + 1;
          var col = (color.A << 24)

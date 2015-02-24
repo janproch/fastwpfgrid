@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="BitmapContext.cs" />
     <Compile Include="BitmapFactory.cs" />
+    <Compile Include="ColorLetterGlyph.cs" />
     <Compile Include="IntGeometry.cs" />
     <Compile Include="LetterGlyph.cs" />
     <Compile Include="LetterGlyphTool.cs" />

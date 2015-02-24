@@ -10,6 +10,7 @@ namespace FastWpfGridTest
     public class GridModel1 : FastGridModelBase
     {
         private Dictionary<Tuple<int, int>, string> _editedCells = new Dictionary<Tuple<int, int>, string>();
+        private static string[] _columnBasicNames = new[] { "", "Value:", "Long column value:" };
 
         public override int ColumnCount
         {
@@ -25,7 +26,9 @@ namespace FastWpfGridTest
         {
             var key = Tuple.Create(row, column);
             if (_editedCells.ContainsKey(key)) return _editedCells[key];
-            return String.Format("{0},{1}", row + 1, column + 1);
+
+
+            return String.Format("{0}{1},{2}", _columnBasicNames[column % _columnBasicNames.Length], row + 1, column + 1);
         }
 
         public override void SetCellText(int row, int column, string value)

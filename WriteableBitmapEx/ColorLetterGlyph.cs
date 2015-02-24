@@ -3,19 +3,16 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace System.Windows.Media.Imaging
 {
-    public class LetterGlyph
+    public class ColorLetterGlyph
     {
         public struct Item
         {
             public short X;
             public short Y;
-            public int Alpha;
+            public int Color;
         }
 
         public char Ch;
@@ -25,18 +22,18 @@ namespace System.Windows.Media.Imaging
         public Item[] Items;
 
 
-        public static LetterGlyph CreateSpaceGluph(GlyphTypeface glyphTypeface, double size)
+        public static ColorLetterGlyph CreateSpaceGluph(GlyphTypeface glyphTypeface, double size)
         {
-            int spaceWidth = (int)Math.Ceiling(glyphTypeface.AdvanceWidths[glyphTypeface.CharacterToGlyphMap[' ']] * size);
-            return new LetterGlyph
-            {
-                Ch = ' ',
-                Height = (int)Math.Ceiling(glyphTypeface.Height * size),
-                Width = spaceWidth,
-            };
+            int spaceWidth = (int) Math.Ceiling(glyphTypeface.AdvanceWidths[glyphTypeface.CharacterToGlyphMap[' ']]*size);
+            return new ColorLetterGlyph
+                {
+                    Ch = ' ',
+                    Height = (int) Math.Ceiling(glyphTypeface.Height*size),
+                    Width = spaceWidth,
+                };
         }
 
-        public static unsafe LetterGlyph CreateGlyph(Typeface typeface, GlyphTypeface glyphTypeface, double size, char ch)
+        public static unsafe ColorLetterGlyph CreateGlyph(Typeface typeface, GlyphTypeface glyphTypeface, double size, char ch, Color fontColor, Color bgColor)
         {
             if (ch == ' ') return CreateSpaceGluph(glyphTypeface, size);
 
@@ -45,15 +42,16 @@ namespace System.Windows.Media.Imaging
                                                    FlowDirection.LeftToRight,
                                                    typeface,
                                                    size,
-                                                   Brushes.White);
+                                                   new SolidColorBrush(fontColor));
 
             int width = (int) Math.Ceiling(text.Width);
             int height = (int) Math.Ceiling(text.Height);
             if (width == 0 || height == 0) return null;
+            int bgColorInt = WriteableBitmapExtensions.ConvertColor(bgColor);
 
             DrawingVisual drawingVisual = new DrawingVisual();
             DrawingContext drawingContext = drawingVisual.RenderOpen();
-            drawingContext.DrawRectangle(Brushes.Black, new Pen(), new Rect(0, 0, width, height));
+            drawingContext.DrawRectangle(new SolidColorBrush(bgColor), new Pen(), new Rect(0, 0, width, height));
             drawingContext.DrawText(text, new Point(0, 0));
             drawingContext.Close();
 
@@ -73,29 +71,20 @@ namespace System.Windows.Media.Imaging
                     {
                         int color = pixels[y*width + x];
 
-                        byte r, g, b;
-                        double avg;
-
-                        r = (byte) ((color >> 16) & 0xFF);
-                        g = (byte) ((color >> 8) & 0xFF);
-                        b = (byte) ((color) & 0xFF);
-
-                        avg = 0.299*r + 0.587*g + 0.114*b;
-
-                        if (avg >= 1)
+                        if (color != bgColorInt)
                         {
                             res.Add(new Item
                                 {
                                     X = (short) x,
                                     Y = (short) y,
-                                    Alpha = (int) Math.Round(avg/255.0*0x1000),
+                                    Color = color,
                                 });
                         }
                     }
                 }
             }
 
-            return new LetterGlyph
+            return new ColorLetterGlyph
                 {
                     Width = width,
                     Height = height,
@@ -103,5 +92,6 @@ namespace System.Windows.Media.Imaging
                     Items = res.ToArray(),
                 };
         }
+
     }
 }

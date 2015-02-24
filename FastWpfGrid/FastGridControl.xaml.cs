@@ -64,7 +64,7 @@ namespace FastWpfGrid
         private Color _headerBackground = Color.FromRgb(0xDD, 0xDD, 0xDD);
         private Color _selectedColor = Color.FromRgb(51, 153, 255);
         private Color _selectedTextColor = Colors.White;
-        private Color _mouseOverRowColor = Colors.Beige;
+        private Color _mouseOverRowColor = Color.FromRgb(235, 235, 255); // Colors.LemonChiffon; // Colors .Beige;
         private WriteableBitmap _drawBuffer;
 
         private bool _isInvalidated;
@@ -673,14 +673,10 @@ namespace FastWpfGrid
 
 
 
-                        var rectContent = GetContentRect(rect);
-                        _drawBuffer.DrawRectangle(rect, GridLineColor);
-                        _drawBuffer.FillRectangle(rectContent, selectedBgColor
+                        RenderCell(cell, rect, selectedTextColor, selectedBgColor
                                                             ?? hoverRowColor
                                                             ?? cell.BackgroundColor
                                                             ?? GetAlternateBackground(row));
-
-                        RenderCell(cell, rectContent, selectedTextColor);
                     }
                 }
 
@@ -691,11 +687,7 @@ namespace FastWpfGrid
                     if (!ShouldDrawRowHeader(row)) continue;
 
                     var rect = GetRowHeaderRect(row);
-                    var rectContent = GetContentRect(rect);
-
-                    _drawBuffer.DrawRectangle(rect, GridLineColor);
-                    _drawBuffer.FillRectangle(rectContent, cell.BackgroundColor ?? HeaderBackground);
-                    RenderCell(cell, rectContent, null);
+                    RenderCell(cell, rect, null, cell.BackgroundColor ?? HeaderBackground);
                 }
 
                 for (int col = FirstVisibleColumn; col < FirstVisibleColumn + colsToRender; col++)
@@ -705,11 +697,7 @@ namespace FastWpfGrid
                     if (!ShouldDrawColumnHeader(col)) continue;
 
                     var rect = GetColumnHeaderRect(col);
-                    var rectContent = GetContentRect(rect);
-
-                    _drawBuffer.DrawRectangle(rect, GridLineColor);
-                    _drawBuffer.FillRectangle(rectContent, cell.BackgroundColor ?? HeaderBackground);
-                    RenderCell(cell, rectContent, null);
+                    RenderCell(cell, rect, null, cell.BackgroundColor ?? HeaderBackground);
                 }
             }
             ClearInvalidation();
@@ -913,13 +901,17 @@ namespace FastWpfGrid
         }
 
 
-        private void RenderCell(IFastGridCell cell, IntRect rect, Color? selectedTextColor)
+        private void RenderCell(IFastGridCell cell, IntRect rect, Color? selectedTextColor, Color bgColor)
         {
+            var rectContent = GetContentRect(rect);
+            _drawBuffer.DrawRectangle(rect, GridLineColor);
+            _drawBuffer.FillRectangle(rectContent, bgColor);
+
             int count = cell.BlockCount;
             int rightCount = cell.RightAlignBlockCount;
             int leftCount = count - rightCount;
-            int leftPos = rect.Left;
-            int rightPos = rect.Right;
+            int leftPos = rectContent.Left;
+            int rightPos = rectContent.Right;
 
             for (int i = 0; i < leftCount && leftPos < rightPos; i++)
             {
@@ -931,9 +923,9 @@ namespace FastWpfGrid
                 var font = GetFont(isBold, isItalic);
                 //var glyphTypeface = GetGlyphTypeface(isBold, isItalic);
                 int textHeight = font.TextHeight;
-                var origin = new IntPoint(leftPos, rect.Top + (int) Math.Round(rect.Height/2.0 - textHeight/2.0));
+                var origin = new IntPoint(leftPos, rectContent.Top + (int) Math.Round(rectContent.Height/2.0 - textHeight/2.0));
                 //int maxWidth = rect.Right - origin.X;
-                int width = _drawBuffer.DrawString(origin.X, origin.Y, rect, selectedTextColor ?? color ?? CellFontColor, font, text);
+                int width = _drawBuffer.DrawString(origin.X, origin.Y, rectContent, selectedTextColor ?? color ?? CellFontColor, font, text);
                 leftPos += width;
             }
         }
@@ -961,6 +953,9 @@ namespace FastWpfGrid
 
         private void MoveCurrentCell(int? row, int? col)
         {
+            _selectedCells.ToList().ForEach(InvalidateCell);
+            _selectedCells.Clear();
+
             InvalidateCell(_currentCell);
 
             if (row < 0) row = 0;
