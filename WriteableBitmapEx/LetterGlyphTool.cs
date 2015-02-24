@@ -183,7 +183,7 @@ namespace System.Windows.Media.Imaging
 
         public ColorLetterGlyph GetColorLetter(char ch, Color fontColor, Color bgColor)
         {
-            lock (Glyphs)
+            lock (ColorGlyphs)
             {
                 var key = Tuple.Create(fontColor, bgColor, ch);
                 if (!ColorGlyphs.ContainsKey(key))

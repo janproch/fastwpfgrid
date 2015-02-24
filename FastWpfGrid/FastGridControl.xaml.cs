@@ -32,8 +32,13 @@ namespace FastWpfGrid
         private int _rowCount;
         private int _columnCount;
         //private double[] _columnWidths = new double[0];
+
         private int _rowHeight;
         private int _columnWidth;
+
+        private Dictionary<int, int> _rowHeightOverrides = new Dictionary<int, int>();
+        private Dictionary<int, int> _columnWidthOverrides = new Dictionary<int, int>();
+
         private Color _gridLineColor = Colors.LightGray;
         private int _cellPadding = 1;
 
@@ -61,7 +66,9 @@ namespace FastWpfGrid
         private Dictionary<Color, Brush> _solidBrushes = new Dictionary<Color, Brush>();
         private Color _cellFontColor = Colors.Black;
         private double _rowHeightReserve = 5;
-        private Color _headerBackground = Color.FromRgb(0xDD, 0xDD, 0xDD);
+        //private Color _headerBackground = Color.FromRgb(0xDD, 0xDD, 0xDD);
+        private Color _headerBackground = Color.FromRgb(0xF6, 0xF7, 0xF9);
+        private Color _headerCurrentBackground = Color.FromRgb(190, 207, 220);
         private Color _selectedColor = Color.FromRgb(51, 153, 255);
         private Color _selectedTextColor = Colors.White;
         private Color _mouseOverRowColor = Color.FromRgb(235, 235, 255); // Colors.LemonChiffon; // Colors .Beige;
@@ -90,6 +97,7 @@ namespace FastWpfGrid
         }
 
         private int _invalidationCount;
+
         private void LeaveInvalidation()
         {
             _invalidationCount--;
@@ -422,6 +430,16 @@ namespace FastWpfGrid
             }
         }
 
+        public Color HeaderCurrentBackground
+        {
+            get { return _headerCurrentBackground; }
+            set
+            {
+                _headerCurrentBackground = value;
+                InvalidateVisual();
+            }
+        }
+
         public int GridScrollAreaWidth
         {
             get
@@ -686,8 +704,11 @@ namespace FastWpfGrid
                     var cell = Model.GetRowHeader(row);
                     if (!ShouldDrawRowHeader(row)) continue;
 
+                    Color? selectedBgColor = null;
+                    if (row == _currentCell.Row) selectedBgColor = HeaderCurrentBackground;
+
                     var rect = GetRowHeaderRect(row);
-                    RenderCell(cell, rect, null, cell.BackgroundColor ?? HeaderBackground);
+                    RenderCell(cell, rect, null, selectedBgColor ?? cell.BackgroundColor ?? HeaderBackground);
                 }
 
                 for (int col = FirstVisibleColumn; col < FirstVisibleColumn + colsToRender; col++)
@@ -696,8 +717,11 @@ namespace FastWpfGrid
                     var cell = Model.GetColumnHeader(col);
                     if (!ShouldDrawColumnHeader(col)) continue;
 
+                    Color? selectedBgColor = null;
+                    if (col == _currentCell.Column) selectedBgColor = HeaderCurrentBackground;
+
                     var rect = GetColumnHeaderRect(col);
-                    RenderCell(cell, rect, null, cell.BackgroundColor ?? HeaderBackground);
+                    RenderCell(cell, rect, null, selectedBgColor ?? cell.BackgroundColor ?? HeaderBackground);
                 }
             }
             ClearInvalidation();
@@ -823,13 +847,20 @@ namespace FastWpfGrid
             return new FastGridCellAddress((int) ((pt.Y - HeaderHeight)/RowHeight) + FirstVisibleRow, (int) ((pt.X - HeaderWidth)/ColumnWidth) + FirstVisibleColumn);
         }
 
+        private void InvalidateCurrentCell()
+        {
+            if (_currentCell.IsCell) InvalidateCell(_currentCell);
+            if (_currentCell.Column.HasValue) InvalidateColumnHeader(_currentCell.Column.Value);
+            if (_currentCell.Row.HasValue) InvalidateRowHeader(_currentCell.Row.Value);
+        }
+
         private void SetCurrentCell(FastGridCellAddress cell)
         {
             using (var ctx = CreateInvalidationContext())
             {
-                if (_currentCell.IsCell) InvalidateCell(_currentCell);
+                InvalidateCurrentCell();
                 _currentCell = cell;
-                if (_currentCell.IsCell) InvalidateCell(_currentCell);
+                InvalidateCurrentCell();
             }
         }
 
@@ -956,7 +987,7 @@ namespace FastWpfGrid
             _selectedCells.ToList().ForEach(InvalidateCell);
             _selectedCells.Clear();
 
-            InvalidateCell(_currentCell);
+            InvalidateCurrentCell();
 
             if (row < 0) row = 0;
             if (row >= _rowCount) row = _rowCount - 1;
@@ -964,7 +995,7 @@ namespace FastWpfGrid
             if (col >= _columnCount) col = _columnCount - 1;
 
             _currentCell = new FastGridCellAddress(row, col);
-            InvalidateCell(_currentCell);
+            InvalidateCurrentCell();
             ScrollCurrentCellIntoView();
         }
 
