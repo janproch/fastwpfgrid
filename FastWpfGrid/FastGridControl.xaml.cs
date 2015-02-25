@@ -48,30 +48,12 @@ namespace FastWpfGrid
         private int? _mouseOverRow;
         private FastGridCellAddress _inplaceEditorCell;
 
-        private Color[] _alternatingColors = new Color[]
-            {
-                Colors.White,
-                Colors.White,
-                Color.FromRgb(235, 235, 235),
-                Colors.White,
-                Colors.White,
-                Color.FromRgb(235, 245, 255)
-            };
-
-        private string _cellFontName = "Arial";
-        private double _cellFontSize;
         private int _headerHeight;
         private int _headerWidth;
         private Dictionary<Tuple<bool, bool>, GlyphFont> _glyphFonts = new Dictionary<Tuple<bool, bool>, GlyphFont>();
         private Dictionary<Color, Brush> _solidBrushes = new Dictionary<Color, Brush>();
-        private Color _cellFontColor = Colors.Black;
         private double _rowHeightReserve = 5;
         //private Color _headerBackground = Color.FromRgb(0xDD, 0xDD, 0xDD);
-        private Color _headerBackground = Color.FromRgb(0xF6, 0xF7, 0xF9);
-        private Color _headerCurrentBackground = Color.FromRgb(190, 207, 220);
-        private Color _selectedColor = Color.FromRgb(51, 153, 255);
-        private Color _selectedTextColor = Colors.White;
-        private Color _mouseOverRowColor = Color.FromRgb(235, 235, 255); // Colors.LemonChiffon; // Colors .Beige;
         private WriteableBitmap _drawBuffer;
 
         private bool _isInvalidated;
@@ -80,51 +62,37 @@ namespace FastWpfGrid
         private List<Tuple<int, int>> _invalidatedCells = new List<Tuple<int, int>>();
         private List<int> _invalidatedRowHeaders = new List<int>();
         private List<int> _invalidatedColumnHeaders = new List<int>();
-
-        private class InvalidationContext : IDisposable
-        {
-            private FastGridControl _grid;
-            internal InvalidationContext(FastGridControl grid)
-            {
-                _grid = grid;
-                _grid.EnterInvalidation();
-            }
-
-            public void Dispose()
-            {
-                _grid.LeaveInvalidation();
-            }
-        }
-
-        private int _invalidationCount;
-
-        private void LeaveInvalidation()
-        {
-            _invalidationCount--;
-            if (_invalidationCount == 0)
-            {
-                if (_isInvalidated)
-                {
-                    RenderGrid();
-                }
-            }
-        }
-
-        private void EnterInvalidation()
-        {
-            _invalidationCount++;
-        }
-
-        private InvalidationContext CreateInvalidationContext()
-        {
-            return new InvalidationContext(this);
-        }
+        private bool _isTransposed;
 
         public FastGridControl()
         {
             InitializeComponent();
             //gridCore.Grid = this;
             CellFontSize = 12;
+        }
+
+        private static void Exchange<T>(ref T a, ref T b)
+        {
+            T tmp = a;
+            a = b;
+            b = tmp;
+        }
+
+        public bool IsTransposed
+        {
+            get { return _isTransposed; }
+            set
+            {
+                if (_isTransposed != value)
+                {
+                    _isTransposed = value;
+                    Exchange(ref _rowCount, ref _columnCount);
+                    Exchange(ref FirstVisibleColumn, ref FirstVisibleRow);
+                    if (_currentCell.IsCell) _currentCell = new FastGridCellAddress(_currentCell.Column, _currentCell.Row);
+                    AdjustScrollbars();
+                    RenderGrid();
+                }
+            }
         }
 
         public int HeaderHeight
@@ -151,75 +119,6 @@ namespace FastWpfGrid
                         Left = HeaderWidth,
                     };
             }
-        }
-
-        public string CellFontName
-        {
-            get { return _cellFontName; }
-            set
-            {
-                _cellFontName = value;
-                RecalculateDefaultCellSize();
-                RenderGrid();
-            }
-        }
-
-        public double CellFontSize
-        {
-            get { return _cellFontSize; }
-            set
-            {
-                _cellFontSize = value;
-                RecalculateDefaultCellSize();
-                RenderGrid();
-            }
-        }
-
-        public double RowHeightReserve
-        {
-            get { return _rowHeightReserve; }
-            set
-            {
-                _rowHeightReserve = value;
-                RecalculateDefaultCellSize();
-                RenderGrid();
-            }
-        }
-
-        public Color CellFontColor
-        {
-            get { return _cellFontColor; }
-            set
-            {
-                _cellFontColor = value;
-                RenderGrid();
-            }
-        }
-
-        public Color SelectedColor
-        {
-            get { return _selectedColor; }
-            set
-            {
-                _selectedColor = value;
-                RenderGrid();
-            }
-        }
-
-        public Color SelectedTextColor
-        {
-            get { return _selectedTextColor; }
-            set
-            {
-                _selectedTextColor = value;
-                RenderGrid();
-            }
-        }
-
-        public Color MouseOverRowColor
-        {
-            get { return _mouseOverRowColor; }
-            set { _mouseOverRowColor = value; }
         }
 
         public GlyphFont GetFont(bool isBold, bool isItalic)
@@ -389,56 +288,6 @@ namespace FastWpfGrid
             }
         }
 
-        public Color GridLineColor
-        {
-            get { return _gridLineColor; }
-            set
-            {
-                _gridLineColor = value;
-                InvalidateVisual();
-            }
-        }
-
-        public Color[] AlternatingColors
-        {
-            get { return _alternatingColors; }
-            set
-            {
-                if (value.Length < 1) throw new Exception("Invalid value");
-                _alternatingColors = value;
-                InvalidateVisual();
-            }
-        }
-
-        public int CellPadding
-        {
-            get { return _cellPadding; }
-            set
-            {
-                _cellPadding = value;
-                InvalidateVisual();
-            }
-        }
-
-        public Color HeaderBackground
-        {
-            get { return _headerBackground; }
-            set
-            {
-                _headerBackground = value;
-                InvalidateVisual();
-            }
-        }
-
-        public Color HeaderCurrentBackground
-        {
-            get { return _headerCurrentBackground; }
-            set
-            {
-                _headerCurrentBackground = value;
-                InvalidateVisual();
-            }
-        }
 
         public int GridScrollAreaWidth
         {
@@ -487,8 +336,8 @@ namespace FastWpfGrid
             _columnCount = 0;
             if (_model != null)
             {
-                _rowCount = _model.RowCount;
-                _columnCount = _model.ColumnCount;
+                _rowCount = IsTransposed ? _model.ColumnCount : _model.RowCount;
+                _columnCount = IsTransposed ? _model.RowCount : _model.ColumnCount;
             }
             AdjustScrollbars();
             InvalidateVisual();
@@ -675,7 +524,7 @@ namespace FastWpfGrid
                         if (row < 0 || col < 0 || row >= _rowCount || col >= _columnCount) continue;
                         if (!ShouldDrawCell(row, col)) continue;
                         var rect = GetCellRect(row, col);
-                        var cell = Model.GetCell(row, col);
+                        var cell = IsTransposed ? Model.GetCell(col, row) : Model.GetCell(row, col);
                         Color? selectedBgColor = null;
                         Color? selectedTextColor = null;
                         Color? hoverRowColor = null;
@@ -701,7 +550,7 @@ namespace FastWpfGrid
                 for (int row = FirstVisibleRow; row < FirstVisibleRow + rowsToRender; row++)
                 {
                     if (row < 0 || row >= _rowCount) continue;
-                    var cell = Model.GetRowHeader(row);
+                    var cell = IsTransposed ? Model.GetColumnHeader(row) : Model.GetRowHeader(row);
                     if (!ShouldDrawRowHeader(row)) continue;
 
                     Color? selectedBgColor = null;
@@ -714,7 +563,7 @@ namespace FastWpfGrid
                 for (int col = FirstVisibleColumn; col < FirstVisibleColumn + colsToRender; col++)
                 {
                     if (col < 0 || col >= _columnCount) continue;
-                    var cell = Model.GetColumnHeader(col);
+                    var cell = IsTransposed ? Model.GetRowHeader(col) : Model.GetColumnHeader(col);
                     if (!ShouldDrawColumnHeader(col)) continue;
 
                     Color? selectedBgColor = null;
@@ -774,7 +623,9 @@ namespace FastWpfGrid
             {
                 if (_inplaceEditorCell.IsCell)
                 {
-                    var cell = Model.GetCell(_inplaceEditorCell.Row.Value, _inplaceEditorCell.Column.Value);
+                    var cell = IsTransposed
+                                   ? Model.GetCell(_inplaceEditorCell.Column.Value, _inplaceEditorCell.Row.Value)
+                                   : Model.GetCell(_inplaceEditorCell.Row.Value, _inplaceEditorCell.Column.Value);
                     cell.SetEditText(edText.Text);
                     InvalidateCell(_inplaceEditorCell);
                 }
@@ -788,7 +639,9 @@ namespace FastWpfGrid
         {
             _inplaceEditorCell = cell;
 
-            string text = Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText();
+            string text = (IsTransposed
+                               ? Model.GetCell(cell.Column.Value, cell.Row.Value)
+                               : Model.GetCell(cell.Row.Value, cell.Column.Value)).GetEditText();
 
             edText.Text = text;
             edText.Visibility = Visibility.Visible;
@@ -956,7 +809,9 @@ namespace FastWpfGrid
                 int textHeight = font.TextHeight;
                 var origin = new IntPoint(leftPos, rectContent.Top + (int) Math.Round(rectContent.Height/2.0 - textHeight/2.0));
                 //int maxWidth = rect.Right - origin.X;
-                int width = _drawBuffer.DrawString(origin.X, origin.Y, rectContent, selectedTextColor ?? color ?? CellFontColor, font, text);
+                int width;
+                if (PreciseCharacterGlyphs) width = _drawBuffer.DrawString(origin.X, origin.Y, rectContent, selectedTextColor ?? color ?? CellFontColor, bgColor, font, text);
+                else width = _drawBuffer.DrawString(origin.X, origin.Y, rectContent, selectedTextColor ?? color ?? CellFontColor, font, text);
                 leftPos += width;
             }
         }
@@ -1057,6 +912,11 @@ namespace FastWpfGrid
         private void imageMouseDown(object sender, MouseButtonEventArgs e)
         {
             Keyboard.Focus(image);
+        }
+
+        private void RenderChanged()
+        {
+            RenderGrid();
         }
     }
 }

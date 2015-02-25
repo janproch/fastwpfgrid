@@ -6,7 +6,17 @@
     <Grid>
         <TabControl>
             <TabItem Header="Grid 1">
-                <FastWpfGrid:FastGridControl x:Name="grid1"/>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox Content="Precise character glyphs" IsChecked="{Binding PreciseCharacterGlyphs, ElementName=grid1}" />
+                        <CheckBox Content="Is transposed" IsChecked="{Binding IsTransposed, ElementName=grid1}" />
+                    </StackPanel>
+                    <FastWpfGrid:FastGridControl x:Name="grid1" Grid.Row="1"/>
+                </Grid>
             </TabItem>
         </TabControl>
     </Grid>
