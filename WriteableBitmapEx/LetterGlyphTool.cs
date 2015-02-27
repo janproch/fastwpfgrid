@@ -102,28 +102,29 @@ namespace System.Windows.Media.Imaging
 
         public static int DrawString(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, Color fontColor, GlyphFont font, string text)
         {
-            int dx = 0;
-            foreach (char ch in text)
-            {
-                if (x0 + dx > cliprect.Right) break;
-                var letter = font.GetLetter(ch);
-                if (letter == null) continue;
-                bmp.DrawLetter(x0 + dx, y0, cliprect, fontColor, letter);
-                dx += letter.Width;
-            }
-            return dx;
+            return DrawString(bmp, x0, y0, cliprect, fontColor, null, font, text);
         }
 
-        public static int DrawString(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, Color fontColor, Color bgColor, GlyphFont font, string text)
+        public static int DrawString(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, Color fontColor, Color? bgColor, GlyphFont font, string text)
         {
             int dx = 0;
             foreach (char ch in text)
             {
                 if (x0 + dx > cliprect.Right) break;
-                var letter = font.GetColorLetter(ch, fontColor, bgColor);
-                if (letter == null) continue;
-                bmp.DrawLetter(x0 + dx, y0, cliprect, letter);
-                dx += letter.Width;
+                if (bgColor != null)
+                {
+                    var letter = font.GetColorLetter(ch, fontColor, bgColor.Value);
+                    if (letter == null) continue;
+                    bmp.DrawLetter(x0 + dx, y0, cliprect, letter);
+                    dx += letter.Width;
+                }
+                else
+                {
+                    var letter = font.GetLetter(ch);
+                    if (letter == null) continue;
+                    bmp.DrawLetter(x0 + dx, y0, cliprect, fontColor, letter);
+                    dx += letter.Width;
+                }
             }
             return dx;
         }
