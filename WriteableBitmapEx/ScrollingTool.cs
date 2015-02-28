@@ -14,8 +14,10 @@ namespace System.Windows.Media.Imaging
         /// <param name="bmp"></param>
         /// <param name="dy">if greater than 0, scrolls down, else scrolls up</param>
         /// <param name="rect"></param>
-        public unsafe static void ScrollY(this WriteableBitmap bmp, int dy, IntRect rect)
+        public static unsafe void ScrollY(this WriteableBitmap bmp, int dy, IntRect rect, Color? background = null)
         {
+            int bgcolor = WriteableBitmapExtensions.ConvertColor(background ?? Colors.White);
+
             using (var context = bmp.GetBitmapContext())
             {
                 // Use refs for faster access (really important!) speeds up a lot!
@@ -56,6 +58,15 @@ namespace System.Windows.Media.Imaging
                         NativeMethods.memcpy(pixels + ydstidex*w + xmin, pixels + ysrcindex*w + xmin, xcnt*4);
                     }
                 }
+
+                if (dy < 0)
+                {
+                    bmp.FillRectangle(xmin, ymax + dy + 1, xmax, ymax, bgcolor);
+                }
+                if (dy > 0)
+                {
+                    bmp.FillRectangle(xmin, ymin, xmax, ymin + dy - 1, bgcolor);
+                }
             }
         }
 
@@ -65,8 +76,9 @@ namespace System.Windows.Media.Imaging
         /// <param name="bmp"></param>
         /// <param name="dx">if greater than 0, scrolls right, else scrolls left</param>
         /// <param name="rect"></param>
-        public unsafe static void ScrollX(this WriteableBitmap bmp, int dx, IntRect rect)
+        public static unsafe void ScrollX(this WriteableBitmap bmp, int dx, IntRect rect, Color? background = null)
         {
+            int bgcolor = WriteableBitmapExtensions.ConvertColor(background ?? Colors.White);
             using (var context = bmp.GetBitmapContext())
             {
                 // Use refs for faster access (really important!) speeds up a lot!
@@ -104,9 +116,19 @@ namespace System.Windows.Media.Imaging
                 int* yptr = pixels + w*ymin;
                 for (int y = ymin; y <= ymax; y++, yptr += w)
                 {
-                    NativeMethods.memcpy(yptr + dstx, yptr + srcx, xcnt * 4);
+                    NativeMethods.memcpy(yptr + dstx, yptr + srcx, xcnt*4);
+                }
+
+                if (dx < 0)
+                {
+                    bmp.FillRectangle(xmax + dx + 1, ymin, xmax, ymax, bgcolor);
+                }
+                if (dx > 0)
+                {
+                    bmp.FillRectangle(xmin, ymin, xmin + dx - 1, ymax, bgcolor);
                 }
             }
         }
     }
 }
+

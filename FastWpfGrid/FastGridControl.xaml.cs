@@ -213,26 +213,10 @@ namespace FastWpfGrid
             if (row != FirstVisibleRow && !_isInvalidated && column == FirstVisibleColumn
                 && Math.Abs(row - FirstVisibleRow) * 2 < VisibleRowCount)
             {
-                int scrollY = _rowSizes.GetScroll(FirstVisibleRow, row);// (FirstVisibleRow - row) * RowHeight;
-
-                int oldFirstVisible = FirstVisibleRow;
+                int scrollY = _rowSizes.GetScroll(FirstVisibleRow, row);
+                _rowSizes.InvalidateAfterScroll(FirstVisibleRow, row, InvalidateRow, GridScrollAreaHeight);
                 FirstVisibleRow = row;
-                int visibleRows = VisibleRowCount;
 
-                if (row > oldFirstVisible)
-                {
-                    for (int i = row + visibleRows; i >= oldFirstVisible + visibleRows - 1; i--)
-                    {
-                        InvalidateRow(i);
-                    }
-                }
-                else
-                {
-                    for (int i = row; i <= oldFirstVisible; i++)
-                    {
-                        InvalidateRow(i);
-                    }
-                }
                 _drawBuffer.ScrollY(scrollY, GetScrollRect());
                 _drawBuffer.ScrollY(scrollY, GetRowHeadersRect());
                 RenderGrid();
@@ -242,26 +226,9 @@ namespace FastWpfGrid
             if (column != FirstVisibleColumn && !_isInvalidated && row == FirstVisibleRow
                 && Math.Abs(column - FirstVisibleColumn) * 2 < VisibleColumnCount)
             {
-                int scrollX = _columnSizes.GetScroll(FirstVisibleColumn, column); // (FirstVisibleColumn - column) * ColumnWidth;
-
-                int oldFirstVisible = FirstVisibleColumn;
+                int scrollX = _columnSizes.GetScroll(FirstVisibleColumn, column);
+                _columnSizes.InvalidateAfterScroll(FirstVisibleColumn, column, InvalidateColumn, GridScrollAreaWidth);
                 FirstVisibleColumn = column;
-                int visibleCols = VisibleColumnCount;
-
-                if (column > oldFirstVisible)
-                {
-                    for (int i = column + visibleCols; i >= oldFirstVisible + visibleCols - 1; i--)
-                    {
-                        InvalidateColumn(i);
-                    }
-                }
-                else
-                {
-                    for (int i = column; i <= oldFirstVisible; i++)
-                    {
-                        InvalidateColumn(i);
-                    }
-                }
 
                 _drawBuffer.ScrollX(scrollX, GetScrollRect());
                 _drawBuffer.ScrollX(scrollX, GetColumnHeadersRect());
@@ -327,11 +294,11 @@ namespace FastWpfGrid
         private void AdjustScrollbars()
         {
             hscroll.Minimum = 0;
-            hscroll.Maximum = _columnSizes.GetTotalSizeSum() - GridScrollAreaWidth;
+            hscroll.Maximum = _columnSizes.GetTotalSizeSum() - GridScrollAreaWidth + _columnSizes.DefaultSize;
             hscroll.ViewportSize = GridScrollAreaWidth;
 
             vscroll.Minimum = 0;
-            vscroll.Maximum = _rowSizes.GetTotalSizeSum() - GridScrollAreaHeight;
+            vscroll.Maximum = _rowSizes.GetTotalSizeSum() - GridScrollAreaHeight + _rowSizes.DefaultSize;
             vscroll.ViewportSize = GridScrollAreaHeight;
         }
 
@@ -493,12 +460,12 @@ namespace FastWpfGrid
 
         private int VisibleRowCount
         {
-            get { return _rowSizes.GetVisibleCount(FirstVisibleRow, (int)ActualHeight); }
+            get { return _rowSizes.GetVisibleCount(FirstVisibleRow, GridScrollAreaHeight); }
         }
 
         private int VisibleColumnCount
         {
-            get { return _columnSizes.GetVisibleCount(FirstVisibleColumn, (int)ActualWidth); }
+            get { return _columnSizes.GetVisibleCount(FirstVisibleColumn, GridScrollAreaWidth); }
         }
 
         private int GetRowTop(int row)
@@ -918,8 +885,9 @@ namespace FastWpfGrid
             RenderGrid();
         }
 
-        private void MoveCurrentCell(int? row, int? col)
+        private void MoveCurrentCell(int? row, int? col, KeyEventArgs e)
         {
+            e.Handled = true;
             _selectedCells.ToList().ForEach(InvalidateCell);
             _selectedCells.Clear();
 
@@ -974,19 +942,19 @@ namespace FastWpfGrid
         {
             using (var ctx = CreateInvalidationContext())
             {
-                if (e.Key == Key.Up && _currentCell.Row > 0) MoveCurrentCell(_currentCell.Row - 1, _currentCell.Column);
-                else if (e.Key == Key.Down && _currentCell.Row < _rowCount - 1) MoveCurrentCell(_currentCell.Row + 1, _currentCell.Column);
-                else if (e.Key == Key.Left && _currentCell.Column > 0) MoveCurrentCell(_currentCell.Row, _currentCell.Column - 1);
-                else if (e.Key == Key.Right && _currentCell.Column < _columnCount - 1) MoveCurrentCell(_currentCell.Row, _currentCell.Column + 1);
+                if (e.Key == Key.Up && _currentCell.Row > 0) MoveCurrentCell(_currentCell.Row - 1, _currentCell.Column, e);
+                else if (e.Key == Key.Down && _currentCell.Row < _rowCount - 1) MoveCurrentCell(_currentCell.Row + 1, _currentCell.Column, e);
+                else if (e.Key == Key.Left && _currentCell.Column > 0) MoveCurrentCell(_currentCell.Row, _currentCell.Column - 1, e);
+                else if (e.Key == Key.Right && _currentCell.Column < _columnCount - 1) MoveCurrentCell(_currentCell.Row, _currentCell.Column + 1, e);
 
-                else if (e.Key == Key.Home && ControlPressed) MoveCurrentCell(0, 0);
-                else if (e.Key == Key.End && ControlPressed) MoveCurrentCell(_rowCount - 1, _columnCount - 1);
-                else if (e.Key == Key.PageDown && ControlPressed) MoveCurrentCell(_rowCount - 1, _currentCell.Column);
-                else if (e.Key == Key.PageUp && ControlPressed) MoveCurrentCell(0, _currentCell.Column);
-                else if (e.Key == Key.Home) MoveCurrentCell(_currentCell.Row, 0);
-                else if (e.Key == Key.End) MoveCurrentCell(_currentCell.Row, _columnCount - 1);
-                else if (e.Key == Key.PageDown) MoveCurrentCell(_currentCell.Row + VisibleRowCount, _currentCell.Column);
-                else if (e.Key == Key.PageUp) MoveCurrentCell(_currentCell.Row - VisibleRowCount, _currentCell.Column);
+                else if (e.Key == Key.Home && ControlPressed) MoveCurrentCell(0, 0, e);
+                else if (e.Key == Key.End && ControlPressed) MoveCurrentCell(_rowCount - 1, _columnCount - 1, e);
+                else if (e.Key == Key.PageDown && ControlPressed) MoveCurrentCell(_rowCount - 1, _currentCell.Column, e);
+                else if (e.Key == Key.PageUp && ControlPressed) MoveCurrentCell(0, _currentCell.Column, e);
+                else if (e.Key == Key.Home) MoveCurrentCell(_currentCell.Row, 0, e);
+                else if (e.Key == Key.End) MoveCurrentCell(_currentCell.Row, _columnCount - 1, e);
+                else if (e.Key == Key.PageDown) MoveCurrentCell(_currentCell.Row + VisibleRowCount, _currentCell.Column, e);
+                else if (e.Key == Key.PageUp) MoveCurrentCell(_currentCell.Row - VisibleRowCount, _currentCell.Column, e);
             }
         }
 

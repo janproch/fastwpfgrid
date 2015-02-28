@@ -154,7 +154,32 @@ namespace FastWpfGrid
                 index++;
                 count++;
             }
-            return count + 1;
+            return count;
+        }
+
+        public void InvalidateAfterScroll(int oldFirstVisible, int newFirstVisible, Action<int> invalidate, int viewportSize)
+        {
+            //int oldFirstVisible = FirstVisibleColumn;
+            //FirstVisibleColumn = column;
+            //int visibleCols = VisibleColumnCount;
+
+            if (newFirstVisible > oldFirstVisible)
+            {
+                int oldVisibleCount = GetVisibleCount(oldFirstVisible, viewportSize);
+                int newVisibleCount = GetVisibleCount(newFirstVisible, viewportSize);
+
+                for (int i = oldFirstVisible + oldVisibleCount - 1; i <= newFirstVisible + newVisibleCount; i++)
+                {
+                    invalidate(i);
+                }
+            }
+            else
+            {
+                for (int i = newFirstVisible; i <= oldFirstVisible; i++)
+                {
+                    invalidate(i);
+                }
+            }
         }
     }
 }
