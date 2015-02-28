@@ -910,26 +910,18 @@ namespace FastWpfGrid
 
         public void ScrollIntoView(FastGridCellAddress cell)
         {
-            int vrows = VisibleRowCount;
-            int vcols = VisibleColumnCount;
-
-            if (cell.Row < FirstVisibleRow)
+            if (cell.Row.HasValue)
             {
-                ScrollContent(cell.Row.Value, FirstVisibleColumn);
-            }
-            if (cell.Row > FirstVisibleRow + vrows - 2)
-            {
-                ScrollContent(cell.Row.Value - vrows + 2, FirstVisibleColumn);
+                int newRow = _rowSizes.ScrollInView(FirstVisibleRow, cell.Row.Value, GridScrollAreaHeight);
+                ScrollContent(newRow, FirstVisibleColumn);
             }
 
-            if (cell.Column < FirstVisibleColumn)
+            if (cell.Column.HasValue)
             {
-                ScrollContent(FirstVisibleRow, cell.Column.Value);
+                int newColumn = _columnSizes.ScrollInView(FirstVisibleColumn, cell.Column.Value, GridScrollAreaWidth);
+                ScrollContent(FirstVisibleRow, newColumn);
             }
-            if (cell.Column > FirstVisibleColumn + vcols - 2)
-            {
-                ScrollContent(FirstVisibleRow, cell.Column.Value - vcols + 2);
-            }
+
             AdjustScrollBarPositions();
         }
 

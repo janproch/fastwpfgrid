@@ -148,7 +148,7 @@ namespace FastWpfGrid
             int res = 0;
             int index = firstVisibleIndex;
             int count = 0;
-            while (res < viewportSize && index < Count)
+            while (res < viewportSize && index <= Count)
             {
                 res += GetSize(index);
                 index++;
@@ -180,6 +180,45 @@ namespace FastWpfGrid
                     invalidate(i);
                 }
             }
+        }
+
+        public bool IsWholeInView(int firstVisibleIndex, int index, int viewportSize)
+        {
+            int res = 0;
+            int testedIndex = firstVisibleIndex;
+            while (res < viewportSize && testedIndex < Count)
+            {
+                res += GetSize(testedIndex);
+                if (testedIndex == index) return res <= viewportSize;
+                testedIndex++;
+            }
+            return false;
+        }
+
+        public int ScrollInView(int firstVisibleIndex, int index, int viewportSize)
+        {
+            if (IsWholeInView(firstVisibleIndex, index, viewportSize))
+            {
+                return firstVisibleIndex;
+            }
+
+            if (index < firstVisibleIndex)
+            {
+                return index;
+            }
+
+            // scroll to the end
+            int res = 0;
+            int testedIndex = index;
+            while (res < viewportSize && testedIndex >= 0)
+            {
+                int size = GetSize(testedIndex);
+                if (res + size > viewportSize) return testedIndex + 1;
+                testedIndex--;
+                res += size;
+            }
+
+            return firstVisibleIndex;
         }
     }
 }
