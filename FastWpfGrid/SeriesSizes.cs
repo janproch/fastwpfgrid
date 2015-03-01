@@ -222,5 +222,12 @@ namespace FastWpfGrid
 
             return firstVisibleIndex;
         }
+
+        public void Resize(int index, int newSize)
+        {
+            // can be done more effectively
+            _sizeOverrides[index] = newSize;
+            BuildIndex();
+        }
     }
 }

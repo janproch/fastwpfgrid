@@ -69,48 +69,49 @@ namespace System.Windows.Media.Imaging
       public static void FillRectangle(this WriteableBitmap bmp, int x1, int y1, int x2, int y2, int color)
       {
 
-         using (var context = bmp.GetBitmapContext())
-         {
-            // Use refs for faster access (really important!) speeds up a lot!
-            var w = context.Width;
-            var h = context.Height;
-            var pixels = context.Pixels;
+          using (var context = bmp.GetBitmapContext())
+          {
+              // Use refs for faster access (really important!) speeds up a lot!
+              var w = context.Width;
+              var h = context.Height;
+              var pixels = context.Pixels;
 
-            // Check boundaries
-            if ((x1 < 0 && x2 < 0) || (y1 < 0 && y2 < 0)
-             || (x1 >= w && x2 >= w) || (y1 >= h && y2 >= h))
-            {
-               return;
-            }
+              // Check boundaries
+              if ((x1 < 0 && x2 < 0) || (y1 < 0 && y2 < 0)
+               || (x1 >= w && x2 >= w) || (y1 >= h && y2 >= h))
+              {
+                  return;
+              }
 
-            // Clamp boundaries
-            if (x1 < 0) { x1 = 0; }
-            if (y1 < 0) { y1 = 0; }
-            if (x2 < 0) { x2 = 0; }
-            if (y2 < 0) { y2 = 0; }
-            if (x1 >= w) { x1 = w - 1; }
-            if (y1 >= h) { y1 = h - 1; }
-            if (x2 >= w) { x2 = w - 1; }
-            if (y2 >= h) { y2 = h - 1; }
+              // Clamp boundaries
+              if (x1 < 0) { x1 = 0; }
+              if (y1 < 0) { y1 = 0; }
+              if (x2 < 0) { x2 = 0; }
+              if (y2 < 0) { y2 = 0; }
+              if (x1 >= w) { x1 = w - 1; }
+              if (y1 >= h) { y1 = h - 1; }
+              if (x2 >= w) { x2 = w - 1; }
+              if (y2 >= h) { y2 = h - 1; }
 
-            // Fill first line
-            var startY = y1 * w;
-            var startYPlusX1 = startY + x1;
-            var endOffset = startY + x2;
-            for (var x = startYPlusX1; x <= endOffset; x++)
-            {
-               pixels[x] = color;
-            }
+              // Fill first line
+              var startY = y1 * w;
+              var startYPlusX1 = startY + x1;
+              var endOffset = startY + x2;
+              for (var x = startYPlusX1; x <= endOffset; x++)
+              {
+                  pixels[x] = color;
+              }
 
-            // Copy first line
-            var len = (x2 - x1 + 1) * SizeOfArgb;
-            var srcOffsetBytes = startYPlusX1 * SizeOfArgb;
-            var offset2 = y2 * w + x1;
-            for (var y = startYPlusX1 + w; y <= offset2; y += w)
-            {
-               BitmapContext.BlockCopy(context, srcOffsetBytes, context, y * SizeOfArgb, len);
-            }
-         }
+              // Copy first line
+              var len = (x2 - x1 + 1) * SizeOfArgb;
+              if (len <= 0) return;
+              var srcOffsetBytes = startYPlusX1 * SizeOfArgb;
+              var offset2 = y2 * w + x1;
+              for (var y = startYPlusX1 + w; y <= offset2; y += w)
+              {
+                  BitmapContext.BlockCopy(context, srcOffsetBytes, context, y * SizeOfArgb, len);
+              }
+          }
       }
 
       #endregion

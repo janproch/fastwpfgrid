@@ -23,6 +23,7 @@ namespace FastWpfGrid
         private int _cellPaddingHorizontal = 2;
         private int _cellPaddingVertical = 1;
         private int _blockPadding = 2;
+        private int _columnResizeTheresold = 2;
 
         private Color[] _alternatingColors = new Color[]
             {
@@ -34,6 +35,11 @@ namespace FastWpfGrid
                 Color.FromRgb(235, 245, 255)
             };
 
+        public int ColumnResizeTheresold
+        {
+            get { return _columnResizeTheresold; }
+            set { _columnResizeTheresold = value; }
+        }
 
         public string CellFontName
         {
@@ -44,6 +50,11 @@ namespace FastWpfGrid
                 RecalculateDefaultCellSize();
                 RenderChanged();
             }
+        }
+
+        public int MinColumnWidth
+        {
+            get { return _rowSizes.DefaultSize; }
         }
 
         public double CellFontSize

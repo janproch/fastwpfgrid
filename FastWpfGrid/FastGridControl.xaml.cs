@@ -66,6 +66,10 @@ namespace FastWpfGrid
         private List<int> _invalidatedColumnHeaders = new List<int>();
         private bool _isTransposed;
 
+        private int? _resizingColumn;
+        private Point? _resizingColumnOrigin;
+        private int? _resizingColumnStartSize;
+
         private static Dictionary<string, WriteableBitmap> _imageCache = new Dictionary<string, WriteableBitmap>();
 
         public FastGridControl()
@@ -618,6 +622,13 @@ namespace FastWpfGrid
         {
             base.OnMouseLeftButtonUp(e);
             _dragStartCell = new FastGridCellAddress();
+            if (_resizingColumn.HasValue)
+            {
+                _resizingColumn = null;
+                _resizingColumnOrigin = null;
+                _resizingColumnStartSize = null;
+                ReleaseMouseCapture();
+            }
         }
 
         protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
@@ -642,6 +653,16 @@ namespace FastWpfGrid
                         SetCurrentCell(cell);
                     }
                     _dragStartCell = cell;
+                }
+
+                int? column = GetResizingColumn(pt);
+                if (column != null)
+                {
+                    Cursor = Cursors.SizeWE;
+                    _resizingColumn = column;
+                    _resizingColumnOrigin = pt;
+                    _resizingColumnStartSize = _columnSizes.GetSize(_resizingColumn.Value);
+                    CaptureMouse();
                 }
             }
 
@@ -703,6 +724,16 @@ namespace FastWpfGrid
             }
         }
 
+        public int? GetResizingColumn(Point pt)
+        {
+            if (pt.Y > HeaderHeight) return null;
+            int index = _columnSizes.GetIndexOnPosition((int) pt.X - HeaderWidth + _columnSizes.GetPosition(FirstVisibleColumn));
+            int begin = _columnSizes.GetPosition(index) + HeaderWidth;
+            int end = begin + _columnSizes.GetSize(index);
+            if (pt.X >= begin - ColumnResizeTheresold && pt.X <= begin + ColumnResizeTheresold) return index - 1;
+            if (pt.X >= end - ColumnResizeTheresold && pt.X <= end + ColumnResizeTheresold) return index;
+            return null;
+        }
 
         public FastGridCellAddress GetCellAddress(Point pt)
         {
@@ -724,7 +755,7 @@ namespace FastWpfGrid
             }
             if (pt.Y < HeaderHeight)
             {
-                return new FastGridCellAddress(null, _rowSizes.GetIndexOnPosition((int) pt.X - HeaderWidth + _columnSizes.GetPosition(FirstVisibleColumn)));
+                return new FastGridCellAddress(null, _columnSizes.GetIndexOnPosition((int) pt.X - HeaderWidth + _columnSizes.GetPosition(FirstVisibleColumn)));
             }
             return new FastGridCellAddress(
                 _rowSizes.GetIndexOnPosition((int) pt.Y - HeaderHeight + _rowSizes.GetPosition(FirstVisibleRow)),
@@ -773,6 +804,22 @@ namespace FastWpfGrid
             {
                 var pt = e.GetPosition(image);
                 var cell = GetCellAddress(pt);
+
+                if (_resizingColumn.HasValue)
+                {
+                    int newSize = _resizingColumnStartSize.Value + (int) Math.Round(pt.X - _resizingColumnOrigin.Value.X);
+                    if (newSize < MinColumnWidth) newSize = MinColumnWidth;
+                    if (newSize > GridScrollAreaWidth) newSize = GridScrollAreaWidth;
+                    _columnSizes.Resize(_resizingColumn.Value, newSize);
+                    RenderGrid();
+                }
+                else
+                {
+                    int? column = GetResizingColumn(pt);
+                    if (column != null) Cursor = Cursors.SizeWE;
+                    else Cursor = Cursors.Arrow;
+                }
+
                 if (_dragStartCell.IsCell && cell.IsCell)
                 {
                     _isInvalidated = true;
@@ -790,6 +837,7 @@ namespace FastWpfGrid
                     _selectedCells = newSelected;
                     SetCurrentCell(cell);
                 }
+
 
                 SetHoverRow(cell.IsCell ? cell.Row.Value : (int?)null);
             }
