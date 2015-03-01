@@ -61,6 +61,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="GridModel2.cs" />
     <Compile Include="GridModel1.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
@@ -99,6 +100,12 @@
       <Project>{e9d6f03c-bfb5-4d31-a15e-7f789b4bbcc3}</Project>
       <Name>FastWpfGrid</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\primary_keysmall.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\foreign_keysmall.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

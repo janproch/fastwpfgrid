@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media;
 
 namespace FastWpfGrid
@@ -18,6 +19,10 @@ namespace FastWpfGrid
         private Color _mouseOverRowColor = Color.FromRgb(235, 235, 255); // Colors.LemonChiffon; // Colors .Beige;
         private string _cellFontName = "Arial";
         private double _cellFontSize;
+        private Color _gridLineColor = Colors.LightGray;
+        private int _cellPaddingHorizontal = 2;
+        private int _cellPaddingVertical = 1;
+        private int _blockPadding = 2;
 
         private Color[] _alternatingColors = new Color[]
             {
@@ -29,15 +34,6 @@ namespace FastWpfGrid
                 Color.FromRgb(235, 245, 255)
             };
 
-        public bool PreciseCharacterGlyphs
-        {
-            get { return _preciseCharacterGlyphs; }
-            set
-            {
-                _preciseCharacterGlyphs = value;
-                RenderChanged();
-            }
-        }
 
         public string CellFontName
         {
@@ -129,12 +125,32 @@ namespace FastWpfGrid
             }
         }
 
-        public int CellPadding
+        public int CellPaddingHorizontal
         {
-            get { return _cellPadding; }
+            get { return _cellPaddingHorizontal; }
             set
             {
-                _cellPadding = value;
+                _cellPaddingHorizontal = value;
+                RenderChanged();
+            }
+        }
+
+        public int CellPaddingVertical
+        {
+            get { return _cellPaddingVertical; }
+            set
+            {
+                _cellPaddingVertical = value;
+                RenderChanged();
+            }
+        }
+
+        public int BlockPadding
+        {
+            get { return _blockPadding; }
+            set
+            {
+                _blockPadding = value;
                 RenderChanged();
             }
         }
@@ -155,7 +171,7 @@ namespace FastWpfGrid
             set
             {
                 _headerCurrentBackground = value;
-                RenderChanged(); 
+                RenderChanged();
             }
         }
     }

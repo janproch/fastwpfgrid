@@ -24,6 +24,7 @@ namespace FastWpfGridTest
         {
             InitializeComponent();
             grid1.Model = new GridModel1();
+            grid2.Model = new GridModel2();
         }
     }
 }

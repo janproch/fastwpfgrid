@@ -34,6 +34,8 @@ namespace FastWpfGrid
             _items.Clear();
             _itemByIndex.Clear();
             _sizeOverrides.Clear();
+            _positions.Clear();
+            _indexes.Clear();
         }
 
         public void PutSizeOverride(int index, int size)

@@ -66,6 +66,14 @@ namespace System.Windows.Media.Imaging
             Right = bottomRight.X;
             Bottom = bottomRight.Y;
         }
+
+        public IntRect GrowSymmetrical(int dWidth2, int dHeight2)
+        {
+            return new IntRect(
+                new IntPoint(Left - dWidth2, Top - dHeight2),
+                new IntSize(Width + 2*dWidth2, Height + 2*dHeight2)
+                );
+        }
     }
 
     public struct IntPoint

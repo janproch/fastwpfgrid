@@ -107,6 +107,7 @@ namespace System.Windows.Media.Imaging
 
         public static int DrawString(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, Color fontColor, Color? bgColor, GlyphFont font, string text)
         {
+            if (text == null) return 0;
             int dx = 0;
             foreach (char ch in text)
             {

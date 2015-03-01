@@ -5,17 +5,36 @@
         xmlns:FastWpfGrid="clr-namespace:FastWpfGrid;assembly=FastWpfGrid" Title="FastWpfGrid Test Application" Height="350" Width="525">
     <Grid>
         <TabControl>
-            <TabItem Header="Grid 1">
+            <TabItem Header="Grid 1 - scrolling">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal">
-                        <CheckBox Content="Precise character glyphs" IsChecked="{Binding PreciseCharacterGlyphs, ElementName=grid1}" />
-                        <CheckBox Content="Is transposed" IsChecked="{Binding IsTransposed, ElementName=grid1}" />
+                        <CheckBox Content="Precise character glyphs" x:Name="chbPrecise1" />
+                        <CheckBox Content="Is transposed" x:Name="chbIsTransposed1" />
                     </StackPanel>
-                    <FastWpfGrid:FastGridControl x:Name="grid1" Grid.Row="1"/>
+                    <FastWpfGrid:FastGridControl x:Name="grid1" Grid.Row="1" 
+                                                 IsTransposed="{Binding IsChecked, ElementName=chbIsTransposed1}"
+                                                 PreciseCharacterGlyphs="{Binding IsChecked, ElementName=chbPrecise1}"
+                                                 />
+                </Grid>
+            </TabItem>
+            <TabItem Header="Grid 1 - blocks">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox Content="Precise character glyphs" x:Name="chbPrecise2" />
+                        <CheckBox Content="Is transposed" x:Name="chbIsTransposed2" />
+                    </StackPanel>
+                    <FastWpfGrid:FastGridControl x:Name="grid2" Grid.Row="1" 
+                                                 IsTransposed="{Binding IsChecked, ElementName=chbIsTransposed2}"
+                                                 PreciseCharacterGlyphs="{Binding IsChecked, ElementName=chbPrecise2}"
+                                                 />
                 </Grid>
             </TabItem>
         </TabControl>
