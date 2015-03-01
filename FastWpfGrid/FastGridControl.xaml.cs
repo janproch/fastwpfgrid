@@ -59,6 +59,7 @@ namespace FastWpfGrid
         private WriteableBitmap _drawBuffer;
 
         private bool _isInvalidated;
+        private bool _isInvalidatedAll;
         private List<int> _invalidatedRows = new List<int>();
         private List<int> _invalidatedColumns = new List<int>();
         private List<Tuple<int, int>> _invalidatedCells = new List<Tuple<int, int>>();
@@ -76,7 +77,7 @@ namespace FastWpfGrid
         {
             InitializeComponent();
             //gridCore.Grid = this;
-            CellFontSize = 12;
+            CellFontSize = 11;
         }
 
         private static void Exchange<T>(ref T a, ref T b)
@@ -97,8 +98,9 @@ namespace FastWpfGrid
                 _columnSizes.Count = _columnCount;
                 _rowSizes.Count = _rowCount;
                 RecountColumnWidths();
+                RecalculateDefaultCellSize();
                 AdjustScrollbars();
-                RenderGrid();
+                AdjustScrollBarPositions();
             }
         }
 
@@ -174,10 +176,24 @@ namespace FastWpfGrid
             _rowSizes.DefaultSize = rowHeight;
             _columnSizes.DefaultSize = columnWidth;
 
-            HeaderWidth = GetTextWidth("0000", false, false);
+            HeaderWidth = GetTextWidth("0000000", false, false);
             HeaderHeight = rowHeight;
 
-            InvalidateAll();
+            if (IsTransposed) CountTransposedHeaderWidth();
+
+            RenderGrid();
+        }
+
+        private void CountTransposedHeaderWidth()
+        {
+            int maxw = 0;
+            for (int col = 0; col < _columnCount; col++)
+            {
+                var cell = Model.GetColumnHeader(col);
+                int width = GetCellContentWidth(cell) + 2*CellPaddingHorizontal;
+                if (width>maxw) maxw = width;
+            }
+            HeaderWidth = maxw;
         }
 
         //public int RowHeight
@@ -268,7 +284,7 @@ namespace FastWpfGrid
             if (_model != null) _model.DetachView(this);
             _model = Model;
             if (_model != null) _model.AttachView(this);
-            InvalidateAll();
+            NotifyRefresh();
         }
 
 
@@ -314,6 +330,12 @@ namespace FastWpfGrid
         }
 
         public void InvalidateAll()
+        {
+            _isInvalidatedAll = true;
+            _isInvalidated = true;
+        }
+
+        public void NotifyRefresh()
         {
             _rowCount = 0;
             _columnCount = 0;
@@ -408,7 +430,7 @@ namespace FastWpfGrid
 
         public void NotifyAddedRows()
         {
-            InvalidateAll();
+            NotifyRefresh();
         }
 
         public Brush GetSolidBrush(Color color)
@@ -428,11 +450,12 @@ namespace FastWpfGrid
             _invalidatedColumnHeaders.Clear();
             _invalidatedRowHeaders.Clear();
             _isInvalidated = false;
+            _isInvalidatedAll = false;
         }
 
         private bool ShouldDrawCell(int row, int column)
         {
-            if (!_isInvalidated) return true;
+            if (!_isInvalidated || _isInvalidatedAll) return true;
 
             if (_invalidatedRows.Contains(row)) return true;
             if (_invalidatedColumns.Contains(column)) return true;
@@ -442,7 +465,7 @@ namespace FastWpfGrid
 
         private bool ShouldDrawRowHeader(int row)
         {
-            if (!_isInvalidated) return true;
+            if (!_isInvalidated || _isInvalidatedAll) return true;
 
             if (_invalidatedRows.Contains(row)) return true;
             if (_invalidatedRowHeaders.Contains(row)) return true;
@@ -451,7 +474,7 @@ namespace FastWpfGrid
 
         private bool ShouldDrawColumnHeader(int column)
         {
-            if (!_isInvalidated) return true;
+            if (!_isInvalidated || _isInvalidatedAll) return true;
 
             if (_invalidatedColumns.Contains(column)) return true;
             if (_invalidatedColumnHeaders.Contains(column)) return true;
@@ -522,7 +545,7 @@ namespace FastWpfGrid
                 int colsToRender = VisibleColumnCount;
                 int rowsToRender = VisibleRowCount;
 
-                if (!_isInvalidated)
+                if (!_isInvalidated || _isInvalidatedAll)
                 {
                     _drawBuffer.Clear(Colors.White);
                 }
@@ -874,6 +897,7 @@ namespace FastWpfGrid
             for (int i = 0; i < leftCount; i++)
             {
                 var block = cell.GetBlock(i);
+                if (block == null) continue;
                 if (i > 0) witdh += BlockPadding;
 
                 switch (block.BlockType)
@@ -909,8 +933,9 @@ namespace FastWpfGrid
 
             for (int i = 0; i < leftCount && leftPos < rightPos; i++)
             {
-                if (i > 0) leftPos += BlockPadding;
                 var block = cell.GetBlock(i);
+                if (block == null) continue;
+                if (i > 0) leftPos += BlockPadding;
 
                 switch (block.BlockType)
                 {
@@ -930,7 +955,7 @@ namespace FastWpfGrid
                     case FastGridBlockType.Image:
                         var imgOrigin = new IntPoint(leftPos, rectContent.Top + (int) Math.Round(rectContent.Height/2.0 - block.ImageHeight/2.0));
                         var wbmp = GetImage(block.ImageSource);
-                        _drawBuffer.Blit(new Rect(imgOrigin.X, imgOrigin.Y, block.ImageWidth, block.ImageHeight), wbmp, new Rect(0, 0, block.ImageWidth, block.ImageHeight), WriteableBitmapExtensions.BlendMode.ColorKeying);
+                        _drawBuffer.Blit(new Rect(imgOrigin.X, imgOrigin.Y, block.ImageWidth, block.ImageHeight), wbmp, new Rect(0, 0, block.ImageWidth, block.ImageHeight), WriteableBitmapExtensions.BlendMode.Alpha);
                         leftPos += block.ImageWidth;
                         break;
                 }
@@ -951,6 +976,10 @@ namespace FastWpfGrid
             bmImage.UriSource = new Uri(packUri, UriKind.Absolute);
             bmImage.EndInit();
             var wbmp = new WriteableBitmap(bmImage);
+
+            if (wbmp.Format != PixelFormats.Bgra32)
+                wbmp = new WriteableBitmap(new FormatConvertedBitmap(wbmp, PixelFormats.Bgra32, null, 0));
+
             lock (_imageCache)
             {
                 _imageCache[source] = wbmp;

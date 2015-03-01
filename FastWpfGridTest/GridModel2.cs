@@ -22,40 +22,28 @@ namespace FastWpfGridTest
 
         public override IFastGridCell GetColumnHeader(int column)
         {
-            if (column==0)
-            {
-                return new FastGridCellImpl
-                {
-                    SetBlocks = new[]
-                        {
-                            new FastGridBlockImpl
-                                {
-                                    BlockType = FastGridBlockType.Image,
-                                    ImageWidth = 16,
-                                    ImageHeight = 16,
-                                    ImageSource = "/Images/primary_keysmall.png",
-                                },
+            string image = null;
+            if (column == 0) image = "/Images/primary_keysmall.png";
+            if (column == 2) image = "/Images/foreign_keysmall.png";
 
-                            new FastGridBlockImpl
-                                {
-                                    IsBold = true,
-                                    TextData = String.Format("Column {0}", column),
-                                },
-                        }
-                };
+            var res = new FastGridCellImpl();
+            if (image != null)
+            {
+                res.Blocks.Add(new FastGridBlockImpl
+                    {
+                        BlockType = FastGridBlockType.Image,
+                        ImageWidth = 16,
+                        ImageHeight = 16,
+                        ImageSource = image,
+                    });
             }
 
-            return new FastGridCellImpl
+            res.Blocks.Add(new FastGridBlockImpl
                 {
-                    SetBlocks = new[]
-                        {
-                            new FastGridBlockImpl
-                                {
-                                    IsBold = true,
-                                    TextData = String.Format("Column {0}", column)
-                                }
-                        }
-                };
+                    IsBold = true,
+                    TextData = String.Format("Column {0}", column),
+                });
+            return res;
         }
 
         public override IFastGridCell GetCell(int row, int column)

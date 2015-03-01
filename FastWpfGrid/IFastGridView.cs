@@ -11,7 +11,10 @@ namespace FastWpfGrid
         void InvalidateAll();
         void InvalidateCell(int row, int column);
         void InvalidateRowHeader(int row);
+        void InvalidateRow(int row);
         void InvalidateColumnHeader(int column);
+        void InvalidateColumn(int column);
+        void NotifyRefresh();
         void NotifyAddedRows();
     }
 }

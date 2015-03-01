@@ -199,6 +199,7 @@ namespace System.Windows.Media.Imaging
         public int GetTextWidth(string text)
         {
             var res = 0;
+            if (text == null) return 0;
             foreach (var ch in text)
             {
                 var letter = GetLetter(ch);
@@ -210,7 +211,7 @@ namespace System.Windows.Media.Imaging
 
         public int TextHeight
         {
-            get { return (int)Math.Ceiling(GlyphTypeface.Height*EmSize); }
+            get { return (int) Math.Ceiling(GlyphTypeface.Height*EmSize); }
         }
     }
 }
