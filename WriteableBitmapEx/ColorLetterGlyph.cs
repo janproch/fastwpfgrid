@@ -53,6 +53,8 @@ namespace System.Windows.Media.Imaging
             DrawingContext drawingContext = drawingVisual.RenderOpen();
             drawingContext.DrawRectangle(new SolidColorBrush(bgColor), new Pen(), new Rect(0, 0, width, height));
             drawingContext.DrawText(text, new Point(0, 0));
+            //var run=new GlyphRun();
+            //drawingContext.DrawGlyphRun(new SolidColorBrush(fontColor), run);
             drawingContext.Close();
 
             RenderTargetBitmap bmp = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);

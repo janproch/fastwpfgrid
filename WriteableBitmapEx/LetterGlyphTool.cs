@@ -142,6 +142,12 @@ namespace System.Windows.Media.Imaging
             return bmp.DrawString(x0, y0, new IntRect(new IntPoint(0, 0), new IntSize(bmp.PixelWidth, bmp.PixelHeight)), fontColor, font, text);
         }
 
+        public static int DrawString(this WriteableBitmap bmp, int x0, int y0, Color fontColor, Color? bgColor, Typeface typeface, double emsize, string text)
+        {
+            var font = GetFont(typeface, emsize);
+            return bmp.DrawString(x0, y0, new IntRect(new IntPoint(0, 0), new IntSize(bmp.PixelWidth, bmp.PixelHeight)), fontColor, bgColor, font, text);
+        }
+
         public static GlyphFont GetFont(Typeface typeface, double emsize)
         {
             var key = Tuple.Create(typeface, emsize);

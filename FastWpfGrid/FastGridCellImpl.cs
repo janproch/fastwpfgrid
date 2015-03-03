@@ -19,7 +19,7 @@ namespace FastWpfGrid
         public int ImageHeight { get; set; }
     }
 
-    public class FastGridCellImpl  : IFastGridCell
+    public class FastGridCellImpl : IFastGridCell
     {
         public Color? BackgroundColor { get; set; }
         public List<FastGridBlockImpl> Blocks = new List<FastGridBlockImpl>();
@@ -52,6 +52,30 @@ namespace FastWpfGrid
                 Blocks.Clear();
                 Blocks.AddRange(value);
             }
+        }
+
+        public FastGridBlockImpl AddImageBlock(string image, int width = 16, int height = 16)
+        {
+            var res = new FastGridBlockImpl
+                {
+                    BlockType = FastGridBlockType.Image,
+                    ImageWidth = width,
+                    ImageHeight = height,
+                    ImageSource = image,
+                };
+            Blocks.Add(res);
+            return res;
+        }
+
+        public FastGridBlockImpl AddTextBlock(object text)
+        {
+            var res = new FastGridBlockImpl
+                {
+                    BlockType = FastGridBlockType.Text,
+                    TextData = text == null ? null : text.ToString(),
+                };
+            Blocks.Add(res);
+            return res;
         }
     }
 }

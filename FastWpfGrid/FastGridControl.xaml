@@ -16,7 +16,7 @@
         </Grid.ColumnDefinitions>
 
         <Grid x:Name="imageGrid" Grid.Row="0" Grid.Column="0" SizeChanged="imageGridResized">
-            <Image x:Name="image" SnapsToDevicePixels="True" Focusable="True" KeyDown="imageKeyDown" MouseDown="imageMouseDown" />
+            <Image x:Name="image" SnapsToDevicePixels="True" Focusable="True" KeyDown="imageKeyDown" MouseDown="imageMouseDown" RenderOptions.BitmapScalingMode="NearestNeighbor" />
             <TextBox x:Name="edText" Visibility="Hidden" SnapsToDevicePixels="True"  />
         </Grid>
         

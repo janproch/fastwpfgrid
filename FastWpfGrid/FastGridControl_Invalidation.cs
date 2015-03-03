@@ -3,14 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace FastWpfGrid
 {
     partial class FastGridControl
     {
+        private bool _isInvalidated;
+        private bool _isInvalidatedAll;
+        private List<int> _invalidatedRows = new List<int>();
+        private List<int> _invalidatedColumns = new List<int>();
+        private List<Tuple<int, int>> _invalidatedCells = new List<Tuple<int, int>>();
+        private List<int> _invalidatedRowHeaders = new List<int>();
+        private List<int> _invalidatedColumnHeaders = new List<int>();
+
         private class InvalidationContext : IDisposable
         {
             private FastGridControl _grid;
+
             internal InvalidationContext(FastGridControl grid)
             {
                 _grid = grid;
@@ -45,6 +55,93 @@ namespace FastWpfGrid
         private InvalidationContext CreateInvalidationContext()
         {
             return new InvalidationContext(this);
+        }
+
+        private void CheckInvalidation()
+        {
+            if (_isInvalidated) return;
+            if (_invalidationCount > 0) return;
+            Dispatcher.BeginInvoke(DispatcherPriority.Render, (Action) RenderInvoked);
+        }
+
+        private void RenderInvoked()
+        {
+            if (!_isInvalidated) return;
+            RenderGrid();
+        }
+
+        public void InvalidateAll()
+        {
+            CheckInvalidation();
+            _isInvalidatedAll = true;
+            _isInvalidated = true;
+        }
+
+        public void InvalidateRowHeader(int row)
+        {
+            CheckInvalidation();
+            _isInvalidated = true;
+            _invalidatedRowHeaders.Add(row);
+        }
+
+        public void InvalidateColumnHeader(int column)
+        {
+            CheckInvalidation();
+            _isInvalidated = true;
+            _invalidatedColumnHeaders.Add(column);
+        }
+
+        public void InvalidateColumn(int column)
+        {
+            CheckInvalidation();
+            _isInvalidated = true;
+            _invalidatedColumns.Add(column);
+            _invalidatedColumnHeaders.Add(column);
+        }
+
+        public void InvalidateRow(int row)
+        {
+            _isInvalidated = true;
+            _invalidatedRows.Add(row);
+            _invalidatedRowHeaders.Add(row);
+        }
+
+        public void InvalidateCell(int row, int column)
+        {
+            CheckInvalidation();
+            _isInvalidated = true;
+            _invalidatedCells.Add(Tuple.Create(row, column));
+        }
+
+        public void InvalidateCell(FastGridCellAddress cell)
+        {
+            if (cell.Column == null && cell.Row == null)
+            {
+                // invalidate cell 00
+                return;
+            }
+            if (cell.Column == null)
+            {
+                InvalidateRowHeader(cell.Row.Value);
+                return;
+            }
+            if (cell.Row == null)
+            {
+                InvalidateColumnHeader(cell.Column.Value);
+                return;
+            }
+            InvalidateCell(cell.Row.Value, cell.Column.Value);
+        }
+
+        private void ClearInvalidation()
+        {
+            _invalidatedRows.Clear();
+            _invalidatedColumns.Clear();
+            _invalidatedCells.Clear();
+            _invalidatedColumnHeaders.Clear();
+            _invalidatedRowHeaders.Clear();
+            _isInvalidated = false;
+            _isInvalidatedAll = false;
         }
     }
 }

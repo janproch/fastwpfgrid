@@ -53,6 +53,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="TextRenderPanel.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -99,6 +100,10 @@
     <ProjectReference Include="..\FastWpfGrid\FastWpfGrid.csproj">
       <Project>{e9d6f03c-bfb5-4d31-a15e-7f789b4bbcc3}</Project>
       <Name>FastWpfGrid</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WriteableBitmapEx\WriteableBitmapEx.Wpf.csproj">
+      <Project>{B0AA6A94-6784-4221-81F0-244A68C374C0}</Project>
+      <Name>WriteableBitmapEx.Wpf</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
