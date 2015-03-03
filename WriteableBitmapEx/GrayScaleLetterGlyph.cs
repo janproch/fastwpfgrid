@@ -3,16 +3,19 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace System.Windows.Media.Imaging
 {
-    public class ColorLetterGlyph
+    public class GrayScaleLetterGlyph
     {
         public struct Item
         {
             public short X;
             public short Y;
-            public int Color;
+            public int Alpha;
         }
 
         public char Ch;
@@ -22,39 +25,36 @@ namespace System.Windows.Media.Imaging
         public Item[] Items;
 
 
-        public static ColorLetterGlyph CreateSpaceGluph(GlyphTypeface glyphTypeface, double size)
+        public static GrayScaleLetterGlyph CreateSpaceGlyph(GlyphTypeface glyphTypeface, double size)
         {
-            int spaceWidth = (int) Math.Ceiling(glyphTypeface.AdvanceWidths[glyphTypeface.CharacterToGlyphMap[' ']]*size);
-            return new ColorLetterGlyph
-                {
-                    Ch = ' ',
-                    Height = (int) Math.Ceiling(glyphTypeface.Height*size),
-                    Width = spaceWidth,
-                };
+            int spaceWidth = (int)Math.Ceiling(glyphTypeface.AdvanceWidths[glyphTypeface.CharacterToGlyphMap[' ']] * size);
+            return new GrayScaleLetterGlyph
+            {
+                Ch = ' ',
+                Height = (int)Math.Ceiling(glyphTypeface.Height * size),
+                Width = spaceWidth,
+            };
         }
 
-        public static unsafe ColorLetterGlyph CreateGlyph(Typeface typeface, GlyphTypeface glyphTypeface, double size, char ch, Color fontColor, Color bgColor)
+        public static unsafe GrayScaleLetterGlyph CreateGlyph(Typeface typeface, GlyphTypeface glyphTypeface, double size, char ch)
         {
-            if (ch == ' ') return CreateSpaceGluph(glyphTypeface, size);
+            if (ch == ' ') return CreateSpaceGlyph(glyphTypeface, size);
 
             FormattedText text = new FormattedText("" + ch,
                                                    CultureInfo.InvariantCulture,
                                                    FlowDirection.LeftToRight,
                                                    typeface,
                                                    size,
-                                                   new SolidColorBrush(fontColor));
+                                                   Brushes.White);
 
             int width = (int) Math.Ceiling(text.Width);
             int height = (int) Math.Ceiling(text.Height);
             if (width == 0 || height == 0) return null;
-            int bgColorInt = WriteableBitmapExtensions.ConvertColor(bgColor);
 
             DrawingVisual drawingVisual = new DrawingVisual();
             DrawingContext drawingContext = drawingVisual.RenderOpen();
-            drawingContext.DrawRectangle(new SolidColorBrush(bgColor), new Pen(), new Rect(0, 0, width, height));
+            drawingContext.DrawRectangle(Brushes.Black, new Pen(), new Rect(0, 0, width, height));
             drawingContext.DrawText(text, new Point(0, 0));
-            //var run=new GlyphRun();
-            //drawingContext.DrawGlyphRun(new SolidColorBrush(fontColor), run);
             drawingContext.Close();
 
             RenderTargetBitmap bmp = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
@@ -73,20 +73,29 @@ namespace System.Windows.Media.Imaging
                     {
                         int color = pixels[y*width + x];
 
-                        if (color != bgColorInt)
+                        byte r, g, b;
+                        double avg;
+
+                        r = (byte) ((color >> 16) & 0xFF);
+                        g = (byte) ((color >> 8) & 0xFF);
+                        b = (byte) ((color) & 0xFF);
+
+                        avg = 0.299*r + 0.587*g + 0.114*b;
+
+                        if (avg >= 1)
                         {
                             res.Add(new Item
                                 {
                                     X = (short) x,
                                     Y = (short) y,
-                                    Color = color,
+                                    Alpha = (int) Math.Round(avg/255.0*0x1000),
                                 });
                         }
                     }
                 }
             }
 
-            return new ColorLetterGlyph
+            return new GrayScaleLetterGlyph
                 {
                     Width = width,
                     Height = height,
@@ -94,6 +103,5 @@ namespace System.Windows.Media.Imaging
                     Items = res.ToArray(),
                 };
         }
-
     }
 }

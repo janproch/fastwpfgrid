@@ -44,6 +44,7 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -55,11 +56,12 @@
   <ItemGroup>
     <Compile Include="BitmapContext.cs" />
     <Compile Include="BitmapFactory.cs" />
-    <Compile Include="ColorLetterGlyph.cs" />
+    <Compile Include="ClearTypeLetterGlyph.cs" />
     <Compile Include="IntGeometry.cs" />
-    <Compile Include="LetterGlyph.cs" />
+    <Compile Include="GrayScaleLetterGlyph.cs" />
     <Compile Include="LetterGlyphTool.cs" />
     <Compile Include="NativeMethods.cs" />
+    <Compile Include="PortableFontDesc.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ScrollingTool.cs" />
     <Compile Include="WriteableBitmapBaseExtensions.cs" />

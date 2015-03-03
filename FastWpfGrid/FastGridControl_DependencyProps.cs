@@ -45,20 +45,20 @@ namespace FastWpfGrid
 
         #endregion
 
-        #region property PreciseCharacterGlyphs
+        #region property UseClearType
 
-        public bool PreciseCharacterGlyphs
+        public bool UseClearType
         {
-            get { return (bool)this.GetValue(PreciseCharacterGlyphsProperty); }
-            set { this.SetValue(PreciseCharacterGlyphsProperty, value); }
+            get { return (bool)this.GetValue(UseClearTypeProperty); }
+            set { this.SetValue(UseClearTypeProperty, value); }
         }
 
-        public static readonly DependencyProperty PreciseCharacterGlyphsProperty = DependencyProperty.Register(
-            "PreciseCharacterGlyphs", typeof(bool), typeof(FastGridControl), new PropertyMetadata(false, OnPreciseCharacterGlyphsPropertyChanged));
+        public static readonly DependencyProperty UseClearTypeProperty = DependencyProperty.Register(
+            "UseClearType", typeof(bool), typeof(FastGridControl), new PropertyMetadata(true, OnUseClearTypePropertyChanged));
 
-        private static void OnPreciseCharacterGlyphsPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
+        private static void OnUseClearTypePropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
         {
-            ((FastGridControl)dependencyObject).OnPreciseCharacterGlyphsPropertyChanged();
+            ((FastGridControl)dependencyObject).OnUseClearTypePropertyChanged();
         }
 
 

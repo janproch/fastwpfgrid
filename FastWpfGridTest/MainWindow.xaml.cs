@@ -50,7 +50,7 @@ namespace FastWpfGridTest
             buffer = BitmapFactory.New(width, height);
             buffer.Clear(bgColor);
             //buffer.DrawString(0, 0, Colors.Black, new Typeface("Arial"), 12, "ABC 123 Gfijdr");
-            buffer.DrawString(0, 0, Colors.Black, new Typeface(new FontFamily("Arial"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal), 11, "Transparency");
+            buffer.DrawString(0, 0, Colors.Black, new PortableFontDesc(isbold: true), "Transparency");
             buffer.DrawLine(0, 10, 50, 10, Colors.Black);
             buffer.DrawLine(50, 0, 50, 40, Colors.Black);
             textImage1.Source = buffer;
@@ -59,7 +59,7 @@ namespace FastWpfGridTest
             textImage2.Height = height;
             buffer = BitmapFactory.New(width, height);
             buffer.Clear(bgColor);
-            buffer.DrawString(0, 0, Colors.Black, bgColor, new Typeface("Arial"), 12, "ABC 123 Gfijdr");
+            buffer.DrawString(0, 0, Colors.Black, bgColor, new PortableFontDesc(), "ABC 123 Gfijdr");
             textImage2.Source = buffer;
 
             textImage3.Width = width;
@@ -75,7 +75,13 @@ namespace FastWpfGridTest
 
 
             var drawingVisual = new DrawingVisual();
-            //TextOptions.SetTextRenderingMode(drawingVisual, TextRenderingMode.ClearType);
+            RenderOptions.SetBitmapScalingMode(drawingVisual, BitmapScalingMode.NearestNeighbor);
+            RenderOptions.SetClearTypeHint(drawingVisual, ClearTypeHint.Enabled);
+            RenderOptions.SetEdgeMode(drawingVisual, EdgeMode.Aliased);
+            TextOptions.SetTextRenderingMode(drawingVisual, TextRenderingMode.ClearType);
+            TextOptions.SetTextFormattingMode(drawingVisual, TextFormattingMode.Display);
+            TextOptions.SetTextHintingMode(drawingVisual, TextHintingMode.Fixed);
+
             using (var drawingContext = drawingVisual.RenderOpen())
             {
 
@@ -121,8 +127,12 @@ namespace FastWpfGridTest
 
             var bmp = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
 
-            RenderOptions.SetBitmapScalingMode(drawingVisual, BitmapScalingMode.NearestNeighbor);
             RenderOptions.SetBitmapScalingMode(bmp, BitmapScalingMode.NearestNeighbor);
+            RenderOptions.SetClearTypeHint(bmp, ClearTypeHint.Enabled);
+            RenderOptions.SetEdgeMode(bmp, EdgeMode.Aliased);
+            TextOptions.SetTextRenderingMode(bmp, TextRenderingMode.ClearType);
+            TextOptions.SetTextFormattingMode(bmp, TextFormattingMode.Display);
+            TextOptions.SetTextHintingMode(bmp, TextHintingMode.Fixed);
 
             //RenderOptions.SetCachingHint(bmp, CachingHint.Cache);
             //RenderOptions.SetBitmapScalingMode(bmp, BitmapScalingMode.LowQuality);

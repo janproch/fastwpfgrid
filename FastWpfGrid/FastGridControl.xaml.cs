@@ -131,12 +131,7 @@ namespace FastWpfGrid
             var key = Tuple.Create(isBold, isItalic);
             if (!_glyphFonts.ContainsKey(key))
             {
-                var typeFace = new Typeface(new FontFamily(CellFontName),
-                                            isItalic ? FontStyles.Italic : FontStyles.Normal,
-                                            isBold ? FontWeights.Bold : FontWeights.Normal,
-                                            FontStretches.Normal);
-
-                var font = LetterGlyphTool.GetFont(typeFace, CellFontSize);
+                var font = LetterGlyphTool.GetFont(new PortableFontDesc(CellFontName, CellFontSize, isBold, isItalic, UseClearType));
                 _glyphFonts[key] = font;
             }
             return _glyphFonts[key];
@@ -913,7 +908,7 @@ namespace FastWpfGrid
                         var font = GetFont(isBold, isItalic);
                         int textHeight = font.TextHeight;
                         var textOrigin = new IntPoint(leftPos, rectContent.Top + (int) Math.Round(rectContent.Height/2.0 - textHeight/2.0));
-                        int textWidth = _drawBuffer.DrawString(textOrigin.X, textOrigin.Y, rectContent, selectedTextColor ?? color ?? CellFontColor, PreciseCharacterGlyphs ? bgColor : (Color?) null,
+                        int textWidth = _drawBuffer.DrawString(textOrigin.X, textOrigin.Y, rectContent, selectedTextColor ?? color ?? CellFontColor, UseClearType ? bgColor : (Color?) null,
                                                                font,
                                                                text);
                         leftPos += textWidth;
@@ -966,8 +961,8 @@ namespace FastWpfGrid
                 _drawBuffer = null;
             }
             image.Source = _drawBuffer;
-            image.Width = width;
-            image.Height = height;
+            image.Width = Math.Max(0, width);
+            image.Height = Math.Max(0, height);
 
             AdjustScrollbars();
             InvalidateAll();
@@ -1048,9 +1043,10 @@ namespace FastWpfGrid
             InvalidateAll();
         }
 
-        private void OnPreciseCharacterGlyphsPropertyChanged()
+        private void OnUseClearTypePropertyChanged()
         {
-            _preciseCharacterGlyphs = PreciseCharacterGlyphs;
+            ClearCaches();
+            RecalculateDefaultCellSize();
             RenderChanged();
         }
     }

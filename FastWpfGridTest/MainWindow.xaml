@@ -13,12 +13,12 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal">
-                        <CheckBox Content="Precise character glyphs" x:Name="chbPrecise1" />
+                        <CheckBox Content="Use clear type" x:Name="chbClearType1" />
                         <CheckBox Content="Is transposed" x:Name="chbIsTransposed1" />
                     </StackPanel>
                     <FastWpfGrid:FastGridControl x:Name="grid1" Grid.Row="1" 
                                                  IsTransposed="{Binding IsChecked, ElementName=chbIsTransposed1}"
-                                                 PreciseCharacterGlyphs="{Binding IsChecked, ElementName=chbPrecise1}"
+                                                 UseClearType="{Binding IsChecked, ElementName=chbClearType1}"
                                                  />
                 </Grid>
             </TabItem>
@@ -29,12 +29,12 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal">
-                        <CheckBox Content="Precise character glyphs" x:Name="chbPrecise2" />
+                        <CheckBox Content="Use clear type" x:Name="chbClearType2" />
                         <CheckBox Content="Is transposed" x:Name="chbIsTransposed2" />
                     </StackPanel>
                     <FastWpfGrid:FastGridControl x:Name="grid2" Grid.Row="1" 
                                                  IsTransposed="{Binding IsChecked, ElementName=chbIsTransposed2}"
-                                                 PreciseCharacterGlyphs="{Binding IsChecked, ElementName=chbPrecise2}"
+                                                 UseClearType="{Binding IsChecked, ElementName=chbClearType2}"
                                                  />
                 </Grid>
             </TabItem>

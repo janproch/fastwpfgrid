@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Media;
@@ -9,9 +10,9 @@ namespace System.Windows.Media.Imaging
 {
     public static class LetterGlyphTool
     {
-        public static Dictionary<Tuple<Typeface, double>, GlyphFont> FontCache = new Dictionary<Tuple<Typeface, double>, GlyphFont>();
+        public static Dictionary<PortableFontDesc, GlyphFont> FontCache = new Dictionary<PortableFontDesc, GlyphFont>();
 
-        public static unsafe void DrawLetter(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, Color fontColor, LetterGlyph glyph)
+        public static unsafe void DrawLetter(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, Color fontColor, GrayScaleLetterGlyph glyph)
         {
             if (glyph.Items == null) return;
 
@@ -36,10 +37,10 @@ namespace System.Windows.Media.Imaging
                 if (xmax >= w) xmax = w - 1;
                 if (ymax >= h) ymax = h - 1;
 
-                fixed (LetterGlyph.Item* items = glyph.Items)
+                fixed (GrayScaleLetterGlyph.Item* items = glyph.Items)
                 {
                     int itemCount = glyph.Items.Length;
-                    LetterGlyph.Item* currentItem = items;
+                    GrayScaleLetterGlyph.Item* currentItem = items;
                     for (int i = 0; i < itemCount; i++, currentItem++)
                     {
                         int x = x0 + currentItem->X;
@@ -62,7 +63,7 @@ namespace System.Windows.Media.Imaging
             }
         }
 
-        public static unsafe void DrawLetter(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, ColorLetterGlyph glyph)
+        public static unsafe void DrawLetter(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, ClearTypeLetterGlyph glyph)
         {
             if (glyph.Items == null) return;
 
@@ -83,10 +84,10 @@ namespace System.Windows.Media.Imaging
                 if (xmax >= w) xmax = w - 1;
                 if (ymax >= h) ymax = h - 1;
 
-                fixed (ColorLetterGlyph.Item* items = glyph.Items)
+                fixed (ClearTypeLetterGlyph.Item* items = glyph.Items)
                 {
                     int itemCount = glyph.Items.Length;
-                    ColorLetterGlyph.Item* currentItem = items;
+                    ClearTypeLetterGlyph.Item* currentItem = items;
                     for (int i = 0; i < itemCount; i++, currentItem++)
                     {
                         int x = x0 + currentItem->X;
@@ -112,16 +113,17 @@ namespace System.Windows.Media.Imaging
             foreach (char ch in text)
             {
                 if (x0 + dx > cliprect.Right) break;
-                if (bgColor != null)
+                if (font.IsClearType)
                 {
-                    var letter = font.GetColorLetter(ch, fontColor, bgColor.Value);
+                    if (!bgColor.HasValue) throw new Exception("Clear type fonts must have background specified");
+                    var letter = font.GetClearTypeLetter(ch, fontColor, bgColor.Value);
                     if (letter == null) continue;
                     bmp.DrawLetter(x0 + dx, y0, cliprect, letter);
                     dx += letter.Width;
                 }
                 else
                 {
-                    var letter = font.GetLetter(ch);
+                    var letter = font.GetGrayScaleLetter(ch);
                     if (letter == null) continue;
                     bmp.DrawLetter(x0 + dx, y0, cliprect, fontColor, letter);
                     dx += letter.Width;
@@ -130,40 +132,47 @@ namespace System.Windows.Media.Imaging
             return dx;
         }
 
-        public static int DrawString(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, Color fontColor, Typeface typeface, double emsize, string text)
+        public static int DrawString(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, Color fontColor, PortableFontDesc typeface, string text)
         {
-            var font = GetFont(typeface, emsize);
+            var font = GetFont(typeface);
             return bmp.DrawString(x0, y0, cliprect, fontColor, font, text);
         }
 
-        public static int DrawString(this WriteableBitmap bmp, int x0, int y0, Color fontColor, Typeface typeface, double emsize, string text)
+        public static int DrawString(this WriteableBitmap bmp, int x0, int y0, Color fontColor, PortableFontDesc typeface, string text)
         {
-            var font = GetFont(typeface, emsize);
+            var font = GetFont(typeface);
             return bmp.DrawString(x0, y0, new IntRect(new IntPoint(0, 0), new IntSize(bmp.PixelWidth, bmp.PixelHeight)), fontColor, font, text);
         }
 
-        public static int DrawString(this WriteableBitmap bmp, int x0, int y0, Color fontColor, Color? bgColor, Typeface typeface, double emsize, string text)
+        public static int DrawString(this WriteableBitmap bmp, int x0, int y0, Color fontColor, Color? bgColor, PortableFontDesc typeface, string text)
         {
-            var font = GetFont(typeface, emsize);
+            var font = GetFont(typeface);
             return bmp.DrawString(x0, y0, new IntRect(new IntPoint(0, 0), new IntSize(bmp.PixelWidth, bmp.PixelHeight)), fontColor, bgColor, font, text);
         }
 
-        public static GlyphFont GetFont(Typeface typeface, double emsize)
+        public static GlyphFont GetFont(PortableFontDesc typeface)
         {
-            var key = Tuple.Create(typeface, emsize);
             lock (FontCache)
             {
-                if (FontCache.ContainsKey(key)) return FontCache[key];
+                if (FontCache.ContainsKey(typeface)) return FontCache[typeface];
             }
+            var fontFlags = System.Drawing.FontStyle.Regular;
+            if (typeface.IsItalic) fontFlags |= System.Drawing.FontStyle.Italic;
+            if (typeface.IsBold) fontFlags |= System.Drawing.FontStyle.Bold;
             var font = new GlyphFont
                 {
-                    Typeface = typeface,
-                    EmSize = emsize,
+                    Typeface = new Typeface(new FontFamily(typeface.FontName),
+                                            typeface.IsItalic ? FontStyles.Italic : FontStyles.Normal,
+                                            typeface.IsBold ? FontWeights.Bold : FontWeights.Normal,
+                                            FontStretches.Normal),
+                    EmSize = typeface.EmSize,
+                    Font = new Font(typeface.FontName, typeface.EmSize*76.0f/92.0f, fontFlags),
+                    IsClearType = typeface.IsClearType,
                 };
-            typeface.TryGetGlyphTypeface(out font.GlyphTypeface);
+            font.Typeface.TryGetGlyphTypeface(out font.GlyphTypeface);
             lock (FontCache)
             {
-                FontCache[key] = font;
+                FontCache[typeface] = font;
             }
             return font;
         }
@@ -171,32 +180,34 @@ namespace System.Windows.Media.Imaging
 
     public class GlyphFont
     {
-        public Dictionary<char, LetterGlyph> Glyphs = new Dictionary<char, LetterGlyph>();
-        public Dictionary<Tuple<Color, Color, char>, ColorLetterGlyph> ColorGlyphs = new Dictionary<Tuple<Color, Color, char>, ColorLetterGlyph>();
+        public Dictionary<char, GrayScaleLetterGlyph> Glyphs = new Dictionary<char, GrayScaleLetterGlyph>();
+        public Dictionary<Tuple<Color, Color, char>, ClearTypeLetterGlyph> ColorGlyphs = new Dictionary<Tuple<Color, Color, char>, ClearTypeLetterGlyph>();
         public Typeface Typeface;
         public double EmSize;
         public GlyphTypeface GlyphTypeface;
+        public System.Drawing.Font Font;
+        public bool IsClearType;
 
-        public LetterGlyph GetLetter(char ch)
+        public GrayScaleLetterGlyph GetGrayScaleLetter(char ch)
         {
             lock (Glyphs)
             {
                 if (!Glyphs.ContainsKey(ch))
                 {
-                    Glyphs[ch] = LetterGlyph.CreateGlyph(Typeface, GlyphTypeface, EmSize, ch);
+                    Glyphs[ch] = GrayScaleLetterGlyph.CreateGlyph(Typeface, GlyphTypeface, EmSize, ch);
                 }
                 return Glyphs[ch];
             }
         }
 
-        public ColorLetterGlyph GetColorLetter(char ch, Color fontColor, Color bgColor)
+        public ClearTypeLetterGlyph GetClearTypeLetter(char ch, Color fontColor, Color bgColor)
         {
             lock (ColorGlyphs)
             {
                 var key = Tuple.Create(fontColor, bgColor, ch);
                 if (!ColorGlyphs.ContainsKey(key))
                 {
-                    ColorGlyphs[key] = ColorLetterGlyph.CreateGlyph(Typeface, GlyphTypeface, EmSize, ch, fontColor, bgColor);
+                    ColorGlyphs[key] = ClearTypeLetterGlyph.CreateGlyph(GlyphTypeface, Font, EmSize, ch, fontColor, bgColor);
                 }
                 return ColorGlyphs[key];
             }
@@ -208,9 +219,18 @@ namespace System.Windows.Media.Imaging
             if (text == null) return 0;
             foreach (var ch in text)
             {
-                var letter = GetLetter(ch);
-                if (letter == null) continue;
-                res += letter.Width;
+                if (IsClearType)
+                {
+                    var letter = GetClearTypeLetter(ch, Colors.Black, Colors.White);
+                    if (letter == null) continue;
+                    res += letter.Width;
+                }
+                else
+                {
+                    var letter = GetGrayScaleLetter(ch);
+                    if (letter == null) continue;
+                    res += letter.Width;
+                }
             }
             return res;
         }

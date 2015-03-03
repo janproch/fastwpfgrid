@@ -10,7 +10,6 @@ namespace FastWpfGrid
 {
     partial class FastGridControl
     {
-        private bool _preciseCharacterGlyphs = false;
         private Color _cellFontColor = Colors.Black;
         private Color _headerBackground = Color.FromRgb(0xF6, 0xF7, 0xF9);
         private Color _headerCurrentBackground = Color.FromRgb(190, 207, 220);
@@ -18,7 +17,7 @@ namespace FastWpfGrid
         private Color _selectedTextColor = Colors.White;
         private Color _mouseOverRowColor = Color.FromRgb(235, 235, 255); // Colors.LemonChiffon; // Colors .Beige;
         private string _cellFontName = "Arial";
-        private double _cellFontSize;
+        private int _cellFontSize;
         private Color _gridLineColor = Colors.LightGray;
         private int _cellPaddingHorizontal = 2;
         private int _cellPaddingVertical = 1;
@@ -57,7 +56,7 @@ namespace FastWpfGrid
             get { return _rowSizes.DefaultSize; }
         }
 
-        public double CellFontSize
+        public int CellFontSize
         {
             get { return _cellFontSize; }
             set
