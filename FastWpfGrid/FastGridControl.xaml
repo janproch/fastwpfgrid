@@ -16,12 +16,14 @@
         </Grid.ColumnDefinitions>
 
         <Grid x:Name="imageGrid" Grid.Row="0" Grid.Column="0" SizeChanged="imageGridResized">
-            <Image x:Name="image" SnapsToDevicePixels="True" Focusable="True" KeyDown="imageKeyDown" MouseDown="imageMouseDown" RenderOptions.BitmapScalingMode="NearestNeighbor" />
-            <TextBox x:Name="edText" Visibility="Hidden" SnapsToDevicePixels="True"  />
+            <Image 
+                x:Name="image" SnapsToDevicePixels="True" Focusable="True" KeyDown="imageKeyDown" MouseDown="imageMouseDown" 
+                RenderOptions.BitmapScalingMode="NearestNeighbor" TextInput="imageTextInput" MouseWheel="imageMouseWheel" />
+            <TextBox x:Name="edText" Visibility="Hidden" SnapsToDevicePixels="True" PreviewKeyDown="edTextKeyDown" />
         </Grid>
         
 
-        <ScrollBar Orientation="Horizontal" Grid.Column="0" Grid.Row="1" x:Name="hscroll" Maximum="100" Scroll="hscroll_Scroll"/>
-        <ScrollBar Orientation="Vertical" Grid.Column="1" Grid.Row="0" x:Name="vscroll" Maximum="100" Scroll="vscroll_Scroll"/>
+        <ScrollBar Orientation="Horizontal" Grid.Column="0" Grid.Row="1" x:Name="hscroll" Maximum="100" Scroll="hscroll_Scroll" />
+        <ScrollBar Orientation="Vertical" Grid.Column="1" Grid.Row="0" x:Name="vscroll" Maximum="100" Scroll="vscroll_Scroll" />
     </Grid>
 </UserControl>

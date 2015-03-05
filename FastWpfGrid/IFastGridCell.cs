@@ -15,6 +15,10 @@ namespace FastWpfGrid
         int RightAlignBlockCount { get; }
         IFastGridCellBlock GetBlock(int blockIndex);
 
+        /// <summary>
+        /// return NULL disables inline editor
+        /// </summary>
+        /// <returns></returns>
         string GetEditText();
         void SetEditText(string value);
     }

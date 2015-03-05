@@ -59,7 +59,7 @@ namespace FastWpfGridTest
             textImage2.Height = height;
             buffer = BitmapFactory.New(width, height);
             buffer.Clear(bgColor);
-            buffer.DrawString(0, 0, Colors.Black, bgColor, new PortableFontDesc(), "ABC 123 Gfijdr");
+            buffer.DrawString(0, 0, Colors.Black, bgColor, new PortableFontDesc(cleartype: true), "ABC 123 Gfijdr");
             textImage2.Source = buffer;
 
             textImage3.Width = width;

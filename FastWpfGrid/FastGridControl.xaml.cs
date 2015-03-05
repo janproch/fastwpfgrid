@@ -161,8 +161,8 @@ namespace FastWpfGrid
         private void RecalculateDefaultCellSize()
         {
             ClearCaches();
-            int rowHeight = (int)(GetFont(false, false).TextHeight + CellPaddingVertical * 2 + 2 + RowHeightReserve);
-            int columnWidth = rowHeight * 4;
+            int rowHeight = (int) (GetFont(false, false).TextHeight + CellPaddingVertical*2 + 2 + RowHeightReserve);
+            int columnWidth = rowHeight*4;
 
             _rowSizes.DefaultSize = rowHeight;
             _columnSizes.DefaultSize = columnWidth;
@@ -182,7 +182,7 @@ namespace FastWpfGrid
             {
                 var cell = Model.GetColumnHeader(col);
                 int width = GetCellContentWidth(cell) + 2*CellPaddingHorizontal;
-                if (width>maxw) maxw = width;
+                if (width > maxw) maxw = width;
             }
             HeaderWidth = maxw;
         }
@@ -199,8 +199,8 @@ namespace FastWpfGrid
 
         private void ScrollChanged()
         {
-            int rowIndex = _rowSizes.GetIndexOnPosition((int)vscroll.Value);
-            int columnIndex = _columnSizes.GetIndexOnPosition((int)hscroll.Value);
+            int rowIndex = _rowSizes.GetIndexOnPosition((int) vscroll.Value);
+            int columnIndex = _columnSizes.GetIndexOnPosition((int) hscroll.Value);
             //FirstVisibleRow = rowIndex;
             //FirstVisibleColumn = columnIndex;
             //RenderGrid();
@@ -263,7 +263,7 @@ namespace FastWpfGrid
 
         public Color GetAlternateBackground(int row)
         {
-            return _alternatingColors[row % _alternatingColors.Length];
+            return _alternatingColors[row%_alternatingColors.Length];
         }
 
         private void hscroll_Scroll(object sender, ScrollEventArgs e)
@@ -308,10 +308,14 @@ namespace FastWpfGrid
             hscroll.Minimum = 0;
             hscroll.Maximum = _columnSizes.GetTotalSizeSum() - GridScrollAreaWidth + _columnSizes.DefaultSize;
             hscroll.ViewportSize = GridScrollAreaWidth;
+            hscroll.SmallChange = GridScrollAreaWidth/10.0;
+            hscroll.LargeChange = GridScrollAreaWidth/2.0;
 
             vscroll.Minimum = 0;
             vscroll.Maximum = _rowSizes.GetTotalSizeSum() - GridScrollAreaHeight + _rowSizes.DefaultSize;
             vscroll.ViewportSize = GridScrollAreaHeight;
+            vscroll.SmallChange = _rowSizes.DefaultSize;
+            vscroll.LargeChange = GridScrollAreaHeight / 2.0;
         }
 
         private void AdjustScrollBarPositions()
@@ -409,12 +413,12 @@ namespace FastWpfGrid
             return false;
         }
 
-        private int VisibleRowCount
+        public int VisibleRowCount
         {
             get { return _rowSizes.GetVisibleCount(FirstVisibleRow, GridScrollAreaHeight); }
         }
 
-        private int VisibleColumnCount
+        public int VisibleColumnCount
         {
             get { return _columnSizes.GetVisibleCount(FirstVisibleColumn, GridScrollAreaWidth); }
         }
@@ -504,9 +508,9 @@ namespace FastWpfGrid
                         if (cell != null) cellBackground = cell.BackgroundColor;
 
                         RenderCell(cell, rect, selectedTextColor, selectedBgColor
-                                                            ?? hoverRowColor
-                                                            ?? cellBackground
-                                                            ?? GetAlternateBackground(row));
+                                                                  ?? hoverRowColor
+                                                                  ?? cellBackground
+                                                                  ?? GetAlternateBackground(row));
                     }
                 }
 
@@ -630,11 +634,11 @@ namespace FastWpfGrid
             //    Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText());
         }
 
-        private void HideInlinEditor()
+        private void HideInlinEditor(bool saveCellValue = true)
         {
             using (var ctx = CreateInvalidationContext())
             {
-                if (_inplaceEditorCell.IsCell)
+                if (saveCellValue && _inplaceEditorCell.IsCell)
                 {
                     var cell = GetCell(_inplaceEditorCell.Row.Value, _inplaceEditorCell.Column.Value);
                     cell.SetEditText(edText.Text);
@@ -644,26 +648,39 @@ namespace FastWpfGrid
                 edText.Text = "";
                 edText.Visibility = Visibility.Hidden;
             }
+            Keyboard.Focus(image);
         }
 
-        private void ShowInlineEditor(FastGridCellAddress cell)
+        private void ShowInlineEditor(FastGridCellAddress cell, string textValueOverride = null)
         {
+            string text = GetCell(cell.Row.Value, cell.Column.Value).GetEditText();
+            if (text == null) return;
+
             _inplaceEditorCell = cell;
 
-            string text = GetCell(cell.Row.Value, cell.Column.Value).GetEditText();
-
-            edText.Text = text;
+            edText.Text = textValueOverride ?? text;
             edText.Visibility = Visibility.Visible;
             AdjustInlineEditorPosition();
 
             if (edText.IsFocused)
             {
-                edText.SelectAll();
+                if (textValueOverride == null)
+                {
+                    edText.SelectAll();
+                }
             }
             else
             {
                 edText.Focus();
-                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Input, (Action)edText.SelectAll);
+                if (textValueOverride == null)
+                {
+                    Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Input, (Action) edText.SelectAll);
+                }
+            }
+
+            if (textValueOverride != null)
+            {
+                edText.SelectionStart = textValueOverride.Length;
             }
         }
 
@@ -674,12 +691,12 @@ namespace FastWpfGrid
                 edText.Visibility = _inplaceEditorCell.Row.Value - FirstVisibleRow >= 0 ? Visibility.Visible : Visibility.Hidden;
                 var rect = GetCellRect(_inplaceEditorCell.Row.Value, _inplaceEditorCell.Column.Value);
                 edText.Margin = new Thickness
-                {
-                    Left = rect.Left,
-                    Top = rect.Top,
-                    Right = imageGrid.ActualWidth - rect.Right,
-                    Bottom = imageGrid.ActualHeight - rect.Bottom,
-                };
+                    {
+                        Left = rect.Left,
+                        Top = rect.Top,
+                        Right = imageGrid.ActualWidth - rect.Right,
+                        Bottom = imageGrid.ActualHeight - rect.Bottom,
+                    };
             }
         }
 
@@ -718,7 +735,7 @@ namespace FastWpfGrid
             }
             return new FastGridCellAddress(
                 _rowSizes.GetIndexOnPosition((int) pt.Y - HeaderHeight + _rowSizes.GetPosition(FirstVisibleRow)),
-                _columnSizes.GetIndexOnPosition((int)pt.X - HeaderWidth + _columnSizes.GetPosition(FirstVisibleColumn)));
+                _columnSizes.GetIndexOnPosition((int) pt.X - HeaderWidth + _columnSizes.GetPosition(FirstVisibleColumn)));
         }
 
         private void InvalidateCurrentCell()
@@ -916,7 +933,8 @@ namespace FastWpfGrid
                     case FastGridBlockType.Image:
                         var imgOrigin = new IntPoint(leftPos, rectContent.Top + (int) Math.Round(rectContent.Height/2.0 - block.ImageHeight/2.0));
                         var wbmp = GetImage(block.ImageSource);
-                        _drawBuffer.Blit(new Rect(imgOrigin.X, imgOrigin.Y, block.ImageWidth, block.ImageHeight), wbmp, new Rect(0, 0, block.ImageWidth, block.ImageHeight), WriteableBitmapExtensions.BlendMode.Alpha);
+                        _drawBuffer.Blit(new Rect(imgOrigin.X, imgOrigin.Y, block.ImageWidth, block.ImageHeight), wbmp, new Rect(0, 0, block.ImageWidth, block.ImageHeight),
+                                         WriteableBitmapExtensions.BlendMode.Alpha);
                         leftPos += block.ImageWidth;
                         break;
                 }
@@ -950,8 +968,8 @@ namespace FastWpfGrid
 
         private void imageGridResized(object sender, SizeChangedEventArgs e)
         {
-            int width = (int)imageGrid.ActualWidth - 2;
-            int height = (int)imageGrid.ActualHeight - 2;
+            int width = (int) imageGrid.ActualWidth - 2;
+            int height = (int) imageGrid.ActualHeight - 2;
             if (width > 0 && height > 0)
             {
                 _drawBuffer = BitmapFactory.New(width, height);
@@ -1013,24 +1031,38 @@ namespace FastWpfGrid
             get { return (Keyboard.Modifiers & ModifierKeys.Control) != 0; }
         }
 
+        private void HandleCursorMove(KeyEventArgs e, bool allowLeftRight = true)
+        {
+            if (e.Key == Key.Up && _currentCell.Row > 0) MoveCurrentCell(_currentCell.Row - 1, _currentCell.Column, e);
+            else if (e.Key == Key.Down) MoveCurrentCell(_currentCell.Row + 1, _currentCell.Column, e);
+            else if (e.Key == Key.Left && allowLeftRight) MoveCurrentCell(_currentCell.Row, _currentCell.Column - 1, e);
+            else if (e.Key == Key.Right && allowLeftRight) MoveCurrentCell(_currentCell.Row, _currentCell.Column + 1, e);
+
+            else if (e.Key == Key.Home && ControlPressed) MoveCurrentCell(0, 0, e);
+            else if (e.Key == Key.End && ControlPressed) MoveCurrentCell(_rowCount - 1, _columnCount - 1, e);
+            else if (e.Key == Key.PageDown && ControlPressed) MoveCurrentCell(_rowCount - 1, _currentCell.Column, e);
+            else if (e.Key == Key.PageUp && ControlPressed) MoveCurrentCell(0, _currentCell.Column, e);
+            else if (e.Key == Key.Home) MoveCurrentCell(_currentCell.Row, 0, e);
+            else if (e.Key == Key.End) MoveCurrentCell(_currentCell.Row, _columnCount - 1, e);
+            else if (e.Key == Key.PageDown) MoveCurrentCell(_currentCell.Row + VisibleRowCount, _currentCell.Column, e);
+            else if (e.Key == Key.PageUp) MoveCurrentCell(_currentCell.Row - VisibleRowCount, _currentCell.Column, e);
+        }
+
         private void imageKeyDown(object sender, KeyEventArgs e)
         {
             using (var ctx = CreateInvalidationContext())
             {
-                if (e.Key == Key.Up && _currentCell.Row > 0) MoveCurrentCell(_currentCell.Row - 1, _currentCell.Column, e);
-                else if (e.Key == Key.Down && _currentCell.Row < _rowCount - 1) MoveCurrentCell(_currentCell.Row + 1, _currentCell.Column, e);
-                else if (e.Key == Key.Left && _currentCell.Column > 0) MoveCurrentCell(_currentCell.Row, _currentCell.Column - 1, e);
-                else if (e.Key == Key.Right && _currentCell.Column < _columnCount - 1) MoveCurrentCell(_currentCell.Row, _currentCell.Column + 1, e);
-
-                else if (e.Key == Key.Home && ControlPressed) MoveCurrentCell(0, 0, e);
-                else if (e.Key == Key.End && ControlPressed) MoveCurrentCell(_rowCount - 1, _columnCount - 1, e);
-                else if (e.Key == Key.PageDown && ControlPressed) MoveCurrentCell(_rowCount - 1, _currentCell.Column, e);
-                else if (e.Key == Key.PageUp && ControlPressed) MoveCurrentCell(0, _currentCell.Column, e);
-                else if (e.Key == Key.Home) MoveCurrentCell(_currentCell.Row, 0, e);
-                else if (e.Key == Key.End) MoveCurrentCell(_currentCell.Row, _columnCount - 1, e);
-                else if (e.Key == Key.PageDown) MoveCurrentCell(_currentCell.Row + VisibleRowCount, _currentCell.Column, e);
-                else if (e.Key == Key.PageUp) MoveCurrentCell(_currentCell.Row - VisibleRowCount, _currentCell.Column, e);
+                HandleCursorMove(e);
             }
+        }
+
+        private void imageTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!_currentCell.IsCell) return;
+            if (e.Text == null) return;
+            if (e.Text != " " && String.IsNullOrEmpty(e.Text.Trim())) return;
+            if (e.Text.Length == 1 && e.Text[0] < 32) return;
+            ShowInlineEditor(_currentCell, e.Text);
         }
 
         private void imageMouseDown(object sender, MouseButtonEventArgs e)
@@ -1048,6 +1080,33 @@ namespace FastWpfGrid
             ClearCaches();
             RecalculateDefaultCellSize();
             RenderChanged();
+        }
+
+        private void edTextKeyDown(object sender, KeyEventArgs e)
+        {
+            using (var ctx = CreateInvalidationContext())
+            {
+                if (e.Key == Key.Escape)
+                {
+                    HideInlinEditor(false);
+                    e.Handled = true;
+                }
+                if (e.Key == Key.Enter)
+                {
+                    HideInlinEditor();
+                    MoveCurrentCell(_currentCell.Row + 1, _currentCell.Column, e);
+                }
+
+                HandleCursorMove(e, false);
+                if (e.Handled) HideInlinEditor();
+            }
+        }
+
+        private void imageMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (e.Delta < 0) vscroll.Value = vscroll.Value + vscroll.LargeChange/2;
+            if (e.Delta > 0) vscroll.Value = vscroll.Value - vscroll.LargeChange/2;
+            ScrollChanged();
         }
     }
 }

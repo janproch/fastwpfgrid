@@ -225,6 +225,7 @@ namespace FastWpfGrid
 
         public void Resize(int index, int newSize)
         {
+            if (index < 0) return;
             // can be done more effectively
             _sizeOverrides[index] = newSize;
             BuildIndex();
