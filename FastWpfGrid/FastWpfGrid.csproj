@@ -48,8 +48,11 @@
     <Compile Include="FastGridControl.xaml.cs">
       <DependentUpon>FastGridControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="FastGridControl_Arrange.cs" />
     <Compile Include="FastGridControl_DependencyProps.cs" />
+    <Compile Include="FastGridControl_Input.cs" />
     <Compile Include="FastGridControl_Invalidation.cs" />
+    <Compile Include="FastGridControl_Render.cs" />
     <Compile Include="FastGridControl_StyleProps.cs" />
     <Compile Include="FastGridCellImpl.cs" />
     <Compile Include="FastGridModelBase.cs" />
@@ -58,6 +61,7 @@
     <Compile Include="IFastGridModel.cs" />
     <Compile Include="IFastGridView.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="EventArgs.cs" />
     <Compile Include="SeriesSizes.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -108,7 +108,7 @@ namespace FastWpfGrid
             get { return 0; }
         }
 
-        public virtual  IFastGridCellBlock GetBlock(int blockIndex)
+        public virtual IFastGridCellBlock GetBlock(int blockIndex)
         {
             return this;
         }
@@ -168,6 +168,16 @@ namespace FastWpfGrid
         public virtual int ImageHeight
         {
             get { return 16; }
+        }
+
+        public virtual CellDecoration Decoration
+        {
+            get { return CellDecoration.None; }
+        }
+
+        public virtual Color? DecorationColor
+        {
+            get { return null; }
         }
     }
 }

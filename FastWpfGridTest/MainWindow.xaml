@@ -13,7 +13,7 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal">
-                        <CheckBox Content="Use clear type" x:Name="chbClearType1" />
+                        <CheckBox Content="Use clear type" x:Name="chbClearType1" IsChecked="True" />
                         <CheckBox Content="Is transposed" x:Name="chbIsTransposed1" />
                     </StackPanel>
                     <FastWpfGrid:FastGridControl x:Name="grid1" Grid.Row="1" 
@@ -29,7 +29,7 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal">
-                        <CheckBox Content="Use clear type" x:Name="chbClearType2" />
+                        <CheckBox Content="Use clear type" x:Name="chbClearType2" IsChecked="True" />
                         <CheckBox Content="Is transposed" x:Name="chbIsTransposed2" />
                     </StackPanel>
                     <FastWpfGrid:FastGridControl x:Name="grid2" Grid.Row="1" 

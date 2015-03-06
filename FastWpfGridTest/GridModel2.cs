@@ -43,6 +43,7 @@ namespace FastWpfGridTest
                     IsBold = true,
                     TextData = String.Format("Column {0}", column),
                 });
+
             return res;
         }
 
@@ -60,7 +61,9 @@ namespace FastWpfGridTest
                                     FontColor = Colors.Gray,
                                     TextData = "(NULL)",
                                 }
-                        }
+                        },
+                        Decoration = CellDecoration.StrikeOutHorizontal,
+                        DecorationColor = Colors.Red,
                 };
             }
             return base.GetCell(row, column);

@@ -22,6 +22,8 @@ namespace FastWpfGrid
     public class FastGridCellImpl : IFastGridCell
     {
         public Color? BackgroundColor { get; set; }
+        public CellDecoration Decoration { get; set; }
+        public Color? DecorationColor { get; set; }
         public List<FastGridBlockImpl> Blocks = new List<FastGridBlockImpl>();
 
         public int BlockCount

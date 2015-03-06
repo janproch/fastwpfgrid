@@ -56,7 +56,7 @@ namespace System.Windows.Media.Imaging
             Left = topLeft.X;
             Top = topLeft.Y;
             Right = topLeft.X + size.Width - 1;
-            Bottom = topLeft.Y + size.Height- 1;
+            Bottom = topLeft.Y + size.Height - 1;
         }
 
         public IntRect(IntPoint topLeft, IntPoint bottomRight)
@@ -73,6 +73,11 @@ namespace System.Windows.Media.Imaging
                 new IntPoint(Left - dWidth2, Top - dHeight2),
                 new IntSize(Width + 2*dWidth2, Height + 2*dHeight2)
                 );
+        }
+
+        public Rect ToRect()
+        {
+            return new Rect(Left, Top, Width, Height);
         }
     }
 

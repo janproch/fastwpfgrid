@@ -7,6 +7,12 @@ using System.Windows.Media;
 
 namespace FastWpfGrid
 {
+    public enum CellDecoration
+    {
+        None,
+        StrikeOutHorizontal,
+    }
+
     public interface IFastGridCell
     {
         Color? BackgroundColor { get; }
@@ -14,6 +20,8 @@ namespace FastWpfGrid
         int BlockCount { get; }
         int RightAlignBlockCount { get; }
         IFastGridCellBlock GetBlock(int blockIndex);
+        CellDecoration Decoration { get; }
+        Color? DecorationColor { get; }
 
         /// <summary>
         /// return NULL disables inline editor

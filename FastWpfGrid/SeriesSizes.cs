@@ -220,7 +220,10 @@ namespace FastWpfGrid
                 res += size;
             }
 
+            if (res >= viewportSize && testedIndex < index) return testedIndex + 1;
             return firstVisibleIndex;
+            //if (testedIndex < index) return testedIndex + 1;
+            //return index;
         }
 
         public void Resize(int index, int newSize)

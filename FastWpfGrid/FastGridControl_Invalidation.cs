@@ -101,6 +101,7 @@ namespace FastWpfGrid
 
         public void InvalidateRow(int row)
         {
+            CheckInvalidation();
             _isInvalidated = true;
             _invalidatedRows.Add(row);
             _invalidatedRowHeaders.Add(row);
@@ -143,5 +144,34 @@ namespace FastWpfGrid
             _isInvalidated = false;
             _isInvalidatedAll = false;
         }
+
+        private bool ShouldDrawCell(int row, int column)
+        {
+            if (!_isInvalidated || _isInvalidatedAll) return true;
+
+            if (_invalidatedRows.Contains(row)) return true;
+            if (_invalidatedColumns.Contains(column)) return true;
+            if (_invalidatedCells.Contains(Tuple.Create(row, column))) return true;
+            return false;
+        }
+
+        private bool ShouldDrawRowHeader(int row)
+        {
+            if (!_isInvalidated || _isInvalidatedAll) return true;
+
+            if (_invalidatedRows.Contains(row)) return true;
+            if (_invalidatedRowHeaders.Contains(row)) return true;
+            return false;
+        }
+
+        private bool ShouldDrawColumnHeader(int column)
+        {
+            if (!_isInvalidated || _isInvalidatedAll) return true;
+
+            if (_invalidatedColumns.Contains(column)) return true;
+            if (_invalidatedColumnHeaders.Contains(column)) return true;
+            return false;
+        }
+
     }
 }

@@ -58,8 +58,8 @@ namespace System.Windows.Media.Imaging
 
             using (var bmp = new System.Drawing.Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppPArgb))
             {
-                var fg2 = System.Drawing.Color.FromArgb(fontColor.A, fontColor.R, fontColor.B, fontColor.B);
-                var bg2 = System.Drawing.Color.FromArgb(bgColor.A, bgColor.R, bgColor.B, bgColor.B);
+                var fg2 = System.Drawing.Color.FromArgb(fontColor.A, fontColor.R, fontColor.G, fontColor.B);
+                var bg2 = System.Drawing.Color.FromArgb(bgColor.A, bgColor.R, bgColor.G, bgColor.B);
 
                 using (var g = System.Drawing.Graphics.FromImage(bmp))
                 {
@@ -78,7 +78,7 @@ namespace System.Windows.Media.Imaging
                                 {
                                     X = (short) x,
                                     Y = (short) y,
-                                    Color = WriteableBitmapExtensions.ConvertColor(Color.FromArgb(color.A, color.G, color.G, color.B)),
+                                    Color = WriteableBitmapExtensions.ConvertColor(Color.FromArgb(color.A, color.R, color.G, color.B)),
                                 });
                         }
                     }
