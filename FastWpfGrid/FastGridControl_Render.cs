@@ -29,77 +29,130 @@ namespace FastWpfGrid
                     _drawBuffer.Clear(Colors.White);
                 }
 
-                for (int row = FirstVisibleRow; row < FirstVisibleRow + rowsToRender; row++)
+                // render frozen rows
+                for (int row = 0; row < _rowSizes.FrozenCount; row++)
                 {
-                    for (int col = FirstVisibleColumn; col < FirstVisibleColumn + colsToRender; col++)
+                    for (int col = FirstVisibleColumnScrollIndex + _columnSizes.FrozenCount; col < FirstVisibleColumnScrollIndex + _columnSizes.FrozenCount + colsToRender; col++)
                     {
-                        if (row < 0 || col < 0 || row >= _rowCount || col >= _columnCount) continue;
                         if (!ShouldDrawCell(row, col)) continue;
-                        var rect = GetCellRect(row, col);
-                        var cell = GetCell(row, col);
-                        Color? selectedBgColor = null;
-                        Color? selectedTextColor = null;
-                        Color? hoverRowColor = null;
-                        if (_currentCell.TestCell(row, col) || _selectedCells.Contains(new FastGridCellAddress(row, col)))
-                        {
-                            selectedBgColor = SelectedColor;
-                            selectedTextColor = SelectedTextColor;
-                        }
-                        if (row == _mouseOverRow)
-                        {
-                            hoverRowColor = MouseOverRowColor;
-                        }
-
-
-                        Color? cellBackground = null;
-                        if (cell != null) cellBackground = cell.BackgroundColor;
-
-                        RenderCell(cell, rect, selectedTextColor, selectedBgColor
-                                                                  ?? hoverRowColor
-                                                                  ?? cellBackground
-                                                                  ?? GetAlternateBackground(row));
+                        RenderCell(row, col);
                     }
                 }
 
-                for (int row = FirstVisibleRow; row < FirstVisibleRow + rowsToRender; row++)
+                // render frozen columns
+                for (int row = FirstVisibleRowScrollIndex + _rowSizes.FrozenCount; row < FirstVisibleRowScrollIndex + _rowSizes.FrozenCount + rowsToRender; row++)
                 {
-                    if (row < 0 || row >= _rowCount) continue;
-                    var cell = GetRowHeader(row);
-                    if (!ShouldDrawRowHeader(row)) continue;
-
-                    Color? selectedBgColor = null;
-                    if (row == _currentCell.Row) selectedBgColor = HeaderCurrentBackground;
-
-                    var rect = GetRowHeaderRect(row);
-                    Color? cellBackground = null;
-                    if (cell != null) cellBackground = cell.BackgroundColor;
-
-                    Color? hoverColor = null;
-                    if (row == _mouseOverRowHeader) hoverColor = MouseOverRowColor;
-
-                    RenderCell(cell, rect, null, hoverColor ?? selectedBgColor ?? cellBackground ?? HeaderBackground);
+                    for (int col = 0; col < _columnSizes.FrozenCount; col++)
+                    {
+                        if (!ShouldDrawCell(row, col)) continue;
+                        RenderCell(row, col);
+                    }
                 }
 
-                for (int col = FirstVisibleColumn; col < FirstVisibleColumn + colsToRender; col++)
+                // render cells
+                for (int row = FirstVisibleRowScrollIndex + _rowSizes.FrozenCount; row < FirstVisibleRowScrollIndex + _rowSizes.FrozenCount + rowsToRender; row++)
                 {
-                    if (col < 0 || col >= _columnCount) continue;
-                    var cell = GetColumnHeader(col);
+                    for (int col = FirstVisibleColumnScrollIndex + _columnSizes.FrozenCount; col < FirstVisibleColumnScrollIndex + _columnSizes.FrozenCount + colsToRender; col++)
+                    {
+                        if (row < 0 || col < 0 || row >= _realRowCount || col >= _realColumnCount) continue;
+                        if (!ShouldDrawCell(row, col)) continue;
+                        RenderCell(row, col);
+                    }
+                }
+
+                // render frozen row headers
+                for (int row = 0; row < _rowSizes.FrozenCount; row++)
+                {
+                    if (!ShouldDrawRowHeader(row)) continue;
+                    RenderRowHeader(row);
+                }
+
+                // render row headers
+                for (int row = FirstVisibleRowScrollIndex + _rowSizes.FrozenCount; row < FirstVisibleRowScrollIndex + _rowSizes.FrozenCount + rowsToRender; row++)
+                {
+                    if (row < 0 || row >= _realRowCount) continue;
+                    if (!ShouldDrawRowHeader(row)) continue;
+                    RenderRowHeader(row);
+                }
+
+                // render frozen column headers
+                for (int col = 0; col < _columnSizes.FrozenCount; col++)
+                {
                     if (!ShouldDrawColumnHeader(col)) continue;
+                    RenderColumnHeader(col);
+                }
 
-                    Color? selectedBgColor = null;
-                    if (col == _currentCell.Column) selectedBgColor = HeaderCurrentBackground;
 
-                    var rect = GetColumnHeaderRect(col);
-                    Color? cellBackground = null;
-                    if (cell != null) cellBackground = cell.BackgroundColor;
-
-                    Color? hoverColor = null;
-                    if (col == _mouseOverColumnHeader) hoverColor = MouseOverRowColor;
-
-                    RenderCell(cell, rect, null, hoverColor ?? selectedBgColor ?? cellBackground ?? HeaderBackground);
+                // render column headers
+                for (int col = FirstVisibleColumnScrollIndex + _columnSizes.FrozenCount; col < FirstVisibleColumnScrollIndex + _columnSizes.FrozenCount + colsToRender; col++)
+                {
+                    if (col < 0 || col >= _realColumnCount) continue;
+                    if (!ShouldDrawColumnHeader(col)) continue;
+                    RenderColumnHeader(col);
                 }
             }
             ClearInvalidation();
+        }
+
+        private void RenderColumnHeader(int col)
+        {
+            var cell = GetColumnHeader(col);
+
+            Color? selectedBgColor = null;
+            if (col == _currentCell.Column) selectedBgColor = HeaderCurrentBackground;
+
+            var rect = GetColumnHeaderRect(col);
+            Color? cellBackground = null;
+            if (cell != null) cellBackground = cell.BackgroundColor;
+
+            Color? hoverColor = null;
+            if (col == _mouseOverColumnHeader) hoverColor = MouseOverRowColor;
+
+            RenderCell(cell, rect, null, hoverColor ?? selectedBgColor ?? cellBackground ?? HeaderBackground);
+        }
+
+        private void RenderRowHeader(int row)
+        {
+            var cell = GetRowHeader(row);
+
+            Color? selectedBgColor = null;
+            if (row == _currentCell.Row) selectedBgColor = HeaderCurrentBackground;
+
+            var rect = GetRowHeaderRect(row);
+            Color? cellBackground = null;
+            if (cell != null) cellBackground = cell.BackgroundColor;
+
+            Color? hoverColor = null;
+            if (row == _mouseOverRowHeader) hoverColor = MouseOverRowColor;
+
+            RenderCell(cell, rect, null, hoverColor ?? selectedBgColor ?? cellBackground ?? HeaderBackground);
+        }
+
+        private void RenderCell(int row, int col)
+        {
+            var rect = GetCellRect(row, col);
+            var cell = GetCell(row, col);
+            Color? selectedBgColor = null;
+            Color? selectedTextColor = null;
+            Color? hoverRowColor = null;
+            if (_currentCell.TestCell(row, col) || _selectedCells.Contains(new FastGridCellAddress(row, col)))
+            {
+                selectedBgColor = SelectedColor;
+                selectedTextColor = SelectedTextColor;
+            }
+            if (row == _mouseOverRow)
+            {
+                hoverRowColor = MouseOverRowColor;
+            }
+
+
+            Color? cellBackground = null;
+            if (cell != null) cellBackground = cell.BackgroundColor;
+
+            RenderCell(cell, rect, selectedTextColor, selectedBgColor
+                                                      ?? hoverRowColor
+                                                      ?? cellBackground
+                                                      ?? GetAlternateBackground(row));
         }
 
         private int GetCellContentWidth(IFastGridCell cell)
@@ -208,6 +261,55 @@ namespace FastWpfGrid
                 _imageCache[source] = wbmp;
             }
             return wbmp;
+        }
+
+        private void ScrollContent(int row, int column)
+        {
+            if (row == FirstVisibleRowScrollIndex && column == FirstVisibleColumnScrollIndex)
+            {
+                return;
+            }
+
+            if (row != FirstVisibleRowScrollIndex && !_isInvalidated && column == FirstVisibleColumnScrollIndex
+                && Math.Abs(row - FirstVisibleRowScrollIndex) * 2 < VisibleRowCount)
+            {
+                using (var ctx = CreateInvalidationContext())
+                {
+                    int scrollY = _rowSizes.GetScroll(FirstVisibleRowScrollIndex, row);
+                    _rowSizes.InvalidateAfterScroll(FirstVisibleRowScrollIndex, row, InvalidateRow, GridScrollAreaHeight);
+                    FirstVisibleRowScrollIndex = row;
+
+                    _drawBuffer.ScrollY(scrollY, GetScrollRect());
+                    _drawBuffer.ScrollY(scrollY, GetRowHeadersScrollRect());
+                    if (_columnSizes.FrozenCount > 0) _drawBuffer.ScrollY(scrollY, GetFrozenColumnsRect());
+                }
+                return;
+            }
+
+            if (column != FirstVisibleColumnScrollIndex && !_isInvalidated && row == FirstVisibleRowScrollIndex
+                && Math.Abs(column - FirstVisibleColumnScrollIndex) * 2 < VisibleColumnCount)
+            {
+                using (var ctx = CreateInvalidationContext())
+                {
+                    int scrollX = _columnSizes.GetScroll(FirstVisibleColumnScrollIndex, column);
+                    _columnSizes.InvalidateAfterScroll(FirstVisibleColumnScrollIndex, column, InvalidateColumn, GridScrollAreaWidth);
+                    FirstVisibleColumnScrollIndex = column;
+
+                    _drawBuffer.ScrollX(scrollX, GetScrollRect());
+                    _drawBuffer.ScrollX(scrollX, GetColumnHeadersScrollRect());
+                    if (_rowSizes.FrozenCount > 0) _drawBuffer.ScrollX(scrollX, GetFrozenRowsRect());
+                }
+                return;
+            }
+
+
+            // render all
+            using (var ctx = CreateInvalidationContext())
+            {
+                FirstVisibleRowScrollIndex = row;
+                FirstVisibleColumnScrollIndex = column;
+                InvalidateAll();
+            }
         }
     }
 }

@@ -45,7 +45,7 @@ namespace FastWpfGrid
                     Cursor = Cursors.SizeWE;
                     _resizingColumn = resizingColumn;
                     _resizingColumnOrigin = pt;
-                    _resizingColumnStartSize = _columnSizes.GetSize(_resizingColumn.Value);
+                    _resizingColumnStartSize = _columnSizes.GetSizeByRealIndex(_resizingColumn.Value);
                     CaptureMouse();
                 }
 
@@ -114,11 +114,11 @@ namespace FastWpfGrid
             else if (e.Key == Key.Right && allowLeftRight) MoveCurrentCell(_currentCell.Row, _currentCell.Column + 1, e);
 
             else if (e.Key == Key.Home && ControlPressed) MoveCurrentCell(0, 0, e);
-            else if (e.Key == Key.End && ControlPressed) MoveCurrentCell(_rowCount - 1, _columnCount - 1, e);
-            else if (e.Key == Key.PageDown && ControlPressed) MoveCurrentCell(_rowCount - 1, _currentCell.Column, e);
+            else if (e.Key == Key.End && ControlPressed) MoveCurrentCell(_modelRowCount - 1, _modelColumnCount - 1, e);
+            else if (e.Key == Key.PageDown && ControlPressed) MoveCurrentCell(_modelRowCount - 1, _currentCell.Column, e);
             else if (e.Key == Key.PageUp && ControlPressed) MoveCurrentCell(0, _currentCell.Column, e);
             else if (e.Key == Key.Home) MoveCurrentCell(_currentCell.Row, 0, e);
-            else if (e.Key == Key.End) MoveCurrentCell(_currentCell.Row, _columnCount - 1, e);
+            else if (e.Key == Key.End) MoveCurrentCell(_currentCell.Row, _modelColumnCount - 1, e);
             else if (e.Key == Key.PageDown) MoveCurrentCell(_currentCell.Row + VisibleRowCount, _currentCell.Column, e);
             else if (e.Key == Key.PageUp) MoveCurrentCell(_currentCell.Row - VisibleRowCount, _currentCell.Column, e);
         }

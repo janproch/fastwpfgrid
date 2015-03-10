@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastWpfGridTest", "FastWpfG
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WriteableBitmapEx.Wpf", "WriteableBitmapEx\WriteableBitmapEx.Wpf.csproj", "{B0AA6A94-6784-4221-81F0-244A68C374C0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastWpfGridUnitTest", "FastWpfGridUnitTest\FastWpfGridUnitTest.csproj", "{B94371DD-DDC9-4889-B49F-7D76E3E52B01}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,6 +27,10 @@ Global
 		{B0AA6A94-6784-4221-81F0-244A68C374C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B0AA6A94-6784-4221-81F0-244A68C374C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B0AA6A94-6784-4221-81F0-244A68C374C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B94371DD-DDC9-4889-B49F-7D76E3E52B01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B94371DD-DDC9-4889-B49F-7D76E3E52B01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B94371DD-DDC9-4889-B49F-7D76E3E52B01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B94371DD-DDC9-4889-B49F-7D76E3E52B01}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

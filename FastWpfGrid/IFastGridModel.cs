@@ -15,5 +15,10 @@ namespace FastWpfGrid
         IFastGridCell GetColumnHeader(int column);
         void AttachView(IFastGridView view);
         void DetachView(IFastGridView view);
+
+        HashSet<int> GetHiddenColumns();
+        HashSet<int> GetFrozenColumns();
+        HashSet<int> GetHiddenRows();
+        HashSet<int> GetFrozenRows();
     }
 }

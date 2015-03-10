@@ -8,7 +8,9 @@ namespace FastWpfGrid
 {
     public class SeriesSizeItem
     {
-        public int Index;
+        public int ScrollIndex = -1;
+        public int ModelIndex;
+        public int FrozenIndex = -1;
         public int Size;
         public int Position;
 
@@ -18,77 +20,148 @@ namespace FastWpfGrid
         }
     }
 
+    /// <summary>
+    /// Manager to hold column/row sizes and indexes
+    /// Terminology: 
+    /// ModelIndex - index in model
+    /// ScrollIndex - index in scroll are (=RealIndex-FrozenCount)
+    /// FrozenIndex - index in frozen area
+    /// RealIndex - index in frozen and scroll area (first are frozen items, than scroll items)
+    /// Grid uses mostly RealIndex
+    /// </summary>
     public class SeriesSizes
     {
-        private List<SeriesSizeItem> _items = new List<SeriesSizeItem>();
-        private Dictionary<int, SeriesSizeItem> _itemByIndex = new Dictionary<int, SeriesSizeItem>();
-        private Dictionary<int, int> _sizeOverrides = new Dictionary<int, int>();
-        private List<int> _positions = new List<int>();
-        private List<int> _indexes = new List<int>();
-
-        public int Count;
+        private Dictionary<int, int> _sizeOverridesByModelIndex = new Dictionary<int, int>();
+        private int _count;
         public int DefaultSize;
+        private List<int> _hiddenAndFrozenModelIndexes;
+        private List<int> _frozenModelIndexes;
+
+        // these items are updated in BuildIndex()
+        private List<SeriesSizeItem> _scrollItems = new List<SeriesSizeItem>();
+        //private Dictionary<int, SeriesSizeItem> _itemByIndex = new Dictionary<int, SeriesSizeItem>();
+        private List<int> _positions = new List<int>();
+        private List<int> _scrollIndexes = new List<int>();
+        private List<SeriesSizeItem> _frozenItems = new List<SeriesSizeItem>();
+
+        public int Count
+        {
+            get { return _count; }
+            set { _count = value; }
+        }
+
+        public int ScrollCount
+        {
+            get { return _count - (_hiddenAndFrozenModelIndexes != null ? _hiddenAndFrozenModelIndexes.Count : 0); }
+        }
+
+        public int FrozenCount
+        {
+            get { return (_frozenModelIndexes != null ? _frozenModelIndexes.Count : 0); }
+        }
+
+        public int FrozenSize
+        {
+            get { return _frozenItems.Sum(x => x.Size); }
+        }
+
+        public int RealCount
+        {
+            get { return FrozenCount + ScrollCount; }
+        }
 
         public void Clear()
         {
-            _items.Clear();
-            _itemByIndex.Clear();
-            _sizeOverrides.Clear();
+            _scrollItems.Clear();
+            //_itemByIndex.Clear();
+            _sizeOverridesByModelIndex.Clear();
             _positions.Clear();
-            _indexes.Clear();
+            _scrollIndexes.Clear();
+            _frozenItems.Clear();
+            _hiddenAndFrozenModelIndexes = null;
+            _frozenModelIndexes = null;
         }
 
-        public void PutSizeOverride(int index, int size)
+        public void PutSizeOverride(int modelIndex, int size)
         {
-            if (!_sizeOverrides.ContainsKey(index)) _sizeOverrides[index] = size;
-            if (size > _sizeOverrides[index]) _sizeOverrides[index] = size;
+            if (!_sizeOverridesByModelIndex.ContainsKey(modelIndex)) _sizeOverridesByModelIndex[modelIndex] = size;
+            if (size > _sizeOverridesByModelIndex[modelIndex]) _sizeOverridesByModelIndex[modelIndex] = size;
         }
 
         public void BuildIndex()
         {
-            _items.Clear();
-            _itemByIndex.Clear();
+            _scrollItems.Clear();
+            //_itemByIndex.Clear();
 
-            _indexes = _sizeOverrides.Keys.ToList();
-            _indexes.Sort();
+            _scrollIndexes = _sizeOverridesByModelIndex.Keys.Select(ModelToReal).Select(x => x - FrozenCount).Where(x => x >= 0).ToList();
+            _scrollIndexes.Sort();
 
-            int lastIndex = -1;
+            int lastScrollIndex = -1;
             int lastEndPosition = 0;
 
-            foreach (int index in _indexes)
+            foreach (int scrollIndex in _scrollIndexes)
             {
-                int size = _sizeOverrides[index];
+                int modelIndex = RealToModel(scrollIndex + FrozenCount);
+                int size = _sizeOverridesByModelIndex[modelIndex];
                 var item = new SeriesSizeItem
                     {
-                        Index = index,
+                        ScrollIndex = scrollIndex,
+                        ModelIndex = modelIndex,
                         Size = size,
-                        Position = lastEndPosition + (index - lastIndex - 1)*DefaultSize,
+                        Position = lastEndPosition + (scrollIndex - lastScrollIndex - 1)*DefaultSize,
                     };
-                _items.Add(item);
-                _itemByIndex[index] = item;
-                lastIndex = index;
+                _scrollItems.Add(item);
+                //_itemByIndex[index] = item;
+                lastScrollIndex = scrollIndex;
                 lastEndPosition = item.EndPosition;
             }
 
-            _positions = _items.Select(x => x.Position).ToList();
+            _positions = _scrollItems.Select(x => x.Position).ToList();
+
+
+            _frozenItems.Clear();
+            int lastpos = 0;
+            for (int i = 0; i < FrozenCount; i++)
+            {
+                int modelIndex = _frozenModelIndexes[i];
+                int size = GetSizeByModelIndex(modelIndex);
+                var item = new SeriesSizeItem
+                {
+                    FrozenIndex = i,
+                    ModelIndex = modelIndex,
+                    Size = size,
+                    Position = lastpos,
+                };
+                _frozenItems.Add(item);
+                lastpos += size;
+            }
         }
 
-        public int GetIndexOnPosition(int position)
+        public int GetScrollIndexOnPosition(int position)
         {
             int itemOrder = _positions.BinarySearch(position);
             if (itemOrder >= 0) return itemOrder;
             itemOrder = ~itemOrder; // bitwise complement - index is next larger index
             if (itemOrder == 0) return position/DefaultSize;
-            if (position <= _items[itemOrder - 1].EndPosition) return _items[itemOrder - 1].Index;
-            return (position - _items[itemOrder - 1].Position)/DefaultSize + _items[itemOrder - 1].Index;
+            if (position <= _scrollItems[itemOrder - 1].EndPosition) return _scrollItems[itemOrder - 1].ScrollIndex;
+            return (position - _scrollItems[itemOrder - 1].Position)/DefaultSize + _scrollItems[itemOrder - 1].ScrollIndex;
         }
 
-        public int GetSizeSum(int start, int end)
+        public int GetFrozenIndexOnPosition(int position)
         {
-            int order1 = _indexes.BinarySearch(start);
-            int order2 = _indexes.BinarySearch(end);
+            foreach (var item in _frozenItems)
+            {
+                if (position >= item.Position && position <= item.EndPosition) return item.FrozenIndex;
+            }
+            return -1;
+        }
 
-            int count = end - start;
+        public int GetSizeSum(int startScrollIndex, int endScrollIndex)
+        {
+            int order1 = _scrollIndexes.BinarySearch(startScrollIndex);
+            int order2 = _scrollIndexes.BinarySearch(endScrollIndex);
+
+            int count = endScrollIndex - startScrollIndex;
 
 
             if (order1 < 0) order1 = ~order1;
@@ -99,10 +172,10 @@ namespace FastWpfGrid
             for (int i = order1; i <= order2; i++)
             {
                 if (i < 0) continue;
-                if (i >= _items.Count) continue;
-                var item = _items[i];
-                if (item.Index < start) continue;
-                if (item.Index >= end) continue;
+                if (i >= _scrollItems.Count) continue;
+                var item = _scrollItems[i];
+                if (item.ScrollIndex < startScrollIndex) continue;
+                if (item.ScrollIndex >= endScrollIndex) continue;
 
                 result += item.Size;
                 count--;
@@ -112,47 +185,73 @@ namespace FastWpfGrid
             return result;
         }
 
-        public int GetSize(int index)
+        public int GetSizeByModelIndex(int modelIndex)
         {
-            if (_sizeOverrides.ContainsKey(index)) return _sizeOverrides[index];
+            if (_sizeOverridesByModelIndex.ContainsKey(modelIndex)) return _sizeOverridesByModelIndex[modelIndex];
             return DefaultSize;
         }
 
-        public int GetScroll(int source, int target)
+        public int GetSizeByScrollIndex(int scrollIndex)
         {
-            if (source < target)
+            return GetSizeByRealIndex(scrollIndex + FrozenCount);
+        }
+
+        public int GetSizeByRealIndex(int realIndex)
+        {
+            int modelIndex = RealToModel(realIndex);
+            return GetSizeByModelIndex(modelIndex);
+        }
+
+
+        public int GetScroll(int sourceScrollIndex, int targetScrollIndex)
+        {
+            if (sourceScrollIndex < targetScrollIndex)
             {
-                return -Enumerable.Range(source, target - source).Select(GetSize).Sum();
+                return -Enumerable.Range(sourceScrollIndex, targetScrollIndex - sourceScrollIndex).Select(GetSizeByScrollIndex).Sum();
             }
             else
             {
-                return Enumerable.Range(target, source - target).Select(GetSize).Sum();
+                return Enumerable.Range(targetScrollIndex, sourceScrollIndex - targetScrollIndex).Select(GetSizeByScrollIndex).Sum();
             }
         }
 
-        public int GetTotalSizeSum()
+        public bool ModelIndexIsInScrollArea(int modelIndex)
         {
-            return _sizeOverrides.Values.Sum() + (Count - _sizeOverrides.Count)*DefaultSize;
+            var realIndex = ModelToReal(modelIndex);
+            return realIndex >= FrozenCount;
         }
 
-        public int GetPosition(int index)
+        public int GetTotalScrollSizeSum()
         {
-            int order = _indexes.BinarySearch(index);
-            if (order >= 0) return _items[order].Position;
+            var scrollSizeOverrides = _sizeOverridesByModelIndex.Where(x => ModelIndexIsInScrollArea(x.Key)).ToList();
+            return scrollSizeOverrides.Select(x => x.Value).Sum() + (Count - scrollSizeOverrides.Count)*DefaultSize;
+        }
+
+        public int GetPositionByRealIndex(int realIndex)
+        {
+            if (realIndex < 0) return 0;
+            if (realIndex < FrozenCount) return _frozenItems[realIndex].Position;
+            return GetPositionByScrollIndex(realIndex - FrozenCount);
+        }
+
+        public int GetPositionByScrollIndex(int scrollIndex)
+        {
+            int order = _scrollIndexes.BinarySearch(scrollIndex);
+            if (order >= 0) return _scrollItems[order].Position;
             order = ~order;
             order--;
-            if (order < 0) return index*DefaultSize;
-            return _items[order].EndPosition + (index - _items[order].Index - 1)*DefaultSize;
+            if (order < 0) return scrollIndex*DefaultSize;
+            return _scrollItems[order].EndPosition + (scrollIndex - _scrollItems[order].ScrollIndex - 1)*DefaultSize;
         }
 
-        public int GetVisibleCount(int firstVisibleIndex, int viewportSize)
+        public int GetVisibleScrollCount(int firstVisibleIndex, int viewportSize)
         {
             int res = 0;
             int index = firstVisibleIndex;
             int count = 0;
             while (res < viewportSize && index <= Count)
             {
-                res += GetSize(index);
+                res += GetSizeByScrollIndex(index);
                 index++;
                 count++;
             }
@@ -167,19 +266,19 @@ namespace FastWpfGrid
 
             if (newFirstVisible > oldFirstVisible)
             {
-                int oldVisibleCount = GetVisibleCount(oldFirstVisible, viewportSize);
-                int newVisibleCount = GetVisibleCount(newFirstVisible, viewportSize);
+                int oldVisibleCount = GetVisibleScrollCount(oldFirstVisible, viewportSize);
+                int newVisibleCount = GetVisibleScrollCount(newFirstVisible, viewportSize);
 
                 for (int i = oldFirstVisible + oldVisibleCount - 1; i <= newFirstVisible + newVisibleCount; i++)
                 {
-                    invalidate(i);
+                    invalidate(i + FrozenCount);
                 }
             }
             else
             {
                 for (int i = newFirstVisible; i <= oldFirstVisible; i++)
                 {
-                    invalidate(i);
+                    invalidate(i + FrozenCount);
                 }
             }
         }
@@ -190,48 +289,100 @@ namespace FastWpfGrid
             int testedIndex = firstVisibleIndex;
             while (res < viewportSize && testedIndex < Count)
             {
-                res += GetSize(testedIndex);
+                res += GetSizeByScrollIndex(testedIndex);
                 if (testedIndex == index) return res <= viewportSize;
                 testedIndex++;
             }
             return false;
         }
 
-        public int ScrollInView(int firstVisibleIndex, int index, int viewportSize)
+        public int ScrollInView(int firstVisibleIndex, int scrollIndex, int viewportSize)
         {
-            if (IsWholeInView(firstVisibleIndex, index, viewportSize))
+            if (IsWholeInView(firstVisibleIndex, scrollIndex, viewportSize))
             {
                 return firstVisibleIndex;
             }
 
-            if (index < firstVisibleIndex)
+            if (scrollIndex < firstVisibleIndex)
             {
-                return index;
+                return scrollIndex;
             }
 
             // scroll to the end
             int res = 0;
-            int testedIndex = index;
+            int testedIndex = scrollIndex;
             while (res < viewportSize && testedIndex >= 0)
             {
-                int size = GetSize(testedIndex);
+                int size = GetSizeByScrollIndex(testedIndex);
                 if (res + size > viewportSize) return testedIndex + 1;
                 testedIndex--;
                 res += size;
             }
 
-            if (res >= viewportSize && testedIndex < index) return testedIndex + 1;
+            if (res >= viewportSize && testedIndex < scrollIndex) return testedIndex + 1;
             return firstVisibleIndex;
             //if (testedIndex < index) return testedIndex + 1;
             //return index;
         }
 
-        public void Resize(int index, int newSize)
+        public void Resize(int realIndex, int newSize)
         {
-            if (index < 0) return;
+            if (realIndex < 0) return;
+            int modelIndex = RealToModel(realIndex);
+            if (modelIndex < 0) return;
             // can be done more effectively
-            _sizeOverrides[index] = newSize;
+            _sizeOverridesByModelIndex[modelIndex] = newSize;
             BuildIndex();
+        }
+
+        public void SetExtraordinaryIndexes(HashSet<int> hidden, HashSet<int> frozen)
+        {
+            _hiddenAndFrozenModelIndexes = new List<int>(hidden);
+            _frozenModelIndexes = new List<int>(frozen.Where(x => !hidden.Contains(x)));
+            _hiddenAndFrozenModelIndexes.AddRange(_frozenModelIndexes);
+
+            _frozenModelIndexes.Sort();
+            _hiddenAndFrozenModelIndexes.Sort();
+
+            if (!_hiddenAndFrozenModelIndexes.Any()) _hiddenAndFrozenModelIndexes = null;
+            if (!_frozenModelIndexes.Any()) _frozenModelIndexes = null;
+
+            BuildIndex();
+        }
+
+        public int RealToModel(int realIndex)
+        {
+            if (_hiddenAndFrozenModelIndexes == null && _frozenModelIndexes == null) return realIndex;
+            if (realIndex < 0) return -1;
+            if (realIndex < FrozenCount && _frozenModelIndexes != null) return _frozenModelIndexes[realIndex];
+            if (_hiddenAndFrozenModelIndexes == null) return realIndex;
+
+            realIndex -= FrozenCount;
+            foreach (int hidItem in _hiddenAndFrozenModelIndexes)
+            {
+                if (realIndex < hidItem) return realIndex;
+                realIndex++;
+            }
+            return realIndex;
+        }
+
+        public int ModelToReal(int modelIndex)
+        {
+            if (_hiddenAndFrozenModelIndexes == null && _frozenModelIndexes == null) return modelIndex;
+            if (modelIndex < 0) return -1;
+            int frozenIndex = _frozenModelIndexes != null ? _frozenModelIndexes.IndexOf(modelIndex) : -1;
+            if (frozenIndex >= 0) return frozenIndex;
+            if (_hiddenAndFrozenModelIndexes == null) return modelIndex;
+            int hiddenIndex = _hiddenAndFrozenModelIndexes.BinarySearch(modelIndex);
+            if (hiddenIndex >= 0) return -1;
+            hiddenIndex = ~hiddenIndex;
+            if (hiddenIndex > 0) return modelIndex - hiddenIndex;
+            return modelIndex;
+        }
+
+        public int GetFrozenPosition(int frozenIndex)
+        {
+            return _frozenItems[frozenIndex].Position;
         }
     }
 }

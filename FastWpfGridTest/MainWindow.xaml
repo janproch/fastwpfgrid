@@ -15,6 +15,8 @@
                     <StackPanel Orientation="Horizontal">
                         <CheckBox Content="Use clear type" x:Name="chbClearType1" IsChecked="True" />
                         <CheckBox Content="Is transposed" x:Name="chbIsTransposed1" />
+                        <CheckBox Content="Hide column 3" x:Name="chbHideColumn3" Click="columnsCfgChanged" />
+                        <CheckBox Content="Freeze column 5" x:Name="chbFreezeColumn5" Click="columnsCfgChanged" />
                     </StackPanel>
                     <FastWpfGrid:FastGridControl x:Name="grid1" Grid.Row="1" 
                                                  IsTransposed="{Binding IsChecked, ElementName=chbIsTransposed1}"

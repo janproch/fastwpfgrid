@@ -13,6 +13,10 @@ namespace FastWpfGrid
         private List<IFastGridView> _grids = new List<IFastGridView>();
         private int? _requestedRow;
         private int? _requestedColumn;
+        private HashSet<int> _frozenRows = new HashSet<int>();
+        private HashSet<int> _hiddenRows = new HashSet<int>();
+        private HashSet<int> _frozenColumns = new HashSet<int>();
+        private HashSet<int> _hiddenColumns = new HashSet<int>();
 
         public abstract int ColumnCount { get; }
 
@@ -68,6 +72,40 @@ namespace FastWpfGrid
             _grids.Remove(view);
         }
 
+        public virtual HashSet<int> GetHiddenColumns()
+        {
+            return _hiddenColumns;
+        }
+
+        public virtual HashSet<int> GetFrozenColumns()
+        {
+            return _frozenColumns;
+        }
+
+        public virtual HashSet<int> GetHiddenRows()
+        {
+            return _hiddenRows;
+        }
+
+        public virtual HashSet<int> GetFrozenRows()
+        {
+            return _frozenRows;
+        }
+
+        public void SetColumnArrange(HashSet<int> hidden, HashSet<int> frozen)
+        {
+            _hiddenColumns = hidden;
+            _frozenColumns = frozen;
+            NotifyColumnArrangeChanged();
+        }
+
+        public void SetRowArrange(HashSet<int> hidden, HashSet<int> frozen)
+        {
+            _hiddenRows = hidden;
+            _frozenRows = frozen;
+            NotifyRowArrangeChanged();
+        }
+
         public void InvalidateAll()
         {
             _grids.ForEach(x => x.InvalidateAll());
@@ -91,6 +129,16 @@ namespace FastWpfGrid
         public void NotifyAddedRows()
         {
             _grids.ForEach(x => x.NotifyAddedRows());
+        }
+
+        public void NotifyColumnArrangeChanged()
+        {
+            _grids.ForEach(x => x.NotifyColumnArrangeChanged());
+        }
+
+        public void NotifyRowArrangeChanged()
+        {
+            _grids.ForEach(x => x.NotifyRowArrangeChanged());
         }
 
         public virtual Color? BackgroundColor

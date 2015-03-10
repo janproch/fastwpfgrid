@@ -23,10 +23,12 @@ namespace FastWpfGridTest
     /// </summary>
     public partial class MainWindow : Window
     {
+        private GridModel1 _model1;
+
         public MainWindow()
         {
             InitializeComponent();
-            grid1.Model = new GridModel1();
+            grid1.Model = _model1 = new GridModel1();
             grid2.Model = new GridModel2();
         }
 
@@ -161,6 +163,17 @@ namespace FastWpfGridTest
 
             textImage3.Stretch = Stretch.None;
             textImage3.Source = bmp;
+        }
+
+        private void columnsCfgChanged(object sender, RoutedEventArgs e)
+        {
+            var hidden = new HashSet<int>();
+            var frozen = new HashSet<int>();
+
+            if (chbHideColumn3.IsChecked == true) hidden.Add(2);
+            if (chbFreezeColumn5.IsChecked == true) frozen.Add(4);
+
+            _model1.SetColumnArrange(hidden, frozen);
         }
     }
 }
