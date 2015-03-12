@@ -29,6 +29,11 @@ namespace FastWpfGrid
                     _drawBuffer.Clear(Colors.White);
                 }
 
+                if (ShouldDrawGridHeader())
+                {
+                    RenderGridHeader();
+                }
+
                 // render frozen rows
                 for (int row = 0; row < _rowSizes.FrozenCount; row++)
                 {
@@ -94,6 +99,14 @@ namespace FastWpfGrid
             ClearInvalidation();
         }
 
+        private void RenderGridHeader()
+        {
+            if (Model == null) return;
+            var cell = Model.GetGridHeader();
+            var rect = GetGridHeaderRect();
+            RenderCell(cell, rect, null, HeaderBackground, FastGridCellAddress.Empty);
+        }
+
         private void RenderColumnHeader(int col)
         {
             var cell = GetColumnHeader(col);
@@ -108,7 +121,7 @@ namespace FastWpfGrid
             Color? hoverColor = null;
             if (col == _mouseOverColumnHeader) hoverColor = MouseOverRowColor;
 
-            RenderCell(cell, rect, null, hoverColor ?? selectedBgColor ?? cellBackground ?? HeaderBackground);
+            RenderCell(cell, rect, null, hoverColor ?? selectedBgColor ?? cellBackground ?? HeaderBackground, new FastGridCellAddress(null, col));
         }
 
         private void RenderRowHeader(int row)
@@ -125,7 +138,7 @@ namespace FastWpfGrid
             Color? hoverColor = null;
             if (row == _mouseOverRowHeader) hoverColor = MouseOverRowColor;
 
-            RenderCell(cell, rect, null, hoverColor ?? selectedBgColor ?? cellBackground ?? HeaderBackground);
+            RenderCell(cell, rect, null, hoverColor ?? selectedBgColor ?? cellBackground ?? HeaderBackground, new FastGridCellAddress(row, null));
         }
 
         private void RenderCell(int row, int col)
@@ -152,18 +165,17 @@ namespace FastWpfGrid
             RenderCell(cell, rect, selectedTextColor, selectedBgColor
                                                       ?? hoverRowColor
                                                       ?? cellBackground
-                                                      ?? GetAlternateBackground(row));
+                                                      ?? GetAlternateBackground(row),
+                                                      new FastGridCellAddress(row, col));
         }
 
         private int GetCellContentWidth(IFastGridCell cell)
         {
             if (cell == null) return 0;
             int count = cell.BlockCount;
-            int rightCount = cell.RightAlignBlockCount;
-            int leftCount = count - rightCount;
 
             int witdh = 0;
-            for (int i = 0; i < leftCount; i++)
+            for (int i = 0; i < count; i++)
             {
                 var block = cell.GetBlock(i);
                 if (block == null) continue;
@@ -173,12 +185,11 @@ namespace FastWpfGrid
                 {
                     case FastGridBlockType.Text:
                         string text = block.TextData;
-                        bool isBold = block.IsBold;
-                        bool isItalic = block.IsItalic;
-                        var font = GetFont(isBold, isItalic);
+                        var font = GetFont(block.IsBold, block.IsItalic);
                         witdh += font.GetTextWidth(text);
                         break;
                     case FastGridBlockType.Image:
+                    case FastGridBlockType.ImageButton:
                         witdh += block.ImageWidth;
                         break;
                 }
@@ -187,7 +198,47 @@ namespace FastWpfGrid
             return witdh;
         }
 
-        private void RenderCell(IFastGridCell cell, IntRect rect, Color? selectedTextColor, Color bgColor)
+        private int RenderBlock(int leftPos, int rightPos, Color? selectedTextColor, Color bgColor, IntRect rectContent, IFastGridCellBlock block, FastGridCellAddress cellAddr, bool leftAlign)
+        {
+            bool renderBlock = true;
+            if (block.ShowOnMouseHover)
+            {
+                if (cellAddr.IsCell) renderBlock = cellAddr == _mouseOverCell;
+                if (cellAddr.IsRowHeader) renderBlock = cellAddr.Row == _mouseOverRowHeader;
+                if (cellAddr.IsColumnHeader) renderBlock = cellAddr.Column == _mouseOverColumnHeader;
+            }
+
+            switch (block.BlockType)
+            {
+                case FastGridBlockType.Text:
+                    string text = block.TextData;
+                    var font = GetFont(block.IsBold, block.IsItalic);
+                    int textHeight = font.TextHeight;
+                    int textWidth = font.GetTextWidth(text);
+                    var textOrigin = new IntPoint(leftAlign ? leftPos : rightPos - textWidth, rectContent.Top + (int) Math.Round(rectContent.Height/2.0 - textHeight/2.0));
+                    if (renderBlock)
+                    {
+                        textWidth = _drawBuffer.DrawString(textOrigin.X, textOrigin.Y, rectContent, selectedTextColor ?? block.FontColor ?? CellFontColor, UseClearType ? bgColor : (Color?) null,
+                                                           font,
+                                                           text);
+                    }
+                    return textWidth;
+                case FastGridBlockType.Image:
+                case FastGridBlockType.ImageButton:
+                    var imgOrigin = new IntPoint(leftAlign ? leftPos : rightPos - block.ImageWidth,
+                                                 rectContent.Top + (int) Math.Round(rectContent.Height/2.0 - block.ImageHeight/2.0));
+                    var wbmp = GetImage(block.ImageSource);
+                    if (renderBlock)
+                    {
+                        _drawBuffer.Blit(new Rect(imgOrigin.X, imgOrigin.Y, block.ImageWidth, block.ImageHeight), wbmp, new Rect(0, 0, block.ImageWidth, block.ImageHeight),
+                                         WriteableBitmapExtensions.BlendMode.Alpha);
+                    }
+                    return block.ImageWidth;
+            }
+            return 0;
+        }
+
+        private void RenderCell(IFastGridCell cell, IntRect rect, Color? selectedTextColor, Color bgColor, FastGridCellAddress cellAddr)
         {
             if (cell == null) return;
             var rectContent = GetContentRect(rect);
@@ -200,42 +251,28 @@ namespace FastWpfGrid
             int leftPos = rectContent.Left;
             int rightPos = rectContent.Right;
 
+            for (int i = count - 1; i >= count - rightCount; i--)
+            {
+                var block = cell.GetBlock(i);
+                if (block == null) continue;
+                if (i < count - 1) rightPos -= BlockPadding;
+                int blockWi = RenderBlock(leftPos, rightPos, selectedTextColor,bgColor, rectContent, block, cellAddr, false);
+                rightPos -= blockWi;
+            }
+
             for (int i = 0; i < leftCount && leftPos < rightPos; i++)
             {
                 var block = cell.GetBlock(i);
                 if (block == null) continue;
                 if (i > 0) leftPos += BlockPadding;
-
-                switch (block.BlockType)
-                {
-                    case FastGridBlockType.Text:
-                        string text = block.TextData;
-                        bool isBold = block.IsBold;
-                        bool isItalic = block.IsItalic;
-                        var color = block.FontColor;
-                        var font = GetFont(isBold, isItalic);
-                        int textHeight = font.TextHeight;
-                        var textOrigin = new IntPoint(leftPos, rectContent.Top + (int) Math.Round(rectContent.Height/2.0 - textHeight/2.0));
-                        int textWidth = _drawBuffer.DrawString(textOrigin.X, textOrigin.Y, rectContent, selectedTextColor ?? color ?? CellFontColor, UseClearType ? bgColor : (Color?) null,
-                                                               font,
-                                                               text);
-                        leftPos += textWidth;
-                        break;
-                    case FastGridBlockType.Image:
-                        var imgOrigin = new IntPoint(leftPos, rectContent.Top + (int) Math.Round(rectContent.Height/2.0 - block.ImageHeight/2.0));
-                        var wbmp = GetImage(block.ImageSource);
-                        _drawBuffer.Blit(new Rect(imgOrigin.X, imgOrigin.Y, block.ImageWidth, block.ImageHeight), wbmp, new Rect(0, 0, block.ImageWidth, block.ImageHeight),
-                                         WriteableBitmapExtensions.BlendMode.Alpha);
-                        leftPos += block.ImageWidth;
-                        break;
-                }
-
-                switch (cell.Decoration)
-                {
-                    case CellDecoration.StrikeOutHorizontal:
-                        _drawBuffer.DrawLine(rect.Left, rect.Top + rect.Height/2, rect.Right, rect.Top + rect.Height/2, cell.DecorationColor ?? Colors.Black);
-                        break;
-                }
+                int blockWi = RenderBlock(leftPos, rightPos, selectedTextColor, bgColor, rectContent, block, cellAddr, true);
+                leftPos += blockWi;
+            }
+            switch (cell.Decoration)
+            {
+                case CellDecoration.StrikeOutHorizontal:
+                    _drawBuffer.DrawLine(rect.Left, rect.Top + rect.Height/2, rect.Right, rect.Top + rect.Height/2, cell.DecorationColor ?? Colors.Black);
+                    break;
             }
         }
 

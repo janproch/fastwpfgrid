@@ -200,6 +200,7 @@ namespace FastWpfGrid
                 SetHoverRow(cell.IsCell ? cell.Row.Value : (int?)null);
                 SetHoverRowHeader(cell.IsRowHeader ? cell.Row.Value : (int?)null);
                 SetHoverColumnHeader(cell.IsColumnHeader ? cell.Column.Value : (int?)null);
+                SetHoverCell(cell);
             }
         }
 

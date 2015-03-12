@@ -11,6 +11,7 @@ namespace FastWpfGrid
     {
         private bool _isInvalidated;
         private bool _isInvalidatedAll;
+        private bool _InvalidatedGridHeader;
         private List<int> _invalidatedRows = new List<int>();
         private List<int> _invalidatedColumns = new List<int>();
         private List<Tuple<int, int>> _invalidatedCells = new List<Tuple<int, int>>();
@@ -114,6 +115,13 @@ namespace FastWpfGrid
             _invalidatedCells.Add(Tuple.Create(row, column));
         }
 
+        public void InvalidateGridHeader()
+        {
+            CheckInvalidation();
+            _isInvalidated = true;
+            _InvalidatedGridHeader = true;
+        }
+
         public void InvalidateCell(FastGridCellAddress cell)
         {
             if (cell.Column == null && cell.Row == null)
@@ -143,6 +151,7 @@ namespace FastWpfGrid
             _invalidatedRowHeaders.Clear();
             _isInvalidated = false;
             _isInvalidatedAll = false;
+            _InvalidatedGridHeader = false;
         }
 
         private bool ShouldDrawCell(int row, int column)
@@ -173,5 +182,10 @@ namespace FastWpfGrid
             return false;
         }
 
+        private bool ShouldDrawGridHeader()
+        {
+            if (!_isInvalidated || _isInvalidatedAll) return true;
+            return _InvalidatedGridHeader;
+        }
     }
 }

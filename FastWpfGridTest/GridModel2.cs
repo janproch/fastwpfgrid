@@ -66,7 +66,11 @@ namespace FastWpfGridTest
                         DecorationColor = Colors.Red,
                 };
             }
-            return base.GetCell(row, column);
+            var impl = new FastGridCellImpl();
+            impl.AddTextBlock(GetCellText(row, column));
+            impl.AddImageBlock("/Images/foreign_keysmall.png").ShowOnMouseHover = true;
+            impl.RightAlignBlockCount = 1;
+            return impl;
         }
 
         public override string GetCellText(int row, int column)

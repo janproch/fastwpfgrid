@@ -45,6 +45,11 @@ namespace FastWpfGrid
         void InvalidateColumn(int column);
 
         /// <summary>
+        /// invalidates grid header (top-left header cell)
+        /// </summary>
+        void InvalidateGridHeader();
+
+        /// <summary>
         /// forces grid to refresh all data
         /// </summary>
         void NotifyRefresh();

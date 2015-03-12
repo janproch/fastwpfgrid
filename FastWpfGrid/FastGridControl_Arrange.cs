@@ -285,13 +285,13 @@ namespace FastWpfGrid
         private void SetScrollbarMargin()
         {
             vscroll.Margin = new Thickness
-            {
-                Top = HeaderHeight + FrozenHeight,
-            };
+                {
+                    Top = HeaderHeight + FrozenHeight,
+                };
             hscroll.Margin = new Thickness
-            {
-                Left = HeaderWidth + FrozenWidth,
-            };
+                {
+                    Left = HeaderWidth + FrozenWidth,
+                };
         }
 
         public int FrozenWidth
@@ -307,6 +307,11 @@ namespace FastWpfGrid
         private IntRect GetScrollRect()
         {
             return new IntRect(new IntPoint(HeaderWidth + FrozenWidth, HeaderHeight + FrozenHeight), new IntSize(GridScrollAreaWidth, GridScrollAreaHeight));
+        }
+
+        private IntRect GetGridHeaderRect()
+        {
+            return new IntRect(new IntPoint(0, 0), new IntSize(HeaderWidth + 1, HeaderHeight + 1));
         }
     }
 }

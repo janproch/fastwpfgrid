@@ -36,5 +36,11 @@ namespace FastWpfGridTest
             var key = Tuple.Create(row, column);
             _editedCells[key] = value;
         }
+
+        public override IFastGridCell GetGridHeader()
+        {
+            var impl = new FastGridCellImpl();
+            return impl;
+        }
     }
 }

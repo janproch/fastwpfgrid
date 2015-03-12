@@ -33,6 +33,7 @@ namespace FastWpfGrid
         private FastGridCellAddress _currentCell;
         private HashSet<FastGridCellAddress> _selectedCells = new HashSet<FastGridCellAddress>();
         private FastGridCellAddress _dragStartCell;
+        private FastGridCellAddress _mouseOverCell;
         private int? _mouseOverRow;
         private int? _mouseOverRowHeader;
         private int? _mouseOverColumnHeader;
@@ -315,11 +316,6 @@ namespace FastWpfGrid
             return Model.GetCell(_rowSizes.RealToModel(row), _columnSizes.RealToModel(col));
         }
 
-        private void RenderCell00()
-        {
-            //dc.DrawRectangle(Brushes.White, new Pen(), new Rect(0, 0, Grid.HeaderWidth, Grid.HeaderHeight));
-        }
-
         protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
         {
             base.OnMouseLeftButtonUp(e);
@@ -439,9 +435,9 @@ namespace FastWpfGrid
 
         private void SetHoverRow(int? row)
         {
+            if (row == _mouseOverRow) return;
             using (var ctx = CreateInvalidationContext())
             {
-                if (row == _mouseOverRow) return;
                 if (_mouseOverRow.HasValue) InvalidateRow(_mouseOverRow.Value);
                 _mouseOverRow = row;
                 if (_mouseOverRow.HasValue) InvalidateRow(_mouseOverRow.Value);
@@ -450,9 +446,9 @@ namespace FastWpfGrid
 
         private void SetHoverRowHeader(int? row)
         {
+            if (row == _mouseOverRowHeader) return;
             using (var ctx = CreateInvalidationContext())
             {
-                if (row == _mouseOverRowHeader) return;
                 if (_mouseOverRowHeader.HasValue) InvalidateRowHeader(_mouseOverRowHeader.Value);
                 _mouseOverRowHeader = row;
                 if (_mouseOverRowHeader.HasValue) InvalidateRow(_mouseOverRowHeader.Value);
@@ -461,15 +457,25 @@ namespace FastWpfGrid
 
         private void SetHoverColumnHeader(int? column)
         {
+            if (column == _mouseOverColumnHeader) return;
             using (var ctx = CreateInvalidationContext())
             {
-                if (column == _mouseOverColumnHeader) return;
                 if (_mouseOverColumnHeader.HasValue) InvalidateColumnHeader(_mouseOverColumnHeader.Value);
                 _mouseOverColumnHeader = column;
                 if (_mouseOverColumnHeader.HasValue) InvalidateColumn(_mouseOverColumnHeader.Value);
             }
         }
 
+        private void SetHoverCell(FastGridCellAddress cell)
+        {
+            if (cell == _mouseOverCell) return;
+            using (var ctx = CreateInvalidationContext())
+            {
+                if (_mouseOverCell.IsCell) InvalidateCell(_mouseOverCell);
+                _mouseOverCell = cell.IsCell ? cell : FastGridCellAddress.Empty;
+                if (_mouseOverCell.IsCell) InvalidateCell(_mouseOverCell);
+            }
+        }
 
         private void imageGridResized(object sender, SizeChangedEventArgs e)
         {

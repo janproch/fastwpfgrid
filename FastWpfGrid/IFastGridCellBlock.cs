@@ -12,6 +12,7 @@ namespace FastWpfGrid
     {
         Text,
         Image,
+        ImageButton,
     }
 
     public interface IFastGridCellBlock
@@ -26,5 +27,8 @@ namespace FastWpfGrid
         string ImageSource { get; }
         int ImageWidth { get; }
         int ImageHeight { get; }
+
+        bool ShowOnMouseHover { get; }
+        object CommandParameter { get; }
     }
 }

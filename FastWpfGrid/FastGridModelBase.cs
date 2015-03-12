@@ -57,6 +57,11 @@ namespace FastWpfGrid
             return this;
         }
 
+        public virtual IFastGridCell GetGridHeader()
+        {
+            return new FastGridCellImpl();
+        }
+
         public virtual string GetColumnHeaderText(int column)
         {
             return "Column " + (column + 1).ToString();
@@ -70,6 +75,10 @@ namespace FastWpfGrid
         public virtual void DetachView(IFastGridView view)
         {
             _grids.Remove(view);
+        }
+
+        public virtual void HandleCommand(FastGridCellAddress address, object commandParameter)
+        {
         }
 
         public virtual HashSet<int> GetHiddenColumns()
@@ -216,6 +225,16 @@ namespace FastWpfGrid
         public virtual int ImageHeight
         {
             get { return 16; }
+        }
+
+        public virtual bool ShowOnMouseHover
+        {
+            get { return false; }
+        }
+
+        public virtual object CommandParameter
+        {
+            get { return null; }
         }
 
         public virtual CellDecoration Decoration
