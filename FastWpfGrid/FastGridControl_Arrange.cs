@@ -135,7 +135,7 @@ namespace FastWpfGrid
         {
             if (pt.X <= HeaderWidth && pt.Y < HeaderHeight)
             {
-                return FastGridCellAddress.Empty;
+                return FastGridCellAddress.GridHeader;
             }
             if (pt.X >= GridScrollAreaWidth + HeaderWidth + FrozenWidth)
             {
@@ -312,6 +312,25 @@ namespace FastWpfGrid
         private IntRect GetGridHeaderRect()
         {
             return new IntRect(new IntPoint(0, 0), new IntSize(HeaderWidth + 1, HeaderHeight + 1));
+        }
+
+        private FastGridCellAddress RealToModel(FastGridCellAddress address)
+        {
+            if (IsTransposed)
+            {
+                return new FastGridCellAddress(
+                    _currentCell.Column.HasValue ? _columnSizes.RealToModel(_currentCell.Column.Value) : (int?)null,
+                    _currentCell.Row.HasValue ? _rowSizes.RealToModel(_currentCell.Row.Value) : (int?)null
+                    );
+            }
+            else
+            {
+                return new FastGridCellAddress(
+                    _currentCell.Row.HasValue ? _rowSizes.RealToModel(_currentCell.Row.Value) : (int?) null,
+                    _currentCell.Column.HasValue ? _columnSizes.RealToModel(_currentCell.Column.Value) : (int?) null
+                    );
+
+            }
         }
     }
 }

@@ -471,9 +471,9 @@ namespace FastWpfGrid
             if (cell == _mouseOverCell) return;
             using (var ctx = CreateInvalidationContext())
             {
-                if (_mouseOverCell.IsCell) InvalidateCell(_mouseOverCell);
-                _mouseOverCell = cell.IsCell ? cell : FastGridCellAddress.Empty;
-                if (_mouseOverCell.IsCell) InvalidateCell(_mouseOverCell);
+                if (!_mouseOverCell.IsEmpty) InvalidateCell(_mouseOverCell);
+                _mouseOverCell = cell.IsEmpty ? FastGridCellAddress.Empty : cell;
+                if (!_mouseOverCell.IsEmpty) InvalidateCell(_mouseOverCell);
             }
         }
 

@@ -12,7 +12,6 @@ namespace FastWpfGrid
     {
         Text,
         Image,
-        ImageButton,
     }
 
     public interface IFastGridCellBlock

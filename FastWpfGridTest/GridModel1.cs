@@ -40,6 +40,8 @@ namespace FastWpfGridTest
         public override IFastGridCell GetGridHeader()
         {
             var impl = new FastGridCellImpl();
+            var btn = impl.AddImageBlock("/Images/flip_vertical_small.png");
+            btn.CommandParameter = FastWpfGrid.FastGridControl.ToggleTransposedCommand;
             return impl;
         }
     }

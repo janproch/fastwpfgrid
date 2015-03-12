@@ -124,17 +124,17 @@ namespace FastWpfGrid
 
         public void InvalidateCell(FastGridCellAddress cell)
         {
-            if (cell.Column == null && cell.Row == null)
+            if (cell.IsGridHeader)
             {
-                // invalidate cell 00
+                InvalidateGridHeader();
                 return;
             }
-            if (cell.Column == null)
+            if (cell.IsRowHeader)
             {
                 InvalidateRowHeader(cell.Row.Value);
                 return;
             }
-            if (cell.Row == null)
+            if (cell.IsColumnHeader)
             {
                 InvalidateColumnHeader(cell.Column.Value);
                 return;

@@ -79,6 +79,16 @@ namespace System.Windows.Media.Imaging
         {
             return new Rect(Left, Top, Width, Height);
         }
+
+        public IntRect Translate(IntPoint pt)
+        {
+            return new IntRect(TopLeft.Translate(pt), Size);
+        }
+
+        public bool Contains(Point pt)
+        {
+            return pt.X >= Left && pt.X <= Right && pt.Y >= Top && pt.Y <= Bottom;
+        }
     }
 
     public struct IntPoint
@@ -89,6 +99,11 @@ namespace System.Windows.Media.Imaging
         {
             X = x;
             Y = y;
+        }
+
+        public IntPoint Translate(IntPoint pt)
+        {
+            return new IntPoint(X + pt.X, Y + pt.Y);
         }
     }
 

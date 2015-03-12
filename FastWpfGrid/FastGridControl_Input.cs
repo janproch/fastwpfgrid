@@ -3,21 +3,41 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace FastWpfGrid
 {
     partial class FastGridControl
     {
+        public static readonly object ToggleTransposedCommand = new object();
+
+        public class ActiveRegion
+        {
+            public IntRect Rect;
+            public object CommandParameter;
+        }
+
         public event Action<object, ColumnClickEventArgs> ColumnHeaderClick;
         public event Action<object, RowClickEventArgs> RowHeaderClick;
         public event EventHandler SelectedCellsChanged;
+        public List<ActiveRegion> CurrentCellActiveRegions = new List<ActiveRegion>();
+        public ActiveRegion CurrentHoverRegion;
+        private Point? _mouseCursorPoint;
 
         protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
         {
             base.OnMouseLeftButtonDown(e);
             var pt = e.GetPosition(image);
             var cell = GetCellAddress(pt);
+
+            var currentRegion = CurrentCellActiveRegions.FirstOrDefault(x => x.Rect.Contains(pt));
+            if (currentRegion!=null)
+            {
+                HandleCommand(cell, currentRegion.CommandParameter);
+                return;
+            }
 
             using (var ctx = CreateInvalidationContext())
             {
@@ -156,11 +176,12 @@ namespace FastWpfGrid
             using (var ctx = CreateInvalidationContext())
             {
                 var pt = e.GetPosition(image);
+                _mouseCursorPoint = pt;
                 var cell = GetCellAddress(pt);
 
                 if (_resizingColumn.HasValue)
                 {
-                    int newSize = _resizingColumnStartSize.Value + (int)Math.Round(pt.X - _resizingColumnOrigin.Value.X);
+                    int newSize = _resizingColumnStartSize.Value + (int) Math.Round(pt.X - _resizingColumnOrigin.Value.X);
                     if (newSize < MinColumnWidth) newSize = MinColumnWidth;
                     if (newSize > GridScrollAreaWidth) newSize = GridScrollAreaWidth;
                     _columnSizes.Resize(_resizingColumn.Value, newSize);
@@ -197,10 +218,16 @@ namespace FastWpfGrid
                     OnChangeSelectedCells();
                 }
 
-                SetHoverRow(cell.IsCell ? cell.Row.Value : (int?)null);
-                SetHoverRowHeader(cell.IsRowHeader ? cell.Row.Value : (int?)null);
-                SetHoverColumnHeader(cell.IsColumnHeader ? cell.Column.Value : (int?)null);
+                SetHoverRow(cell.IsCell ? cell.Row.Value : (int?) null);
+                SetHoverRowHeader(cell.IsRowHeader ? cell.Row.Value : (int?) null);
+                SetHoverColumnHeader(cell.IsColumnHeader ? cell.Column.Value : (int?) null);
                 SetHoverCell(cell);
+
+                var currentRegion = CurrentCellActiveRegions.FirstOrDefault(x => x.Rect.Contains(pt));
+                if (currentRegion != CurrentHoverRegion)
+                {
+                    InvalidateCell(cell);
+                }
             }
         }
 
@@ -217,6 +244,19 @@ namespace FastWpfGrid
                 SetHoverRow(null);
                 SetHoverRowHeader(null);
                 SetHoverColumnHeader(null);
+            }
+        }
+
+        private void HandleCommand(FastGridCellAddress address, object commandParameter)
+        {
+            if (commandParameter == ToggleTransposedCommand)
+            {
+                IsTransposed = !IsTransposed;
+            }
+            if (Model != null)
+            {
+                var addressModel = RealToModel(address);
+                Model.HandleCommand(addressModel, commandParameter);
             }
         }
     }

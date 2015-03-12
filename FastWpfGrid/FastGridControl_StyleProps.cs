@@ -34,6 +34,9 @@ namespace FastWpfGrid
                 Color.FromRgb(235, 245, 255)
             };
 
+        private Color _activeRegionFrameColor = Color.FromRgb(0xAA, 0xAA, 0xFF);
+        private Color _activeRegionHoverFillColor = Color.FromRgb(0xAA, 0xFF, 0xFF);
+
         public int ColumnResizeTheresold
         {
             get { return _columnResizeTheresold; }
@@ -183,6 +186,22 @@ namespace FastWpfGrid
                 _headerCurrentBackground = value;
                 RenderChanged();
             }
+        }
+
+        public Color ActiveRegionFrameColor
+        {
+            get { return _activeRegionFrameColor; }
+            set
+            {
+                _activeRegionFrameColor = value;
+                RenderChanged();
+            }
+        }
+
+        public Color ActiveRegionHoverFillColor
+        {
+            get { return _activeRegionHoverFillColor; }
+            set { _activeRegionHoverFillColor = value; }
         }
     }
 }
