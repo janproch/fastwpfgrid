@@ -29,5 +29,6 @@ namespace FastWpfGrid
 
         bool ShowOnMouseHover { get; }
         object CommandParameter { get; }
+        string Tooltip { get; }
     }
 }

@@ -102,7 +102,7 @@ namespace FastWpfGrid
         private void RenderGridHeader()
         {
             if (Model == null) return;
-            var cell = Model.GetGridHeader();
+            var cell = Model.GetGridHeader(this);
             var rect = GetGridHeaderRect();
             RenderCell(cell, rect, null, HeaderBackground, FastGridCellAddress.GridHeader);
         }
@@ -226,6 +226,7 @@ namespace FastWpfGrid
                 {
                     CommandParameter = block.CommandParameter,
                     Rect = activeRect,
+                    Tooltip = block.Tooltip,
                 };
                 CurrentCellActiveRegions.Add(region);
                 if (_mouseCursorPoint.HasValue && activeRect.Contains(_mouseCursorPoint.Value))
@@ -270,7 +271,11 @@ namespace FastWpfGrid
             //if (cellAddr.IsColumnHeader) isHoverCell = cellAddr.Column == _mouseOverColumnHeader;
             //if (cellAddr.IsGridHeader) isho
 
-            if (isHoverCell) CurrentCellActiveRegions.Clear();
+            if (isHoverCell)
+            {
+                CurrentCellActiveRegions.Clear();
+                CurrentHoverRegion = null;
+            }
 
             if (cell == null) return;
             var rectContent = GetContentRect(rect);

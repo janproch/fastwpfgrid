@@ -31,7 +31,7 @@ namespace FastWpfGrid
         {
         }
 
-        public virtual IFastGridCell GetCell(int row, int column)
+        public virtual IFastGridCell GetCell(IFastGridView view, int row, int column)
         {
             _requestedRow = row;
             _requestedColumn = column;
@@ -43,21 +43,21 @@ namespace FastWpfGrid
             return (row + 1).ToString();
         }
 
-        public virtual IFastGridCell GetRowHeader(int row)
+        public virtual IFastGridCell GetRowHeader(IFastGridView view, int row)
         {
             _requestedRow = row;
             _requestedColumn = null;
             return this;
         }
 
-        public virtual IFastGridCell GetColumnHeader(int column)
+        public virtual IFastGridCell GetColumnHeader(IFastGridView view, int column)
         {
             _requestedColumn = column;
             _requestedRow = null;
             return this;
         }
 
-        public virtual IFastGridCell GetGridHeader()
+        public virtual IFastGridCell GetGridHeader(IFastGridView view)
         {
             return new FastGridCellImpl();
         }
@@ -77,26 +77,26 @@ namespace FastWpfGrid
             _grids.Remove(view);
         }
 
-        public virtual void HandleCommand(FastGridCellAddress address, object commandParameter)
+        public virtual void HandleCommand(IFastGridView view, FastGridCellAddress address, object commandParameter)
         {
         }
 
-        public virtual HashSet<int> GetHiddenColumns()
+        public virtual HashSet<int> GetHiddenColumns(IFastGridView view)
         {
             return _hiddenColumns;
         }
 
-        public virtual HashSet<int> GetFrozenColumns()
+        public virtual HashSet<int> GetFrozenColumns(IFastGridView view)
         {
             return _frozenColumns;
         }
 
-        public virtual HashSet<int> GetHiddenRows()
+        public virtual HashSet<int> GetHiddenRows(IFastGridView view)
         {
             return _hiddenRows;
         }
 
-        public virtual HashSet<int> GetFrozenRows()
+        public virtual HashSet<int> GetFrozenRows(IFastGridView view)
         {
             return _frozenRows;
         }
@@ -233,6 +233,11 @@ namespace FastWpfGrid
         }
 
         public virtual object CommandParameter
+        {
+            get { return null; }
+        }
+
+        public virtual string Tooltip
         {
             get { return null; }
         }

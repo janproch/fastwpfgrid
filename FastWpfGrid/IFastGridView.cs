@@ -68,5 +68,10 @@ namespace FastWpfGrid
         /// notifies grid, that result of GetHiddenRows() or GetFrozenRows() is changed
         /// </summary>
         void NotifyRowArrangeChanged();
+
+        /// <summary>
+        /// set/get whether grid is transposed
+        /// </summary>
+        bool IsTransposed { get; set; }
     }
 }

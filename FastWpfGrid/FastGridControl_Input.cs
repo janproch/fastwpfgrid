@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
@@ -17,6 +18,7 @@ namespace FastWpfGrid
         {
             public IntRect Rect;
             public object CommandParameter;
+            public string Tooltip;
         }
 
         public event Action<object, ColumnClickEventArgs> ColumnHeaderClick;
@@ -25,6 +27,9 @@ namespace FastWpfGrid
         public List<ActiveRegion> CurrentCellActiveRegions = new List<ActiveRegion>();
         public ActiveRegion CurrentHoverRegion;
         private Point? _mouseCursorPoint;
+        private ToolTip _tooltip;
+        private object _tooltipTarget;
+        private string _tooltipText;
 
         protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
         {
@@ -229,6 +234,37 @@ namespace FastWpfGrid
                     InvalidateCell(cell);
                 }
             }
+
+            if (CurrentHoverRegion != null && CurrentHoverRegion.Tooltip != null)
+            {
+                ShowTooltip(CurrentHoverRegion, CurrentHoverRegion.Tooltip);
+            }
+            else
+            {
+                HideTooltip();
+            }
+        }
+
+        private void HideTooltip()
+        {
+            if (_tooltip != null && _tooltip.IsOpen)
+            {
+                _tooltip.IsOpen = false;
+            }
+            _tooltipTarget = null;
+        }
+
+        private void ShowTooltip(object tooltipTarget, string text)
+        {
+            if (tooltipTarget == _tooltipTarget && _tooltipText == text) return;
+            if (_tooltip == null)
+            {
+                _tooltip = new ToolTip();
+            }
+            _tooltipText = text;
+            _tooltipTarget = tooltipTarget;
+            _tooltip.Content = text;
+            _tooltip.IsOpen = true;
         }
 
         private void OnChangeSelectedCells()
@@ -256,7 +292,7 @@ namespace FastWpfGrid
             if (Model != null)
             {
                 var addressModel = RealToModel(address);
-                Model.HandleCommand(addressModel, commandParameter);
+                Model.HandleCommand(this, addressModel, commandParameter);
             }
         }
     }

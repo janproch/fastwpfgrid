@@ -10,17 +10,17 @@ namespace FastWpfGrid
     {
         int ColumnCount { get; }
         int RowCount { get; }
-        IFastGridCell GetCell(int row, int column);
-        IFastGridCell GetRowHeader(int row);
-        IFastGridCell GetColumnHeader(int column);
-        IFastGridCell GetGridHeader();
+        IFastGridCell GetCell(IFastGridView grid, int row, int column);
+        IFastGridCell GetRowHeader(IFastGridView view, int row);
+        IFastGridCell GetColumnHeader(IFastGridView view, int column);
+        IFastGridCell GetGridHeader(IFastGridView view);
         void AttachView(IFastGridView view);
         void DetachView(IFastGridView view);
-        void HandleCommand(FastGridCellAddress address, object commandParameter);
+        void HandleCommand(IFastGridView view, FastGridCellAddress address, object commandParameter);
 
-        HashSet<int> GetHiddenColumns();
-        HashSet<int> GetFrozenColumns();
-        HashSet<int> GetHiddenRows();
-        HashSet<int> GetFrozenRows();
+        HashSet<int> GetHiddenColumns(IFastGridView view);
+        HashSet<int> GetFrozenColumns(IFastGridView view);
+        HashSet<int> GetHiddenRows(IFastGridView view);
+        HashSet<int> GetFrozenRows(IFastGridView view);
     }
 }

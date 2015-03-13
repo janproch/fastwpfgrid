@@ -37,11 +37,12 @@ namespace FastWpfGridTest
             _editedCells[key] = value;
         }
 
-        public override IFastGridCell GetGridHeader()
+        public override IFastGridCell GetGridHeader(IFastGridView view)
         {
             var impl = new FastGridCellImpl();
-            var btn = impl.AddImageBlock("/Images/flip_vertical_small.png");
+            var btn = impl.AddImageBlock(view.IsTransposed ? "/Images/flip_horizontal_small.png" : "/Images/flip_vertical_small.png");
             btn.CommandParameter = FastWpfGrid.FastGridControl.ToggleTransposedCommand;
+            btn.Tooltip = "Swap rows and columns";
             return impl;
         }
     }

@@ -20,7 +20,7 @@ namespace FastWpfGridTest
             get { return 100; }
         }
 
-        public override IFastGridCell GetColumnHeader(int column)
+        public override IFastGridCell GetColumnHeader(IFastGridView view, int column)
         {
             string image = null;
             if (column == 0) image = "/Images/primary_keysmall.png";
@@ -47,7 +47,7 @@ namespace FastWpfGridTest
             return res;
         }
 
-        public override IFastGridCell GetCell(int row, int column)
+        public override IFastGridCell GetCell(IFastGridView view, int row, int column)
         {
             if ((row+column) % 4 == 0)
             {

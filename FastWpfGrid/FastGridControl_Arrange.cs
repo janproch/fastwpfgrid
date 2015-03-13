@@ -225,13 +225,13 @@ namespace FastWpfGrid
             {
                 if (IsTransposed)
                 {
-                    _columnSizes.SetExtraordinaryIndexes(_model.GetHiddenRows(), _model.GetFrozenRows());
-                    _rowSizes.SetExtraordinaryIndexes(_model.GetHiddenColumns(), _model.GetFrozenColumns());
+                    _columnSizes.SetExtraordinaryIndexes(_model.GetHiddenRows(this), _model.GetFrozenRows(this));
+                    _rowSizes.SetExtraordinaryIndexes(_model.GetHiddenColumns(this), _model.GetFrozenColumns(this));
                 }
                 else
                 {
-                    _rowSizes.SetExtraordinaryIndexes(_model.GetHiddenRows(), _model.GetFrozenRows());
-                    _columnSizes.SetExtraordinaryIndexes(_model.GetHiddenColumns(), _model.GetFrozenColumns());
+                    _rowSizes.SetExtraordinaryIndexes(_model.GetHiddenRows(this), _model.GetFrozenRows(this));
+                    _columnSizes.SetExtraordinaryIndexes(_model.GetHiddenColumns(this), _model.GetFrozenColumns(this));
                 }
             }
 

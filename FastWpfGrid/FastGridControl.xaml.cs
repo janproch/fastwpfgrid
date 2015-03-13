@@ -116,7 +116,7 @@ namespace FastWpfGrid
             int maxw = 0;
             for (int col = 0; col < _modelColumnCount; col++)
             {
-                var cell = Model.GetColumnHeader(col);
+                var cell = Model.GetColumnHeader(this, col);
                 int width = GetCellContentWidth(cell) + 2*CellPaddingHorizontal;
                 if (width > maxw) maxw = width;
             }
@@ -298,22 +298,22 @@ namespace FastWpfGrid
         private IFastGridCell GetColumnHeader(int col)
         {
             if (Model == null) return null;
-            if (IsTransposed) return Model.GetRowHeader(_columnSizes.RealToModel(col));
-            return Model.GetColumnHeader(_columnSizes.RealToModel(col));
+            if (IsTransposed) return Model.GetRowHeader(this, _columnSizes.RealToModel(col));
+            return Model.GetColumnHeader(this, _columnSizes.RealToModel(col));
         }
 
         private IFastGridCell GetRowHeader(int row)
         {
             if (Model == null) return null;
-            if (IsTransposed) return Model.GetColumnHeader(_rowSizes.RealToModel(row));
-            return Model.GetRowHeader(_rowSizes.RealToModel(row));
+            if (IsTransposed) return Model.GetColumnHeader(this, _rowSizes.RealToModel(row));
+            return Model.GetRowHeader(this, _rowSizes.RealToModel(row));
         }
 
         private IFastGridCell GetCell(int row, int col)
         {
             if (Model == null) return null;
-            if (IsTransposed) return Model.GetCell(_columnSizes.RealToModel(col), _rowSizes.RealToModel(row));
-            return Model.GetCell(_rowSizes.RealToModel(row), _columnSizes.RealToModel(col));
+            if (IsTransposed) return Model.GetCell(this, _columnSizes.RealToModel(col), _rowSizes.RealToModel(row));
+            return Model.GetCell(this, _rowSizes.RealToModel(row), _columnSizes.RealToModel(col));
         }
 
         protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
