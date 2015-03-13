@@ -169,6 +169,22 @@ namespace FastWpfGrid
                                                       new FastGridCellAddress(row, col));
         }
 
+        private int GetCellContentHeight(IFastGridCell cell)
+        {
+            var font = GetFont(false, false);
+            int res = font.TextHeight;
+            for (int i = 0; i < cell.BlockCount; i++)
+            {
+                var block = cell.GetBlock(i);
+                if (block.BlockType != FastGridBlockType.Text) continue;
+                string text = block.TextData;
+                if (text == null) continue;
+                int hi = font.GetTextHeight(text);
+                if (hi > res) res = hi;
+            }
+            return res;
+        }
+
         private int GetCellContentWidth(IFastGridCell cell)
         {
             if (cell == null) return 0;
@@ -207,7 +223,7 @@ namespace FastWpfGrid
             {
                 case FastGridBlockType.Text:
                     var font = GetFont(block.IsBold, block.IsItalic);
-                    int textHeight = font.TextHeight;
+                    int textHeight = font.GetTextHeight(block.TextData);
                     width = font.GetTextWidth(block.TextData);
                     height = textHeight;
                     top = rectContent.Top + (int) Math.Round(rectContent.Height/2.0 - textHeight/2.0);
@@ -357,6 +373,11 @@ namespace FastWpfGrid
                     _drawBuffer.ScrollY(scrollY, GetRowHeadersScrollRect());
                     if (_columnSizes.FrozenCount > 0) _drawBuffer.ScrollY(scrollY, GetFrozenColumnsRect());
                 }
+                // if row heights are changed, invalidate all
+                if (CountVisibleRowHeights())
+                {
+                    InvalidateAll();
+                }
                 return;
             }
 
@@ -382,6 +403,7 @@ namespace FastWpfGrid
             {
                 FirstVisibleRowScrollIndex = row;
                 FirstVisibleColumnScrollIndex = column;
+                CountVisibleRowHeights();
                 InvalidateAll();
             }
         }

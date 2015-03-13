@@ -32,6 +32,16 @@ namespace FastWpfGrid
             get { return _columnSizes.GetVisibleScrollCount(FirstVisibleColumnScrollIndex, GridScrollAreaWidth); }
         }
 
+        public bool IsWide
+        {
+            get { return _realColumnCount > WideColumnsLimit; }
+        }
+
+        public bool FlexibleRows
+        {
+            get { return !IsWide && AllowFlexibleRows; }
+        }
+
         private int GetRowTop(int row)
         {
             if (row < _rowSizes.FrozenCount) return _rowSizes.GetFrozenPosition(row) + HeaderHeight;
@@ -253,8 +263,12 @@ namespace FastWpfGrid
                 _isTransposed = IsTransposed;
                 Exchange(ref FirstVisibleColumnScrollIndex, ref FirstVisibleRowScrollIndex);
                 if (_currentCell.IsCell) _currentCell = new FastGridCellAddress(_currentCell.Column, _currentCell.Row);
+                var oldSelected = _selectedCells.ToList();
+                _selectedCells.Clear();
+                foreach (var cell in oldSelected) _selectedCells.Add(new FastGridCellAddress(cell.Column, cell.Row, cell.IsColumnHeader));
                 UpdateSeriesCounts();
                 RecountColumnWidths();
+                RecountRowHeights();
                 RecalculateDefaultCellSize();
                 AdjustScrollbars();
                 AdjustScrollBarPositions();
@@ -331,6 +345,15 @@ namespace FastWpfGrid
                     );
 
             }
+        }
+
+        private void OnAllowFlexibleRowsPropertyChanged()
+        {
+            RecountRowHeights();
+            AdjustScrollbars();
+            AdjustScrollBarPositions();
+            AdjustInlineEditorPosition();
+            InvalidateAll();
         }
     }
 }

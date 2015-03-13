@@ -109,27 +109,37 @@ namespace System.Windows.Media.Imaging
         public static int DrawString(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, Color fontColor, Color? bgColor, GlyphFont font, string text)
         {
             if (text == null) return 0;
-            int dx = 0;
+            int dx = 0, dy = 0;
+            int textwi = 0;
             foreach (char ch in text)
             {
-                if (x0 + dx > cliprect.Right) break;
-                if (font.IsClearType)
+                if (ch == '\n')
                 {
-                    if (!bgColor.HasValue) throw new Exception("Clear type fonts must have background specified");
-                    var letter = font.GetClearTypeLetter(ch, fontColor, bgColor.Value);
-                    if (letter == null) continue;
-                    bmp.DrawLetter(x0 + dx, y0, cliprect, letter);
-                    dx += letter.Width;
+                    if (dx > textwi) textwi = dx;
+                    dx = 0;
+                    dy += font.TextHeight;
                 }
-                else
+                if (x0 + dx <= cliprect.Right)
                 {
-                    var letter = font.GetGrayScaleLetter(ch);
-                    if (letter == null) continue;
-                    bmp.DrawLetter(x0 + dx, y0, cliprect, fontColor, letter);
-                    dx += letter.Width;
+                    if (font.IsClearType)
+                    {
+                        if (!bgColor.HasValue) throw new Exception("Clear type fonts must have background specified");
+                        var letter = font.GetClearTypeLetter(ch, fontColor, bgColor.Value);
+                        if (letter == null) continue;
+                        bmp.DrawLetter(x0 + dx, y0 + dy, cliprect, letter);
+                        dx += letter.Width;
+                    }
+                    else
+                    {
+                        var letter = font.GetGrayScaleLetter(ch);
+                        if (letter == null) continue;
+                        bmp.DrawLetter(x0 + dx, y0 + dy, cliprect, fontColor, letter);
+                        dx += letter.Width;
+                    }
                 }
             }
-            return dx;
+            if (dx > textwi) textwi = dx;
+            return textwi;
         }
 
         public static int DrawString(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, Color fontColor, PortableFontDesc typeface, string text)
@@ -215,24 +225,39 @@ namespace System.Windows.Media.Imaging
 
         public int GetTextWidth(string text)
         {
-            var res = 0;
+            int maxLineWidth = 0;
+            int curLineWidth = 0;
             if (text == null) return 0;
             foreach (var ch in text)
             {
+                if (ch == '\n')
+                {
+                    if (curLineWidth > maxLineWidth) maxLineWidth = curLineWidth;
+                    curLineWidth = 0;
+                }
+
                 if (IsClearType)
                 {
                     var letter = GetClearTypeLetter(ch, Colors.Black, Colors.White);
                     if (letter == null) continue;
-                    res += letter.Width;
+                    curLineWidth += letter.Width;
                 }
                 else
                 {
                     var letter = GetGrayScaleLetter(ch);
                     if (letter == null) continue;
-                    res += letter.Width;
+                    curLineWidth += letter.Width;
                 }
             }
-            return res;
+            if (curLineWidth > maxLineWidth) maxLineWidth = curLineWidth;
+            return maxLineWidth;
+        }
+
+        public int GetTextHeight(string text)
+        {
+            if (text == null) return 0;
+            int lines = text.Count(x => x == '\n') + 1;
+            return lines*TextHeight;
         }
 
         public int TextHeight

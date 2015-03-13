@@ -61,6 +61,23 @@ namespace FastWpfGrid
             ((FastGridControl)dependencyObject).OnUseClearTypePropertyChanged();
         }
 
+        #endregion
+
+        #region property AllowFlexibleRows
+
+        public bool AllowFlexibleRows
+        {
+            get { return (bool)this.GetValue(AllowFlexibleRowsProperty); }
+            set { this.SetValue(AllowFlexibleRowsProperty, value); }
+        }
+
+        public static readonly DependencyProperty AllowFlexibleRowsProperty = DependencyProperty.Register(
+            "AllowFlexibleRows", typeof(bool), typeof(FastGridControl), new PropertyMetadata(false, OnAllowFlexibleRowsPropertyChanged));
+
+        private static void OnAllowFlexibleRowsPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
+        {
+            ((FastGridControl)dependencyObject).OnAllowFlexibleRowsPropertyChanged();
+        }
 
         #endregion
 

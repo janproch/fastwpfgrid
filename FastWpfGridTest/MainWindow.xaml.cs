@@ -24,12 +24,15 @@ namespace FastWpfGridTest
     public partial class MainWindow : Window
     {
         private GridModel1 _model1;
+        private GridModel2 _model2;
+        private GridModel3 _model3;
 
         public MainWindow()
         {
             InitializeComponent();
             grid1.Model = _model1 = new GridModel1();
-            grid2.Model = new GridModel2();
+            grid2.Model = _model2 = new GridModel2();
+            grid3.Model = _model3 = new GridModel3();
         }
 
         private void tabChanged(object sender, SelectionChangedEventArgs e)

@@ -24,7 +24,7 @@
                                                  />
                 </Grid>
             </TabItem>
-            <TabItem Header="Grid 1 - blocks">
+            <TabItem Header="Grid 2 - blocks">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -37,6 +37,22 @@
                     <FastWpfGrid:FastGridControl x:Name="grid2" Grid.Row="1" 
                                                  IsTransposed="{Binding IsChecked, ElementName=chbIsTransposed2}"
                                                  UseClearType="{Binding IsChecked, ElementName=chbClearType2}"
+                                                 />
+                </Grid>
+            </TabItem>
+            <TabItem Header="Grid 3 - multiline">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox Content="Is transposed" x:Name="chbIsTransposed3" />
+                        <CheckBox Content="Flexible rows" x:Name="chbFlexibleRows" />
+                    </StackPanel>
+                    <FastWpfGrid:FastGridControl x:Name="grid3" Grid.Row="1" 
+                                                 IsTransposed="{Binding IsChecked, ElementName=chbIsTransposed3}"
+                                                 AllowFlexibleRows="{Binding IsChecked, ElementName=chbFlexibleRows}"
                                                  />
                 </Grid>
             </TabItem>

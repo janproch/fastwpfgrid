@@ -43,7 +43,7 @@ namespace FastWpfGrid
         private int _headerWidth;
         private Dictionary<Tuple<bool, bool>, GlyphFont> _glyphFonts = new Dictionary<Tuple<bool, bool>, GlyphFont>();
         private Dictionary<Color, Brush> _solidBrushes = new Dictionary<Color, Brush>();
-        private double _rowHeightReserve = 5;
+        private int _rowHeightReserve = 5;
         //private Color _headerBackground = Color.FromRgb(0xDD, 0xDD, 0xDD);
         private WriteableBitmap _drawBuffer;
 
@@ -97,7 +97,7 @@ namespace FastWpfGrid
         private void RecalculateDefaultCellSize()
         {
             ClearCaches();
-            int rowHeight = (int) (GetFont(false, false).TextHeight + CellPaddingVertical*2 + 2 + RowHeightReserve);
+            int rowHeight = GetFont(false, false).TextHeight + CellPaddingVertical*2 + 2 + RowHeightReserve;
             int columnWidth = rowHeight*4;
 
             _rowSizes.DefaultSize = rowHeight;
@@ -187,6 +187,11 @@ namespace FastWpfGrid
             }
         }
 
+        private void AdjustVerticalScrollBarRange()
+        {
+            vscroll.Maximum = _rowSizes.GetTotalScrollSizeSum() - GridScrollAreaHeight + _rowSizes.DefaultSize;
+        }
+
         private void AdjustScrollbars()
         {
             hscroll.Minimum = 0;
@@ -196,7 +201,7 @@ namespace FastWpfGrid
             hscroll.LargeChange = GridScrollAreaWidth/2.0;
 
             vscroll.Minimum = 0;
-            vscroll.Maximum = _rowSizes.GetTotalScrollSizeSum() - GridScrollAreaHeight + _rowSizes.DefaultSize;
+            AdjustVerticalScrollBarRange();
             vscroll.ViewportSize = GridScrollAreaHeight;
             vscroll.SmallChange = _rowSizes.DefaultSize;
             vscroll.LargeChange = GridScrollAreaHeight / 2.0;
@@ -229,6 +234,7 @@ namespace FastWpfGrid
             FixCurrentCellAndSetSelectionToCurrentCell();
 
             RecountColumnWidths();
+            RecountRowHeights();
             AdjustScrollbars();
             InvalidateAll();
         }
@@ -260,24 +266,56 @@ namespace FastWpfGrid
         {
             _columnSizes.Clear();
 
-            if (IsTransposed) return;
+            if (IsWide) return;
+            if (_model == null) return;
+            int rowCount = _isTransposed ? _modelColumnCount : _modelRowCount;
+            int colCount = _isTransposed ? _modelRowCount : _modelColumnCount;
 
-            for (int col = 0; col < _modelColumnCount; col++)
+            for (int col = 0; col < colCount; col++)
             {
-                var cell = GetColumnHeader(col);
+                var cell = _isTransposed ? _model.GetRowHeader(this, col) : _model.GetColumnHeader(this, col);
                 _columnSizes.PutSizeOverride(col, GetCellContentWidth(cell) + 2*CellPaddingHorizontal);
             }
 
-            for (int row = 0; row < Math.Min(10, _modelRowCount); row++)
+            for (int row = 0; row < Math.Min(10, rowCount); row++)
             {
-                for (int col = 0; col < _modelColumnCount; col++)
+                for (int col = 0; col < colCount; col++)
                 {
-                    var cell = GetCell(row, col);
+                    var cell = _isTransposed ? _model.GetCell(this, col, row) : _model.GetCell(this, row, col);
                     _columnSizes.PutSizeOverride(col, GetCellContentWidth(cell) + 2*CellPaddingHorizontal);
                 }
             }
 
             _columnSizes.BuildIndex();
+        }
+
+        private void RecountRowHeights()
+        {
+            _rowSizes.Clear();
+
+            CountVisibleRowHeights();
+        }
+
+        private bool CountVisibleRowHeights()
+        {
+            if (!FlexibleRows) return false;
+            int colCount = _isTransposed ? _modelRowCount : _modelColumnCount;
+            int rowCount = VisibleRowCount;
+            bool changed = false;
+            for (int row = FirstVisibleRowScrollIndex; row < FirstVisibleRowScrollIndex + rowCount; row++)
+            {
+                int modelRow = _rowSizes.RealToModel(row);
+                if (_rowSizes.HasSizeOverride(modelRow)) continue;
+                changed = true;
+                for (int col = 0; col < colCount; col++)
+                {
+                    var cell = _isTransposed ? _model.GetCell(this, col, row) : _model.GetCell(this, row, col);
+                    _rowSizes.PutSizeOverride(modelRow, GetCellContentHeight(cell) + 2*CellPaddingVertical + 2 + RowHeightReserve);
+                }
+            }
+            _rowSizes.BuildIndex();
+            AdjustVerticalScrollBarRange();
+            return changed;
         }
 
         public void NotifyAddedRows()

@@ -384,5 +384,17 @@ namespace FastWpfGrid
         {
             return _frozenItems[frozenIndex].Position;
         }
+
+        /// <summary>
+        /// Determines whether [has size override] [the specified model index].
+        /// </summary>
+        /// <param name="modelIndex">Index of the model.</param>
+        /// <returns>
+        ///   <c>true</c> if [has size override] [the specified model index]; otherwise, <c>false</c>.
+        /// </returns>
+        public bool HasSizeOverride(int modelIndex)
+        {
+            return _sizeOverridesByModelIndex.ContainsKey(modelIndex);
+        }
     }
 }

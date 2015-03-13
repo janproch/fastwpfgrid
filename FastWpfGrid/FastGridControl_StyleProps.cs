@@ -36,6 +36,7 @@ namespace FastWpfGrid
 
         private Color _activeRegionFrameColor = Color.FromRgb(0xAA, 0xAA, 0xFF);
         private Color _activeRegionHoverFillColor = Color.FromRgb(0xAA, 0xFF, 0xFF);
+        private int _wideColumnsLimit = 100;
 
         public int ColumnResizeTheresold
         {
@@ -70,7 +71,7 @@ namespace FastWpfGrid
             }
         }
 
-        public double RowHeightReserve
+        public int RowHeightReserve
         {
             get { return _rowHeightReserve; }
             set
@@ -202,6 +203,12 @@ namespace FastWpfGrid
         {
             get { return _activeRegionHoverFillColor; }
             set { _activeRegionHoverFillColor = value; }
+        }
+
+        public int WideColumnsLimit
+        {
+            get { return _wideColumnsLimit; }
+            set { _wideColumnsLimit = value; }
         }
     }
 }
