@@ -42,7 +42,7 @@ namespace FastWpfGridTest
             var impl = new FastGridCellImpl();
             var btn = impl.AddImageBlock(view.IsTransposed ? "/Images/flip_horizontal_small.png" : "/Images/flip_vertical_small.png");
             btn.CommandParameter = FastWpfGrid.FastGridControl.ToggleTransposedCommand;
-            btn.Tooltip = "Swap rows and columns";
+            btn.ToolTip = "Swap rows and columns";
             return impl;
         }
     }

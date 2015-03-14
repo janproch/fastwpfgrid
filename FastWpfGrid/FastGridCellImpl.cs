@@ -19,7 +19,7 @@ namespace FastWpfGrid
         public int ImageHeight { get; set; }
         public bool ShowOnMouseHover { get; set; }
         public object CommandParameter { get; set; }
-        public string Tooltip { get; set; }
+        public string ToolTip { get; set; }
     }
 
     public class FastGridCellImpl : IFastGridCell
@@ -27,6 +27,9 @@ namespace FastWpfGrid
         public Color? BackgroundColor { get; set; }
         public CellDecoration Decoration { get; set; }
         public Color? DecorationColor { get; set; }
+        public string ToolTipText { get; set; }
+        public TooltipVisibilityMode ToolTipVisibility { get; set; }
+
         public List<FastGridBlockImpl> Blocks = new List<FastGridBlockImpl>();
 
         public int BlockCount

@@ -34,6 +34,7 @@ namespace FastWpfGrid
         private Dictionary<int, int> _sizeOverridesByModelIndex = new Dictionary<int, int>();
         private int _count;
         public int DefaultSize;
+        public int? MaxSize;
         private List<int> _hiddenAndFrozenModelIndexes;
         private List<int> _frozenModelIndexes;
 
@@ -84,6 +85,7 @@ namespace FastWpfGrid
 
         public void PutSizeOverride(int modelIndex, int size)
         {
+            if (MaxSize.HasValue && size > MaxSize) size = MaxSize.Value;
             if (!_sizeOverridesByModelIndex.ContainsKey(modelIndex)) _sizeOverridesByModelIndex[modelIndex] = size;
             if (size > _sizeOverridesByModelIndex[modelIndex]) _sizeOverridesByModelIndex[modelIndex] = size;
         }

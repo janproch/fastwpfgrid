@@ -242,7 +242,7 @@ namespace FastWpfGrid
                 {
                     CommandParameter = block.CommandParameter,
                     Rect = activeRect,
-                    Tooltip = block.Tooltip,
+                    Tooltip = block.ToolTip,
                 };
                 CurrentCellActiveRegions.Add(region);
                 if (_mouseCursorPoint.HasValue && activeRect.Contains(_mouseCursorPoint.Value))
@@ -282,13 +282,10 @@ namespace FastWpfGrid
         private void RenderCell(IFastGridCell cell, IntRect rect, Color? selectedTextColor, Color bgColor, FastGridCellAddress cellAddr)
         {
             bool isHoverCell = !cellAddr.IsEmpty && cellAddr == _mouseOverCell;
-            //if (cellAddr.IsCell) isHoverCell = cellAddr == _mouseOverCell;
-            //if (cellAddr.IsRowHeader) isHoverCell = cellAddr.Row == _mouseOverRowHeader;
-            //if (cellAddr.IsColumnHeader) isHoverCell = cellAddr.Column == _mouseOverColumnHeader;
-            //if (cellAddr.IsGridHeader) isho
 
             if (isHoverCell)
             {
+                _mouseOverCellIsTrimmed = false;
                 CurrentCellActiveRegions.Clear();
                 CurrentHoverRegion = null;
             }
@@ -326,6 +323,10 @@ namespace FastWpfGrid
                 case CellDecoration.StrikeOutHorizontal:
                     _drawBuffer.DrawLine(rect.Left, rect.Top + rect.Height/2, rect.Right, rect.Top + rect.Height/2, cell.DecorationColor ?? Colors.Black);
                     break;
+            }
+            if (isHoverCell)
+            {
+                _mouseOverCellIsTrimmed = leftPos > rightPos;
             }
         }
 

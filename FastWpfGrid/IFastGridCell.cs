@@ -13,6 +13,12 @@ namespace FastWpfGrid
         StrikeOutHorizontal,
     }
 
+    public enum TooltipVisibilityMode
+    {
+        Always,
+        OnlyWhenTrimmed,
+    }
+
     public interface IFastGridCell
     {
         Color? BackgroundColor { get; }
@@ -29,5 +35,8 @@ namespace FastWpfGrid
         /// <returns></returns>
         string GetEditText();
         void SetEditText(string value);
+
+        string ToolTipText { get; }
+        TooltipVisibilityMode ToolTipVisibility { get; }
     }
 }

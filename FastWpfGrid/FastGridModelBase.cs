@@ -180,6 +180,16 @@ namespace FastWpfGrid
             SetCellText(_requestedRow.Value, _requestedColumn.Value, value);
         }
 
+        public virtual string ToolTipText
+        {
+            get { return null; }
+        }
+
+        public virtual TooltipVisibilityMode ToolTipVisibility
+        {
+            get { return TooltipVisibilityMode.Always; }
+        }
+
         public virtual FastGridBlockType BlockType
         {
             get { return FastGridBlockType.Text; }
@@ -237,7 +247,7 @@ namespace FastWpfGrid
             get { return null; }
         }
 
-        public virtual string Tooltip
+        public virtual string ToolTip
         {
             get { return null; }
         }

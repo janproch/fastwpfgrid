@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace FastWpfGrid
 {
@@ -30,6 +31,7 @@ namespace FastWpfGrid
         private ToolTip _tooltip;
         private object _tooltipTarget;
         private string _tooltipText;
+        private DispatcherTimer _tooltipTimer;
 
         protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
         {
@@ -235,14 +237,35 @@ namespace FastWpfGrid
                 }
             }
 
+            HandleMouseMoveTooltip();
+        }
+
+        private void HandleMouseMoveTooltip()
+        {
             if (CurrentHoverRegion != null && CurrentHoverRegion.Tooltip != null)
             {
                 ShowTooltip(CurrentHoverRegion, CurrentHoverRegion.Tooltip);
+                return;
             }
-            else
+
+            if (CurrentHoverRegion == null)
             {
-                HideTooltip();
+                var modelCell = GetCell(_mouseOverCell);
+                if (modelCell != null)
+                {
+                    string tooltip = modelCell.ToolTipText;
+                    if (tooltip != null)
+                    {
+                        if (modelCell.ToolTipVisibility == TooltipVisibilityMode.Always || _mouseOverCellIsTrimmed)
+                        {
+                            ShowTooltip(_mouseOverCell, tooltip);
+                            return;
+                        }
+                    }
+                }
             }
+
+            HideTooltip();
         }
 
         private void HideTooltip()
@@ -252,19 +275,38 @@ namespace FastWpfGrid
                 _tooltip.IsOpen = false;
             }
             _tooltipTarget = null;
+            if (_tooltipTimer != null)
+            {
+                _tooltipTimer.IsEnabled = false;
+            }
         }
 
         private void ShowTooltip(object tooltipTarget, string text)
         {
-            if (tooltipTarget == _tooltipTarget && _tooltipText == text) return;
+            if (Equals(tooltipTarget, _tooltipTarget) && _tooltipText == text) return;
+            HideTooltip();
+
             if (_tooltip == null)
             {
                 _tooltip = new ToolTip();
             }
+            if (_tooltipTimer == null)
+            {
+                _tooltipTimer = new DispatcherTimer();
+                _tooltipTimer.Interval = TimeSpan.FromSeconds(0.5);
+                _tooltipTimer.Tick += _tooltipTimer_Tick;
+            }
+
             _tooltipText = text;
             _tooltipTarget = tooltipTarget;
             _tooltip.Content = text;
+            _tooltipTimer.IsEnabled = true;
+        }
+
+        void _tooltipTimer_Tick(object sender, EventArgs e)
+        {
             _tooltip.IsOpen = true;
+            _tooltipTimer.IsEnabled = false;
         }
 
         private void OnChangeSelectedCells()
