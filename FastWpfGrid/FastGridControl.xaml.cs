@@ -32,13 +32,6 @@ namespace FastWpfGrid
 
         private FastGridCellAddress _currentCell;
         private HashSet<FastGridCellAddress> _selectedCells = new HashSet<FastGridCellAddress>();
-        private FastGridCellAddress _dragStartCell;
-        private FastGridCellAddress _mouseOverCell;
-        private bool _mouseOverCellIsTrimmed;
-        private int? _mouseOverRow;
-        private int? _mouseOverRowHeader;
-        private int? _mouseOverColumnHeader;
-        private FastGridCellAddress _inplaceEditorCell;
 
         private int _headerHeight;
         private int _headerWidth;
@@ -556,7 +549,7 @@ namespace FastWpfGrid
             InvalidateAll();
         }
 
-        private void MoveCurrentCell(int? row, int? col, KeyEventArgs e = null)
+        private bool MoveCurrentCell(int? row, int? col, KeyEventArgs e = null)
         {
             if (e != null) e.Handled = true;
             _selectedCells.ToList().ForEach(InvalidateCell);
@@ -565,15 +558,16 @@ namespace FastWpfGrid
             InvalidateCurrentCell();
 
             if (row < 0) row = 0;
-            if (row >= _modelRowCount) row = _modelRowCount - 1;
+            if (row >= _realRowCount) row = _realRowCount - 1;
             if (col < 0) col = 0;
-            if (col >= _modelColumnCount) col = _modelColumnCount - 1;
+            if (col >= _realColumnCount) col = _realColumnCount - 1;
 
             _currentCell = new FastGridCellAddress(row, col);
             if (_currentCell.IsCell) _selectedCells.Add(_currentCell);
             InvalidateCurrentCell();
             ScrollCurrentCellIntoView();
             OnChangeSelectedCells();
+            return true;
         }
 
 

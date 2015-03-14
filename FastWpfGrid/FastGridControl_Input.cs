@@ -14,6 +14,7 @@ namespace FastWpfGrid
     partial class FastGridControl
     {
         public static readonly object ToggleTransposedCommand = new object();
+        public static readonly object ToggleAllowFlexibleRowsCommand = new object();
 
         public class ActiveRegion
         {
@@ -32,6 +33,14 @@ namespace FastWpfGrid
         private object _tooltipTarget;
         private string _tooltipText;
         private DispatcherTimer _tooltipTimer;
+        private FastGridCellAddress _dragStartCell;
+        private FastGridCellAddress _mouseOverCell;
+        private bool _mouseOverCellIsTrimmed;
+        private int? _mouseOverRow;
+        private int? _mouseOverRowHeader;
+        private int? _mouseOverColumnHeader;
+        private FastGridCellAddress _inplaceEditorCell;
+        private FastGridCellAddress _shiftDragStartCell;
 
         protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
         {
@@ -40,7 +49,7 @@ namespace FastWpfGrid
             var cell = GetCellAddress(pt);
 
             var currentRegion = CurrentCellActiveRegions.FirstOrDefault(x => x.Rect.Contains(pt));
-            if (currentRegion!=null)
+            if (currentRegion != null)
             {
                 HandleCommand(cell, currentRegion.CommandParameter);
                 return;
@@ -80,19 +89,19 @@ namespace FastWpfGrid
                 {
                     if (ColumnHeaderClick != null)
                         ColumnHeaderClick(this, new ColumnClickEventArgs
-                        {
-                            Grid = this,
-                            Column = cell.Column.Value,
-                        });
+                            {
+                                Grid = this,
+                                Column = cell.Column.Value,
+                            });
                 }
                 if (cell.IsRowHeader)
                 {
                     if (RowHeaderClick != null)
                         RowHeaderClick(this, new RowClickEventArgs
-                        {
-                            Grid = this,
-                            Row = cell.Row.Value,
-                        });
+                            {
+                                Grid = this,
+                                Row = cell.Row.Value,
+                            });
                 }
             }
 
@@ -123,8 +132,8 @@ namespace FastWpfGrid
 
         private void imageMouseWheel(object sender, MouseWheelEventArgs e)
         {
-            if (e.Delta < 0) vscroll.Value = vscroll.Value + vscroll.LargeChange / 2;
-            if (e.Delta > 0) vscroll.Value = vscroll.Value - vscroll.LargeChange / 2;
+            if (e.Delta < 0) vscroll.Value = vscroll.Value + vscroll.LargeChange/2;
+            if (e.Delta > 0) vscroll.Value = vscroll.Value - vscroll.LargeChange/2;
             ScrollChanged();
         }
 
@@ -133,28 +142,47 @@ namespace FastWpfGrid
             get { return (Keyboard.Modifiers & ModifierKeys.Control) != 0; }
         }
 
-        private void HandleCursorMove(KeyEventArgs e, bool allowLeftRight = true)
+        private static bool ShiftPressed
         {
-            if (e.Key == Key.Up && _currentCell.Row > 0) MoveCurrentCell(_currentCell.Row - 1, _currentCell.Column, e);
-            else if (e.Key == Key.Down) MoveCurrentCell(_currentCell.Row + 1, _currentCell.Column, e);
-            else if (e.Key == Key.Left && allowLeftRight) MoveCurrentCell(_currentCell.Row, _currentCell.Column - 1, e);
-            else if (e.Key == Key.Right && allowLeftRight) MoveCurrentCell(_currentCell.Row, _currentCell.Column + 1, e);
+            get { return (Keyboard.Modifiers & ModifierKeys.Shift) != 0; }
+        }
 
-            else if (e.Key == Key.Home && ControlPressed) MoveCurrentCell(0, 0, e);
-            else if (e.Key == Key.End && ControlPressed) MoveCurrentCell(_modelRowCount - 1, _modelColumnCount - 1, e);
-            else if (e.Key == Key.PageDown && ControlPressed) MoveCurrentCell(_modelRowCount - 1, _currentCell.Column, e);
-            else if (e.Key == Key.PageUp && ControlPressed) MoveCurrentCell(0, _currentCell.Column, e);
-            else if (e.Key == Key.Home) MoveCurrentCell(_currentCell.Row, 0, e);
-            else if (e.Key == Key.End) MoveCurrentCell(_currentCell.Row, _modelColumnCount - 1, e);
-            else if (e.Key == Key.PageDown) MoveCurrentCell(_currentCell.Row + VisibleRowCount, _currentCell.Column, e);
-            else if (e.Key == Key.PageUp) MoveCurrentCell(_currentCell.Row - VisibleRowCount, _currentCell.Column, e);
+        private bool HandleCursorMove(KeyEventArgs e, bool allowLeftRight = true)
+        {
+            if (e.Key == Key.Up) return MoveCurrentCell(_currentCell.Row - 1, _currentCell.Column, e);
+            if (e.Key == Key.Down) return MoveCurrentCell(_currentCell.Row + 1, _currentCell.Column, e);
+            if (e.Key == Key.Left && allowLeftRight) return MoveCurrentCell(_currentCell.Row, _currentCell.Column - 1, e);
+            if (e.Key == Key.Right && allowLeftRight) return MoveCurrentCell(_currentCell.Row, _currentCell.Column + 1, e);
+
+            if (e.Key == Key.Home && ControlPressed) return MoveCurrentCell(0, 0, e);
+            if (e.Key == Key.End && ControlPressed) return MoveCurrentCell(_realRowCount - 1, _realColumnCount - 1, e);
+            if (e.Key == Key.PageDown && ControlPressed) return MoveCurrentCell(_realRowCount - 1, _currentCell.Column, e);
+            if (e.Key == Key.PageUp && ControlPressed) return MoveCurrentCell(0, _currentCell.Column, e);
+            if (e.Key == Key.Home) return MoveCurrentCell(_currentCell.Row, 0, e);
+            if (e.Key == Key.End) return MoveCurrentCell(_currentCell.Row, _realColumnCount - 1, e);
+            if (e.Key == Key.PageDown) return MoveCurrentCell(_currentCell.Row + VisibleRowCount, _currentCell.Column, e);
+            if (e.Key == Key.PageUp) return MoveCurrentCell(_currentCell.Row - VisibleRowCount, _currentCell.Column, e);
+            return false;
         }
 
         private void imageKeyDown(object sender, KeyEventArgs e)
         {
             using (var ctx = CreateInvalidationContext())
             {
-                HandleCursorMove(e);
+                if (ShiftPressed)
+                {
+                    if (!_shiftDragStartCell.IsCell)
+                    {
+                        _shiftDragStartCell = _currentCell;
+                    }
+                }
+                else
+                {
+                    _shiftDragStartCell = FastGridCellAddress.Empty;
+                }
+
+                bool moved = HandleCursorMove(e);
+                if (ShiftPressed && moved) SetSelectedRectangle(_shiftDragStartCell, _currentCell);
 
                 if (e.Key == Key.F2 && _currentCell.IsCell)
                 {
@@ -208,21 +236,7 @@ namespace FastWpfGrid
 
                 if (_dragStartCell.IsCell && cell.IsCell)
                 {
-                    _isInvalidated = true;
-                    var newSelected = GetCellRange(_dragStartCell, cell);
-                    foreach (var added in newSelected)
-                    {
-                        if (_selectedCells.Contains(added)) continue;
-                        InvalidateCell(added);
-                    }
-                    foreach (var removed in _selectedCells)
-                    {
-                        if (newSelected.Contains(removed)) continue;
-                        InvalidateCell(removed);
-                    }
-                    _selectedCells = newSelected;
-                    SetCurrentCell(cell);
-                    OnChangeSelectedCells();
+                    SetSelectedRectangle(_dragStartCell, cell);
                 }
 
                 SetHoverRow(cell.IsCell ? cell.Row.Value : (int?) null);
@@ -240,6 +254,24 @@ namespace FastWpfGrid
             HandleMouseMoveTooltip();
         }
 
+        private void SetSelectedRectangle(FastGridCellAddress origin,FastGridCellAddress cell)
+        {
+            var newSelected = GetCellRange(origin, cell);
+            foreach (var added in newSelected)
+            {
+                if (_selectedCells.Contains(added)) continue;
+                InvalidateCell(added);
+            }
+            foreach (var removed in _selectedCells)
+            {
+                if (newSelected.Contains(removed)) continue;
+                InvalidateCell(removed);
+            }
+            _selectedCells = newSelected;
+            SetCurrentCell(cell);
+            OnChangeSelectedCells();
+        }
+
         private void HandleMouseMoveTooltip()
         {
             if (CurrentHoverRegion != null && CurrentHoverRegion.Tooltip != null)
@@ -253,10 +285,10 @@ namespace FastWpfGrid
                 var modelCell = GetCell(_mouseOverCell);
                 if (modelCell != null)
                 {
-                    string tooltip = modelCell.ToolTipText;
-                    if (tooltip != null)
+                    if (modelCell.ToolTipVisibility == TooltipVisibilityMode.Always || _mouseOverCellIsTrimmed)
                     {
-                        if (modelCell.ToolTipVisibility == TooltipVisibilityMode.Always || _mouseOverCellIsTrimmed)
+                        string tooltip = modelCell.ToolTipText;
+                        if (tooltip != null)
                         {
                             ShowTooltip(_mouseOverCell, tooltip);
                             return;
@@ -303,7 +335,7 @@ namespace FastWpfGrid
             _tooltipTimer.IsEnabled = true;
         }
 
-        void _tooltipTimer_Tick(object sender, EventArgs e)
+        private void _tooltipTimer_Tick(object sender, EventArgs e)
         {
             _tooltip.IsOpen = true;
             _tooltipTimer.IsEnabled = false;
@@ -330,6 +362,10 @@ namespace FastWpfGrid
             if (commandParameter == ToggleTransposedCommand)
             {
                 IsTransposed = !IsTransposed;
+            }
+            if (commandParameter == ToggleAllowFlexibleRowsCommand)
+            {
+                AllowFlexibleRows = !AllowFlexibleRows;
             }
             if (Model != null)
             {
