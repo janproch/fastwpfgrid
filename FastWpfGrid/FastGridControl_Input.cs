@@ -250,9 +250,9 @@ namespace FastWpfGrid
                     _columnSizes.Resize(_resizingColumn.Value, newSize);
                     if (_resizingColumn < _columnSizes.FrozenCount)
                     {
-                        AdjustScrollbars();
                         SetScrollbarMargin();
                     }
+                    AdjustScrollbars();
                     InvalidateAll();
                 }
                 else

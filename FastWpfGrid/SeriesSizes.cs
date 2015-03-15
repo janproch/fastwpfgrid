@@ -260,6 +260,20 @@ namespace FastWpfGrid
             return count;
         }
 
+        public int GetVisibleScrollCountReversed(int lastVisibleIndex, int viewportSize)
+        {
+            int res = 0;
+            int index = lastVisibleIndex;
+            int count = 0;
+            while (res < viewportSize && index >= 0)
+            {
+                res += GetSizeByScrollIndex(index);
+                index--;
+                count++;
+            }
+            return count;
+        }
+
         public void InvalidateAfterScroll(int oldFirstVisible, int newFirstVisible, Action<int> invalidate, int viewportSize)
         {
             //int oldFirstVisible = FirstVisibleColumn;

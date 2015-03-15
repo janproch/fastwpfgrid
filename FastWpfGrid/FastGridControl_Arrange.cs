@@ -122,8 +122,9 @@ namespace FastWpfGrid
             }
             else
             {
-                int index = _columnSizes.GetScrollIndexOnPosition((int) pt.X - HeaderWidth - frozenWidth + _columnSizes.GetPositionByScrollIndex(FirstVisibleColumnScrollIndex));
-                int begin = _columnSizes.GetPositionByScrollIndex(index) + HeaderWidth + frozenWidth;
+                int scrollXStart = _columnSizes.GetPositionByScrollIndex(FirstVisibleColumnScrollIndex);
+                int index = _columnSizes.GetScrollIndexOnPosition((int) pt.X - HeaderWidth - frozenWidth + scrollXStart);
+                int begin = _columnSizes.GetPositionByScrollIndex(index) + HeaderWidth + frozenWidth - scrollXStart;
                 int end = begin + _columnSizes.GetSizeByScrollIndex(index);
                 if (pt.X >= begin - ColumnResizeTheresold && pt.X <= begin + ColumnResizeTheresold) return index - 1 + _columnSizes.FrozenCount;
                 if (pt.X >= end - ColumnResizeTheresold && pt.X <= end + ColumnResizeTheresold) return index + _columnSizes.FrozenCount;
@@ -507,7 +508,7 @@ namespace FastWpfGrid
                 }
             }
             _rowSizes.BuildIndex();
-            AdjustVerticalScrollBarRange();
+            //AdjustVerticalScrollBarRange();
             return changed;
         }
 

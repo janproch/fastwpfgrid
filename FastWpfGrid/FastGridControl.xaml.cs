@@ -129,8 +129,12 @@ namespace FastWpfGrid
 
         private void ScrollChanged()
         {
-            int rowIndex = _rowSizes.GetScrollIndexOnPosition((int) vscroll.Value);
-            int columnIndex = _columnSizes.GetScrollIndexOnPosition((int) hscroll.Value);
+            //int rowIndex = _rowSizes.GetScrollIndexOnPosition((int) vscroll.Value);
+            //int columnIndex = _columnSizes.GetScrollIndexOnPosition((int) hscroll.Value);
+
+            int rowIndex = (int) Math.Round(vscroll.Value);
+            int columnIndex = (int) Math.Round(hscroll.Value);
+
             //FirstVisibleRow = rowIndex;
             //FirstVisibleColumn = columnIndex;
             //RenderGrid();
@@ -181,24 +185,41 @@ namespace FastWpfGrid
             }
         }
 
-        private void AdjustVerticalScrollBarRange()
-        {
-            vscroll.Maximum = _rowSizes.GetTotalScrollSizeSum() - GridScrollAreaHeight + _rowSizes.DefaultSize;
-        }
+        //private void AdjustVerticalScrollBarRange()
+        //{
+        //    //vscroll.Maximum = _rowSizes.GetTotalScrollSizeSum() - GridScrollAreaHeight + _rowSizes.DefaultSize;
+
+        //}
 
         private void AdjustScrollbars()
         {
             hscroll.Minimum = 0;
-            hscroll.Maximum = _columnSizes.GetTotalScrollSizeSum() - GridScrollAreaWidth + _columnSizes.DefaultSize;
-            hscroll.ViewportSize = GridScrollAreaWidth;
-            hscroll.SmallChange = GridScrollAreaWidth/10.0;
-            hscroll.LargeChange = GridScrollAreaWidth/2.0;
+            //hscroll.Maximum = _columnSizes.GetTotalScrollSizeSum() - GridScrollAreaWidth + _columnSizes.DefaultSize;
+
+            // hscroll.Maximum = _columnSizes.ScrollCount - 1;
+
+            hscroll.Maximum = Math.Min(
+                _columnSizes.ScrollCount - 1,
+                _columnSizes.ScrollCount - _columnSizes.GetVisibleScrollCountReversed(_columnSizes.ScrollCount - 1, GridScrollAreaWidth) + 1
+                );
+            hscroll.ViewportSize = VisibleColumnCount; //GridScrollAreaWidth;
+            hscroll.SmallChange = 1; // GridScrollAreaWidth / 10.0;
+            hscroll.LargeChange = 3; // GridScrollAreaWidth / 2.0;
 
             vscroll.Minimum = 0;
-            AdjustVerticalScrollBarRange();
-            vscroll.ViewportSize = GridScrollAreaHeight;
-            vscroll.SmallChange = _rowSizes.DefaultSize;
-            vscroll.LargeChange = GridScrollAreaHeight/2.0;
+            //AdjustVerticalScrollBarRange();
+            //vscroll.Maximum = _rowSizes.GetTotalScrollSizeSum() - GridScrollAreaHeight + _rowSizes.DefaultSize;
+            if (FlexibleRows)
+            {
+                vscroll.Maximum = _rowSizes.ScrollCount - 1;
+            }
+            else
+            {
+                vscroll.Maximum = _rowSizes.ScrollCount - (GridScrollAreaHeight/(_rowSizes.DefaultSize + 1)) + 1;
+            }
+            vscroll.ViewportSize = VisibleRowCount; // GridScrollAreaHeight;
+            vscroll.SmallChange = 1; // _rowSizes.DefaultSize;
+            vscroll.LargeChange = 10; // GridScrollAreaHeight / 2.0;
         }
 
         private void AdjustScrollBarPositions()
