@@ -198,7 +198,7 @@ namespace FastWpfGrid
             AdjustVerticalScrollBarRange();
             vscroll.ViewportSize = GridScrollAreaHeight;
             vscroll.SmallChange = _rowSizes.DefaultSize;
-            vscroll.LargeChange = GridScrollAreaHeight / 2.0;
+            vscroll.LargeChange = GridScrollAreaHeight/2.0;
         }
 
         private void AdjustScrollBarPositions()
@@ -230,6 +230,7 @@ namespace FastWpfGrid
             RecountColumnWidths();
             RecountRowHeights();
             AdjustScrollbars();
+            SetScrollbarMargin();
             InvalidateAll();
         }
 
@@ -254,67 +255,6 @@ namespace FastWpfGrid
             _currentCell = new FastGridCellAddress(row, col);
             if (_currentCell.IsCell) _selectedCells.Add(_currentCell);
             OnChangeSelectedCells();
-        }
-
-        private void RecountColumnWidths()
-        {
-            _columnSizes.Clear();
-            if (_drawBuffer == null) return;
-            if (GridScrollAreaWidth > 16) _columnSizes.MaxSize = GridScrollAreaWidth - 16;
-
-            if (IsWide) return;
-            if (_model == null) return;
-            int rowCount = _isTransposed ? _modelColumnCount : _modelRowCount;
-            int colCount = _isTransposed ? _modelRowCount : _modelColumnCount;
-
-            for (int col = 0; col < colCount; col++)
-            {
-                var cell = _isTransposed ? _model.GetRowHeader(this, col) : _model.GetColumnHeader(this, col);
-                _columnSizes.PutSizeOverride(col, GetCellContentWidth(cell) + 2 * CellPaddingHorizontal);
-            }
-
-            int visRows = VisibleRowCount;
-            for (int row = 0; row < Math.Min(visRows, rowCount); row++)
-            {
-                for (int col = 0; col < colCount; col++)
-                {
-                    var cell = _isTransposed ? _model.GetCell(this, col, row) : _model.GetCell(this, row, col);
-                    _columnSizes.PutSizeOverride(col, GetCellContentWidth(cell) + 2 * CellPaddingHorizontal);
-                }
-            }
-
-            _columnSizes.BuildIndex();
-        }
-
-        private void RecountRowHeights()
-        {
-            _rowSizes.Clear();
-            if (_drawBuffer == null) return;
-            if (GridScrollAreaHeight > 16) _rowSizes.MaxSize = GridScrollAreaHeight - 16;
-
-            CountVisibleRowHeights();
-        }
-
-        private bool CountVisibleRowHeights()
-        {
-            if (!FlexibleRows) return false;
-            int colCount = _isTransposed ? _modelRowCount : _modelColumnCount;
-            int rowCount = VisibleRowCount;
-            bool changed = false;
-            for (int row = FirstVisibleRowScrollIndex; row < FirstVisibleRowScrollIndex + rowCount; row++)
-            {
-                int modelRow = _rowSizes.RealToModel(row);
-                if (_rowSizes.HasSizeOverride(modelRow)) continue;
-                changed = true;
-                for (int col = 0; col < colCount; col++)
-                {
-                    var cell = _isTransposed ? GetModelCell(col, row) : GetModelCell(row, col);
-                    _rowSizes.PutSizeOverride(modelRow, GetCellContentHeight(cell) + 2*CellPaddingVertical + 2 + RowHeightReserve);
-                }
-            }
-            _rowSizes.BuildIndex();
-            AdjustVerticalScrollBarRange();
-            return changed;
         }
 
         public void NotifyAddedRows()
@@ -602,9 +542,22 @@ namespace FastWpfGrid
             RenderChanged();
         }
 
-        public HashSet<FastGridCellAddress> SelectedCells
+        private bool IsModelCellInValidRange(FastGridCellAddress cell)
         {
-            get { return _selectedCells; }
+            if (cell.Row.HasValue && (cell.Row.Value < 0 || cell.Row.Value >= _modelRowCount)) return false;
+            if (cell.Column.HasValue && (cell.Column.Value < 0 || cell.Column.Value >= _modelColumnCount)) return false;
+            return true;
+        }
+
+        public HashSet<FastGridCellAddress> GetSelectedModelCells()
+        {
+            var res = new HashSet<FastGridCellAddress>();
+            foreach (var cell in _selectedCells)
+            {
+                var cellModel = RealToModel(cell);
+                if (cellModel.IsCell && IsModelCellInValidRange(cellModel)) res.Add(cellModel);
+            }
+            return res;
         }
     }
 }

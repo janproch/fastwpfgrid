@@ -15,7 +15,7 @@ namespace FastWpfGridTest
 
         public override int ColumnCount
         {
-            get { return 4; }
+            get { return 5; }
         }
 
         public override int RowCount

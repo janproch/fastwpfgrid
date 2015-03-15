@@ -416,6 +416,101 @@ namespace FastWpfGrid
             return IsTransposed ? GetActiveRealRows() : GetActiveRealColumns();
         }
 
+        private void SetExtraordinaryRealColumns()
+        {
+            if (_model != null)
+            {
+                if (IsTransposed)
+                {
+                    _columnSizes.SetExtraordinaryIndexes(_model.GetHiddenRows(this), _model.GetFrozenRows(this));
+                }
+                else
+                {
+                    _columnSizes.SetExtraordinaryIndexes(_model.GetHiddenColumns(this), _model.GetFrozenColumns(this));
+                }
+            }
+        }
+
+        private void RecountColumnWidths()
+        {
+            _columnSizes.Clear();
+
+            SetExtraordinaryRealColumns();
+
+            if (_drawBuffer == null) return;
+            if (GridScrollAreaWidth > 16) _columnSizes.MaxSize = GridScrollAreaWidth - 16;
+
+            if (IsWide) return;
+            if (_model == null) return;
+            int rowCount = _isTransposed ? _modelColumnCount : _modelRowCount;
+            int colCount = _isTransposed ? _modelRowCount : _modelColumnCount;
+
+            for (int col = 0; col < colCount; col++)
+            {
+                var cell = _isTransposed ? _model.GetRowHeader(this, col) : _model.GetColumnHeader(this, col);
+                _columnSizes.PutSizeOverride(col, GetCellContentWidth(cell) + 2 * CellPaddingHorizontal);
+            }
+
+            int visRows = VisibleRowCount;
+            for (int row = 0; row < Math.Min(visRows, rowCount); row++)
+            {
+                for (int col = 0; col < colCount; col++)
+                {
+                    var cell = _isTransposed ? _model.GetCell(this, col, row) : _model.GetCell(this, row, col);
+                    _columnSizes.PutSizeOverride(col, GetCellContentWidth(cell) + 2 * CellPaddingHorizontal);
+                }
+            }
+
+            _columnSizes.BuildIndex();
+        }
+
+        private void SetExtraordinaryRealRows()
+        {
+            if (_model != null)
+            {
+                if (IsTransposed)
+                {
+                    _rowSizes.SetExtraordinaryIndexes(_model.GetHiddenColumns(this), _model.GetFrozenColumns(this));
+                }
+                else
+                {
+                    _rowSizes.SetExtraordinaryIndexes(_model.GetHiddenRows(this), _model.GetFrozenRows(this));
+                }
+            }
+        }
+
+        private void RecountRowHeights()
+        {
+            _rowSizes.Clear();
+            SetExtraordinaryRealRows();
+            if (_drawBuffer == null) return;
+            if (GridScrollAreaHeight > 16) _rowSizes.MaxSize = GridScrollAreaHeight - 16;
+
+            CountVisibleRowHeights();
+        }
+
+        private bool CountVisibleRowHeights()
+        {
+            if (!FlexibleRows) return false;
+            int colCount = _isTransposed ? _modelRowCount : _modelColumnCount;
+            int rowCount = VisibleRowCount;
+            bool changed = false;
+            for (int row = FirstVisibleRowScrollIndex; row < FirstVisibleRowScrollIndex + rowCount; row++)
+            {
+                int modelRow = _rowSizes.RealToModel(row);
+                if (_rowSizes.HasSizeOverride(modelRow)) continue;
+                changed = true;
+                for (int col = 0; col < colCount; col++)
+                {
+                    var cell = _isTransposed ? GetModelCell(col, row) : GetModelCell(row, col);
+                    _rowSizes.PutSizeOverride(modelRow, GetCellContentHeight(cell) + 2 * CellPaddingVertical + 2 + RowHeightReserve);
+                }
+            }
+            _rowSizes.BuildIndex();
+            AdjustVerticalScrollBarRange();
+            return changed;
+        }
+
         //public int FirstVisibleRowModelIndex
         //{
         //    get
