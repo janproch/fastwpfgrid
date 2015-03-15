@@ -308,7 +308,7 @@ namespace FastWpfGrid
                 changed = true;
                 for (int col = 0; col < colCount; col++)
                 {
-                    var cell = _isTransposed ? _model.GetCell(this, col, row) : _model.GetCell(this, row, col);
+                    var cell = _isTransposed ? GetModelCell(col, row) : GetModelCell(row, col);
                     _rowSizes.PutSizeOverride(modelRow, GetCellContentHeight(cell) + 2*CellPaddingVertical + 2 + RowHeightReserve);
                 }
             }
@@ -332,25 +332,44 @@ namespace FastWpfGrid
         }
 
 
+        private IFastGridCell GetModelRowHeader(int row)
+        {
+            if (_model == null) return null;
+            if (row < 0 || row >= _modelRowCount) return null;
+            return _model.GetRowHeader(this, row);
+        }
+
+        private IFastGridCell GetModelColumnHeader(int col)
+        {
+            if (_model == null) return null;
+            if (col < 0 || col >= _modelColumnCount) return null;
+            return _model.GetColumnHeader(this, col);
+        }
+
+        private IFastGridCell GetModelCell(int row, int col)
+        {
+            if (_model == null) return null;
+            if (row < 0 || row >= _modelRowCount) return null;
+            if (col < 0 || col >= _modelColumnCount) return null;
+            return _model.GetCell(this, row, col);
+        }
+
         private IFastGridCell GetColumnHeader(int col)
         {
-            if (Model == null) return null;
-            if (IsTransposed) return Model.GetRowHeader(this, _columnSizes.RealToModel(col));
-            return Model.GetColumnHeader(this, _columnSizes.RealToModel(col));
+            if (IsTransposed) return GetModelRowHeader(_columnSizes.RealToModel(col));
+            return GetModelColumnHeader(_columnSizes.RealToModel(col));
         }
 
         private IFastGridCell GetRowHeader(int row)
         {
-            if (Model == null) return null;
-            if (IsTransposed) return Model.GetColumnHeader(this, _rowSizes.RealToModel(row));
-            return Model.GetRowHeader(this, _rowSizes.RealToModel(row));
+            if (IsTransposed) return GetModelColumnHeader(_rowSizes.RealToModel(row));
+            return GetModelRowHeader(_rowSizes.RealToModel(row));
         }
 
         private IFastGridCell GetCell(int row, int col)
         {
-            if (Model == null) return null;
-            if (IsTransposed) return Model.GetCell(this, _columnSizes.RealToModel(col), _rowSizes.RealToModel(row));
-            return Model.GetCell(this, _rowSizes.RealToModel(row), _columnSizes.RealToModel(col));
+            if (IsTransposed) return GetModelCell(_columnSizes.RealToModel(col), _rowSizes.RealToModel(row));
+            return GetModelCell(_rowSizes.RealToModel(row), _columnSizes.RealToModel(col));
         }
 
         private IFastGridCell GetCell(FastGridCellAddress addr)

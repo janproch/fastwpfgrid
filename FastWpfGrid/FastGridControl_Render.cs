@@ -171,6 +171,7 @@ namespace FastWpfGrid
 
         private int GetCellContentHeight(IFastGridCell cell)
         {
+            if (cell == null) return 0;
             var font = GetFont(false, false);
             int res = font.TextHeight;
             for (int i = 0; i < cell.BlockCount; i++)

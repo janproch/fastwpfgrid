@@ -87,27 +87,55 @@ namespace FastWpfGrid
 
                 if (resizingColumn == null && cell.IsColumnHeader)
                 {
-                    if (ColumnHeaderClick != null)
-                        ColumnHeaderClick(this, new ColumnClickEventArgs
-                            {
-                                Grid = this,
-                                Column = cell.Column.Value,
-                            });
+                    if (IsTransposed)
+                    {
+                        OnModelRowClick(_rowSizes.RealToModel(cell.Column.Value));
+                    }
+                    else
+                    {
+                        OnModelColumnClick(_columnSizes.RealToModel(cell.Column.Value));
+                    }
                 }
                 if (cell.IsRowHeader)
                 {
-                    if (RowHeaderClick != null)
-                        RowHeaderClick(this, new RowClickEventArgs
-                            {
-                                Grid = this,
-                                Row = cell.Row.Value,
-                            });
+                    if (IsTransposed)
+                    {
+                        OnModelColumnClick(_rowSizes.RealToModel(cell.Row.Value));
+                    }
+                    else
+                    {
+                        OnModelRowClick(_columnSizes.RealToModel(cell.Row.Value));
+                    }
                 }
             }
 
             //if (cell.IsCell) ShowTextEditor(
             //    GetCellRect(cell.Row.Value, cell.Column.Value),
             //    Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText());
+        }
+
+        private void OnModelColumnClick(int column)
+        {
+            if (ColumnHeaderClick != null && column >= 0 && column < _modelColumnCount)
+            {
+                ColumnHeaderClick(this, new ColumnClickEventArgs
+                    {
+                        Grid = this,
+                        Column = column,
+                    });
+            }
+        }
+
+        private void OnModelRowClick(int row)
+        {
+            if (RowHeaderClick != null && row >= 0 && row < _modelRowCount)
+            {
+                RowHeaderClick(this, new RowClickEventArgs
+                    {
+                        Grid = this,
+                        Row = row,
+                    });
+            }
         }
 
         private void edTextKeyDown(object sender, KeyEventArgs e)

@@ -78,5 +78,17 @@ namespace FastWpfGrid
         /// gets whether flexible rows (real rows) are curently used
         /// </summary>
         bool FlexibleRows { get; }
+
+        /// <summary>
+        /// gets summary of active rows
+        /// </summary>
+        /// <returns></returns>
+        ActiveSeries GetActiveRows();
+
+        /// <summary>
+        /// gets summary of active columns
+        /// </summary>
+        /// <returns></returns>
+        ActiveSeries GetActiveColumns();
     }
 }

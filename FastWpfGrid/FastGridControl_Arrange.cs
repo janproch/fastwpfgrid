@@ -96,9 +96,9 @@ namespace FastWpfGrid
             return new IntRect(new IntPoint(HeaderWidth, HeaderHeight), new IntSize(GridScrollAreaHeight, _rowSizes.FrozenSize + 1));
         }
 
-        public Rect GetColumnHeaderRectangle(int column)
+        public Rect GetColumnHeaderRectangle(int modelColumnIndex)
         {
-            var rect = GetColumnHeaderRect(column).ToRect();
+            var rect = (IsTransposed ? GetRowHeaderRect(_rowSizes.ModelToReal(modelColumnIndex)) : GetColumnHeaderRect(_columnSizes.ModelToReal(modelColumnIndex))).ToRect();
             var pt = image.PointToScreen(rect.TopLeft);
             return new Rect(pt, rect.Size);
         }
@@ -266,6 +266,10 @@ namespace FastWpfGrid
                 var oldSelected = _selectedCells.ToList();
                 _selectedCells.Clear();
                 foreach (var cell in oldSelected) _selectedCells.Add(new FastGridCellAddress(cell.Column, cell.Row, cell.IsColumnHeader));
+                _mouseOverCell = FastGridCellAddress.Empty;
+                _mouseOverRow = null;
+                _mouseOverRowHeader = null;
+                _mouseOverColumnHeader = null;
                 UpdateSeriesCounts();
                 RecountColumnWidths();
                 RecountRowHeights();
@@ -355,5 +359,70 @@ namespace FastWpfGrid
             AdjustInlineEditorPosition();
             InvalidateAll();
         }
+
+        private ActiveSeries GetActiveRealRows()
+        {
+            var res = new ActiveSeries();
+            int visibleRows = VisibleRowCount;
+            for (int i = FirstVisibleRowScrollIndex; i < FirstVisibleRowScrollIndex + visibleRows; i++)
+            {
+                int model = _rowSizes.RealToModel(i + _rowSizes.FrozenCount);
+                res.ScrollVisible.Add(model);
+            }
+            for (int i = 0; i < _rowSizes.FrozenCount; i++)
+            {
+                int model = _rowSizes.RealToModel(i);
+                res.Frozen.Add(model);
+            }
+            foreach (var cell in _selectedCells)
+            {
+                if (!cell.Row.HasValue) continue;
+                int model = _rowSizes.RealToModel(cell.Row.Value);
+                res.Selected.Add(model);
+            }
+            return res;
+        }
+
+        private ActiveSeries GetActiveRealColumns()
+        {
+            var res = new ActiveSeries();
+            int visibleCols = VisibleColumnCount;
+            for (int i = FirstVisibleColumnScrollIndex; i < FirstVisibleColumnScrollIndex + visibleCols; i++)
+            {
+                int model = _columnSizes.RealToModel(i + _columnSizes.FrozenCount);
+                res.ScrollVisible.Add(model);
+            }
+            for (int i = 0; i < _columnSizes.FrozenCount; i++)
+            {
+                int model = _columnSizes.RealToModel(i);
+                res.Frozen.Add(model);
+            }
+            foreach(var cell in _selectedCells)
+            {
+                if (!cell.Column.HasValue) continue;
+                int model = _columnSizes.RealToModel(cell.Column.Value);
+                res.Selected.Add(model);
+            }
+            return res;
+        }
+
+        public ActiveSeries GetActiveRows()
+        {
+            return IsTransposed ? GetActiveRealColumns() : GetActiveRealRows();
+        }
+
+        public ActiveSeries GetActiveColumns()
+        {
+            return IsTransposed ? GetActiveRealRows() : GetActiveRealColumns();
+        }
+
+        //public int FirstVisibleRowModelIndex
+        //{
+        //    get
+        //    {
+        //        if (IsTransposed) return -1;
+        //        return _rowSizes.RealToModel(FirstVisibleRowScrollIndex + _rowSizes.FrozenCount);
+        //    }
+        //}
     }
 }

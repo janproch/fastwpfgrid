@@ -124,6 +124,7 @@ namespace FastWpfGrid
 
         public void InvalidateCell(FastGridCellAddress cell)
         {
+            if (cell.IsEmpty) return;
             if (cell.IsGridHeader)
             {
                 InvalidateGridHeader();
