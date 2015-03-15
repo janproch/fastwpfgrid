@@ -65,7 +65,8 @@ namespace System.Windows.Media.Imaging
 
         public static unsafe void DrawLetter(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, ClearTypeLetterGlyph glyph)
         {
-            if (glyph.Items == null) return;
+            if (glyph.Instructions == null) return;
+            //if (glyph.Items == null) return;
 
             using (var context = bmp.GetBitmapContext())
             {
@@ -84,28 +85,84 @@ namespace System.Windows.Media.Imaging
                 if (xmax >= w) xmax = w - 1;
                 if (ymax >= h) ymax = h - 1;
 
-                fixed (ClearTypeLetterGlyph.Item* items = glyph.Items)
-                {
-                    int itemCount = glyph.Items.Length;
-                    ClearTypeLetterGlyph.Item* currentItem = items;
-                    //if (x0 >= xmin && y0 >= ymin && x0 + glyph.Width < xmax && y0 + glyph.Height < ymax)
-                    //{
-                    //    for (int i = 0; i < itemCount; i++, currentItem++)
-                    //    {
-                    //        pixels[(y0 + currentItem->Y)*w + x0 + currentItem->X] = currentItem->Color;
-                    //    }
-                    //}
-                    //else
-                    {
-                        for (int i = 0; i < itemCount; i++, currentItem++)
-                        {
-                            int x = x0 + currentItem->X;
-                            int y = y0 + currentItem->Y;
-                            int color = currentItem->Color;
-                            if (x < xmin || y < ymin || x > xmax || y > ymax) continue;
 
-                            pixels[y*w + x] = color;
+                //fixed (ClearTypeLetterGlyph.Item* items = glyph.Items)
+                //{
+                //    int itemCount = glyph.Items.Length;
+                //    ClearTypeLetterGlyph.Item* currentItem = items;
+                //    //if (x0 >= xmin && y0 >= ymin && x0 + glyph.Width < xmax && y0 + glyph.Height < ymax)
+                //    //{
+                //    //    for (int i = 0; i < itemCount; i++, currentItem++)
+                //    //    {
+                //    //        pixels[(y0 + currentItem->Y)*w + x0 + currentItem->X] = currentItem->Color;
+                //    //    }
+                //    //}
+                //    //else
+                //    {
+                //        for (int i = 0; i < itemCount; i++, currentItem++)
+                //        {
+                //            int x = x0 + currentItem->X;
+                //            int y = y0 + currentItem->Y;
+                //            int color = currentItem->Color;
+                //            if (x < xmin || y < ymin || x > xmax || y > ymax) continue;
+
+                //            pixels[y*w + x] = color;
+                //        }
+                //    }
+                //}
+
+                fixed (int *instructions = glyph.Instructions)
+                {
+                    int* current = instructions;
+                    while (*current != -1)
+                    {
+                        int dy = *current++;
+                        int dx = *current++;
+                        int count0 = *current++;
+
+                        int y = y0 + dy;
+                        if (y >= ymin && y <= ymax)
+                        {
+                            int x = x0 + dx;
+                            int* dst = pixels + y*w + x;
+                            int* src = current;
+                            int count = count0;
+
+                            if (x < xmin)
+                            {
+                                int dmin = xmin - x;
+                                x += dmin;
+                                dst += dmin;
+                                src += dmin;
+                                count -= dmin;
+                            }
+
+                            if (x + count - 1 > xmax)
+                            {
+                                int dmax = x + count - 1 - xmax;
+                                count -= dmax;
+                            }
+
+                            if (count > 0)
+                            {
+                                NativeMethods.memcpy(dst, src, count * 4);
+
+                                //if (count < 10)
+                                //{
+                                //    while (count > 0)
+                                //    {
+                                //        *dst++ = *src++;
+                                //        count--;
+                                //    }
+                                //}
+                                //else
+                                //{
+                                //    NativeMethods.memcpy(dst, src, count*4);
+                                //}
+                            }
                         }
+
+                        current += count0;
                     }
                 }
             }
