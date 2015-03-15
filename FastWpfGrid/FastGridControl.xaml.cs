@@ -224,8 +224,10 @@ namespace FastWpfGrid
 
         private void AdjustScrollBarPositions()
         {
-            hscroll.Value = _columnSizes.GetPositionByScrollIndex(FirstVisibleColumnScrollIndex); //FirstVisibleColumn* ColumnWidth;
-            vscroll.Value = _rowSizes.GetPositionByScrollIndex(FirstVisibleRowScrollIndex);
+            //hscroll.Value = _columnSizes.GetPositionByScrollIndex(FirstVisibleColumnScrollIndex); //FirstVisibleColumn* ColumnWidth;
+            //vscroll.Value = _rowSizes.GetPositionByScrollIndex(FirstVisibleRowScrollIndex);
+            hscroll.Value = FirstVisibleColumnScrollIndex;
+            vscroll.Value = FirstVisibleRowScrollIndex;
         }
 
         protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)

@@ -392,7 +392,7 @@ namespace FastWpfGrid
             int hiddenIndex = _hiddenAndFrozenModelIndexes.BinarySearch(modelIndex);
             if (hiddenIndex >= 0) return -1;
             hiddenIndex = ~hiddenIndex;
-            if (hiddenIndex > 0) return modelIndex - hiddenIndex + FrozenCount;
+            if (hiddenIndex >= 0) return modelIndex - hiddenIndex + FrozenCount;
             return modelIndex;
         }
 

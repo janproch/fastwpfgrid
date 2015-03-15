@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -14,6 +15,7 @@ namespace FastWpfGrid
     {
         private void RenderGrid()
         {
+            var start = DateTime.Now;
             if (_drawBuffer == null)
             {
                 ClearInvalidation();
@@ -95,6 +97,10 @@ namespace FastWpfGrid
                     if (!ShouldDrawColumnHeader(col)) continue;
                     RenderColumnHeader(col);
                 }
+            }
+            if (_isInvalidatedAll)
+            {
+                Debug.WriteLine("Render full grid: {0} ms", Math.Round((DateTime.Now - start).TotalMilliseconds));
             }
             ClearInvalidation();
         }
@@ -362,7 +368,7 @@ namespace FastWpfGrid
                 return;
             }
 
-            if (row != FirstVisibleRowScrollIndex && !_isInvalidated && column == FirstVisibleColumnScrollIndex
+            if (row != FirstVisibleRowScrollIndex && !_isInvalidatedAll && column == FirstVisibleColumnScrollIndex
                 && Math.Abs(row - FirstVisibleRowScrollIndex) * 2 < VisibleRowCount)
             {
                 using (var ctx = CreateInvalidationContext())
@@ -383,7 +389,7 @@ namespace FastWpfGrid
                 return;
             }
 
-            if (column != FirstVisibleColumnScrollIndex && !_isInvalidated && row == FirstVisibleRowScrollIndex
+            if (column != FirstVisibleColumnScrollIndex && !_isInvalidatedAll && row == FirstVisibleRowScrollIndex
                 && Math.Abs(column - FirstVisibleColumnScrollIndex) * 2 < VisibleColumnCount)
             {
                 using (var ctx = CreateInvalidationContext())

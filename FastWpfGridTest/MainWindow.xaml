@@ -21,7 +21,13 @@
                     <FastWpfGrid:FastGridControl x:Name="grid1" Grid.Row="1" 
                                                  IsTransposed="{Binding IsChecked, ElementName=chbIsTransposed1}"
                                                  UseClearType="{Binding IsChecked, ElementName=chbClearType1}"
-                                                 />
+                                                 >
+                        <FastWpfGrid:FastGridControl.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Test" />
+                            </ContextMenu>
+                        </FastWpfGrid:FastGridControl.ContextMenu>
+                    </FastWpfGrid:FastGridControl>
                 </Grid>
             </TabItem>
             <TabItem Header="Grid 2 - blocks">

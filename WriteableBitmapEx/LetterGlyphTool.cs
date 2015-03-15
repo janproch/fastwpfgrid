@@ -88,14 +88,24 @@ namespace System.Windows.Media.Imaging
                 {
                     int itemCount = glyph.Items.Length;
                     ClearTypeLetterGlyph.Item* currentItem = items;
-                    for (int i = 0; i < itemCount; i++, currentItem++)
+                    //if (x0 >= xmin && y0 >= ymin && x0 + glyph.Width < xmax && y0 + glyph.Height < ymax)
+                    //{
+                    //    for (int i = 0; i < itemCount; i++, currentItem++)
+                    //    {
+                    //        pixels[(y0 + currentItem->Y)*w + x0 + currentItem->X] = currentItem->Color;
+                    //    }
+                    //}
+                    //else
                     {
-                        int x = x0 + currentItem->X;
-                        int y = y0 + currentItem->Y;
-                        int color = currentItem->Color;
-                        if (x < xmin || y < ymin || x > xmax || y > ymax) continue;
+                        for (int i = 0; i < itemCount; i++, currentItem++)
+                        {
+                            int x = x0 + currentItem->X;
+                            int y = y0 + currentItem->Y;
+                            int color = currentItem->Color;
+                            if (x < xmin || y < ymin || x > xmax || y > ymax) continue;
 
-                        pixels[y*w + x] = color;
+                            pixels[y*w + x] = color;
+                        }
                     }
                 }
             }

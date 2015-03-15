@@ -355,6 +355,7 @@ namespace FastWpfGrid
         private void OnAllowFlexibleRowsPropertyChanged()
         {
             RecountRowHeights();
+            RecountColumnWidths();
             AdjustScrollbars();
             AdjustScrollBarPositions();
             AdjustInlineEditorPosition();

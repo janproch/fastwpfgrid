@@ -80,6 +80,17 @@ namespace FastWpfGrid
         bool FlexibleRows { get; }
 
         /// <summary>
+        /// gets or sets whereher flexible rows are allows
+        /// </summary>
+        bool AllowFlexibleRows { get; set; }
+
+        /// <summary>
+        /// gets selected model cells
+        /// </summary>
+        /// <returns></returns>
+        HashSet<FastGridCellAddress> GetSelectedModelCells();
+
+        /// <summary>
         /// gets summary of active rows
         /// </summary>
         /// <returns></returns>

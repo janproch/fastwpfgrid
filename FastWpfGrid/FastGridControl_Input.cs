@@ -114,6 +114,27 @@ namespace FastWpfGrid
             //    Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText());
         }
 
+        protected override void OnMouseRightButtonDown(MouseButtonEventArgs e)
+        {
+            base.OnMouseRightButtonDown(e);
+
+            var pt = e.GetPosition(image);
+            var cell = GetCellAddress(pt);
+
+            if (!_selectedCells.Contains(cell))
+            {
+                using (var ctx = CreateInvalidationContext())
+                {
+                    InvalidateCell(_currentCell);
+                    _selectedCells.ToList().ForEach(InvalidateCell);
+                    _selectedCells.Clear();
+                    _selectedCells.Add(cell);
+                    _currentCell = cell;
+                    InvalidateCell(_currentCell);
+                }
+            }
+        }
+
         private void OnModelColumnClick(int column)
         {
             if (ColumnHeaderClick != null && column >= 0 && column < _modelColumnCount)

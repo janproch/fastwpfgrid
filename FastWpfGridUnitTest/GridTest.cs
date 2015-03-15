@@ -30,6 +30,13 @@ namespace FastWpfGridUnitTest
             Assert.AreEqual(1, sizes.RealToModel(1));
             Assert.AreEqual(3, sizes.RealToModel(2));
             Assert.AreEqual(8, sizes.RealToModel(7));
+
+            sizes.SetExtraordinaryIndexes(new HashSet<int>(), new HashSet<int> {3});
+            Assert.AreEqual(1, sizes.ModelToReal(0));
+            Assert.AreEqual(2, sizes.ModelToReal(1));
+            Assert.AreEqual(3, sizes.ModelToReal(2));
+            Assert.AreEqual(0, sizes.ModelToReal(3));
+            Assert.AreEqual(4, sizes.ModelToReal(4));
         }
     }
 }
