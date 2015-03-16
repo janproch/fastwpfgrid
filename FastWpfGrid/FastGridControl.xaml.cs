@@ -407,7 +407,7 @@ namespace FastWpfGrid
                 edText.SelectionStart = textValueOverride.Length;
             }
 
-            _inlineTextChanged = false;
+            _inlineTextChanged = !String.IsNullOrEmpty(textValueOverride);
         }
 
         private void AdjustInlineEditorPosition()

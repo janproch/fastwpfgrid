@@ -122,17 +122,17 @@ namespace FastWpfGrid
 
         public void InvalidateCell(int row, int column)
         {
-            _grids.ForEach(x => x.InvalidateCell(row, column));
+            _grids.ForEach(x => x.InvalidateModelCell(row, column));
         }
 
         public void InvalidateRowHeader(int row)
         {
-            _grids.ForEach(x => x.InvalidateRowHeader(row));
+            _grids.ForEach(x => x.InvalidateModelRowHeader(row));
         }
 
         public void InvalidateColumnHeader(int column)
         {
-            _grids.ForEach(x => x.InvalidateColumnHeader(column));
+            _grids.ForEach(x => x.InvalidateModelColumnHeader(column));
         }
 
         public void NotifyAddedRows()

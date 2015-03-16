@@ -168,6 +168,11 @@ namespace FastWpfGrid
             ScrollIntoView(_currentCell);
         }
 
+        public void ScrollModelIntoView(FastGridCellAddress cell)
+        {
+            ScrollIntoView(ModelToReal(cell));
+        }
+
         public void ScrollIntoView(FastGridCellAddress cell)
         {
             if (cell.Row.HasValue)
@@ -339,18 +344,42 @@ namespace FastWpfGrid
             {
                 return new FastGridCellAddress(
                     address.Column.HasValue ? _columnSizes.RealToModel(address.Column.Value) : (int?)null,
-                    address.Row.HasValue ? _rowSizes.RealToModel(address.Row.Value) : (int?)null
+                    address.Row.HasValue ? _rowSizes.RealToModel(address.Row.Value) : (int?)null,
+                    address.IsGridHeader
                     );
             }
             else
             {
                 return new FastGridCellAddress(
                     address.Row.HasValue ? _rowSizes.RealToModel(address.Row.Value) : (int?)null,
-                    address.Column.HasValue ? _columnSizes.RealToModel(address.Column.Value) : (int?)null
+                    address.Column.HasValue ? _columnSizes.RealToModel(address.Column.Value) : (int?)null,
+                    address.IsGridHeader
                     );
 
             }
         }
+
+        private FastGridCellAddress ModelToReal(FastGridCellAddress address)
+        {
+            if (IsTransposed)
+            {
+                return new FastGridCellAddress(
+                    address.Column.HasValue ? _rowSizes.ModelToReal(address.Column.Value) : (int?)null,
+                    address.Row.HasValue ? _columnSizes.ModelToReal(address.Row.Value) : (int?)null,
+                    address.IsGridHeader
+                    );
+            }
+            else
+            {
+                return new FastGridCellAddress(
+                    address.Row.HasValue ? _rowSizes.ModelToReal(address.Row.Value) : (int?)null,
+                    address.Column.HasValue ? _columnSizes.ModelToReal(address.Column.Value) : (int?)null,
+                    address.IsGridHeader
+                    );
+
+            }
+        }
+
 
         private void OnAllowFlexibleRowsPropertyChanged()
         {
