@@ -41,6 +41,7 @@ namespace FastWpfGrid
         private int? _mouseOverColumnHeader;
         private FastGridCellAddress _inplaceEditorCell;
         private FastGridCellAddress _shiftDragStartCell;
+        private bool _inlineTextChanged;
 
         protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
         {
@@ -112,6 +113,11 @@ namespace FastWpfGrid
             //if (cell.IsCell) ShowTextEditor(
             //    GetCellRect(cell.Row.Value, cell.Column.Value),
             //    Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText());
+        }
+
+        private void edTextChanged(object sender, TextChangedEventArgs e)
+        {
+            _inlineTextChanged = true;
         }
 
         protected override void OnMouseRightButtonDown(MouseButtonEventArgs e)

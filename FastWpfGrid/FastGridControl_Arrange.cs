@@ -338,15 +338,15 @@ namespace FastWpfGrid
             if (IsTransposed)
             {
                 return new FastGridCellAddress(
-                    _currentCell.Column.HasValue ? _columnSizes.RealToModel(_currentCell.Column.Value) : (int?)null,
-                    _currentCell.Row.HasValue ? _rowSizes.RealToModel(_currentCell.Row.Value) : (int?)null
+                    address.Column.HasValue ? _columnSizes.RealToModel(address.Column.Value) : (int?)null,
+                    address.Row.HasValue ? _rowSizes.RealToModel(address.Row.Value) : (int?)null
                     );
             }
             else
             {
                 return new FastGridCellAddress(
-                    _currentCell.Row.HasValue ? _rowSizes.RealToModel(_currentCell.Row.Value) : (int?) null,
-                    _currentCell.Column.HasValue ? _columnSizes.RealToModel(_currentCell.Column.Value) : (int?) null
+                    address.Row.HasValue ? _rowSizes.RealToModel(address.Row.Value) : (int?)null,
+                    address.Column.HasValue ? _columnSizes.RealToModel(address.Column.Value) : (int?)null
                     );
 
             }

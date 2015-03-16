@@ -362,7 +362,7 @@ namespace FastWpfGrid
         {
             using (var ctx = CreateInvalidationContext())
             {
-                if (saveCellValue && _inplaceEditorCell.IsCell)
+                if (saveCellValue && _inplaceEditorCell.IsCell && _inlineTextChanged)
                 {
                     var cell = GetCell(_inplaceEditorCell.Row.Value, _inplaceEditorCell.Column.Value);
                     cell.SetEditText(edText.Text);
@@ -406,6 +406,8 @@ namespace FastWpfGrid
             {
                 edText.SelectionStart = textValueOverride.Length;
             }
+
+            _inlineTextChanged = false;
         }
 
         private void AdjustInlineEditorPosition()
