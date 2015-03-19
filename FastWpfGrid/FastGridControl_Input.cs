@@ -42,6 +42,8 @@ namespace FastWpfGrid
         private FastGridCellAddress _inplaceEditorCell;
         private FastGridCellAddress _shiftDragStartCell;
         private bool _inlineTextChanged;
+        public event EventHandler ScrolledModelRows;
+        public event EventHandler ScrolledModelColumns;
 
         protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
         {
@@ -85,34 +87,50 @@ namespace FastWpfGrid
                     _resizingColumnStartSize = _columnSizes.GetSizeByRealIndex(_resizingColumn.Value);
                     CaptureMouse();
                 }
-
-                if (resizingColumn == null && cell.IsColumnHeader)
-                {
-                    if (IsTransposed)
-                    {
-                        OnModelRowClick(_rowSizes.RealToModel(cell.Column.Value));
-                    }
-                    else
-                    {
-                        OnModelColumnClick(_columnSizes.RealToModel(cell.Column.Value));
-                    }
-                }
-                if (cell.IsRowHeader)
-                {
-                    if (IsTransposed)
-                    {
-                        OnModelColumnClick(_rowSizes.RealToModel(cell.Row.Value));
-                    }
-                    else
-                    {
-                        OnModelRowClick(_columnSizes.RealToModel(cell.Row.Value));
-                    }
-                }
             }
 
             //if (cell.IsCell) ShowTextEditor(
             //    GetCellRect(cell.Row.Value, cell.Column.Value),
             //    Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText());
+        }
+
+        protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonUp(e);
+            _dragStartCell = new FastGridCellAddress();
+            if (_resizingColumn.HasValue)
+            {
+                _resizingColumn = null;
+                _resizingColumnOrigin = null;
+                _resizingColumnStartSize = null;
+                ReleaseMouseCapture();
+            }
+
+            var pt = e.GetPosition(image);
+            var cell = GetCellAddress(pt);
+
+            if (_resizingColumn == null && cell.IsColumnHeader)
+            {
+                if (IsTransposed)
+                {
+                    OnModelRowClick(_rowSizes.RealToModel(cell.Column.Value));
+                }
+                else
+                {
+                    OnModelColumnClick(_columnSizes.RealToModel(cell.Column.Value));
+                }
+            }
+            if (cell.IsRowHeader)
+            {
+                if (IsTransposed)
+                {
+                    OnModelColumnClick(_rowSizes.RealToModel(cell.Row.Value));
+                }
+                else
+                {
+                    OnModelRowClick(_columnSizes.RealToModel(cell.Row.Value));
+                }
+            }
         }
 
         private void edTextChanged(object sender, TextChangedEventArgs e)
@@ -137,6 +155,7 @@ namespace FastWpfGrid
                     _selectedCells.Add(cell);
                     _currentCell = cell;
                     InvalidateCell(_currentCell);
+                    OnChangeSelectedCells();
                 }
             }
         }
@@ -427,6 +446,21 @@ namespace FastWpfGrid
                 var addressModel = RealToModel(address);
                 Model.HandleCommand(this, addressModel, commandParameter);
             }
+        }
+
+        private void imageMouseLeave(object sender, MouseEventArgs e)
+        {
+            HideTooltip();
+        }
+
+        private void OnScrolledModelRows()
+        {
+            if (ScrolledModelRows != null) ScrolledModelRows(this, EventArgs.Empty);
+        }
+
+        private void OnScrolledModelColumns()
+        {
+            if (ScrolledModelColumns != null) ScrolledModelColumns(this, EventArgs.Empty);
         }
     }
 }

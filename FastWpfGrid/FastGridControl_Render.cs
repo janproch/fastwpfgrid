@@ -387,6 +387,8 @@ namespace FastWpfGrid
                 {
                     InvalidateAll();
                 }
+                if (IsTransposed) OnScrolledModelColumns();
+                else OnScrolledModelRows();
                 return;
             }
 
@@ -403,9 +405,13 @@ namespace FastWpfGrid
                     _drawBuffer.ScrollX(scrollX, GetColumnHeadersScrollRect());
                     if (_rowSizes.FrozenCount > 0) _drawBuffer.ScrollX(scrollX, GetFrozenRowsRect());
                 }
+                if (IsTransposed) OnScrolledModelRows();
+                else OnScrolledModelColumns();
                 return;
             }
 
+            bool changedRow = FirstVisibleRowScrollIndex != row;
+            bool changedCol = FirstVisibleColumnScrollIndex != column;
 
             // render all
             using (var ctx = CreateInvalidationContext())
@@ -414,6 +420,17 @@ namespace FastWpfGrid
                 FirstVisibleColumnScrollIndex = column;
                 CountVisibleRowHeights();
                 InvalidateAll();
+            }
+
+            if (changedRow)
+            {
+                if (IsTransposed) OnScrolledModelColumns();
+                else OnScrolledModelRows();
+            }
+            if (changedCol)
+            {
+                if (IsTransposed) OnScrolledModelRows();
+                else OnScrolledModelColumns();
             }
         }
     }

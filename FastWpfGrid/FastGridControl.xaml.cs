@@ -344,20 +344,6 @@ namespace FastWpfGrid
             return null;
         }
 
-        protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
-        {
-            base.OnMouseLeftButtonUp(e);
-            _dragStartCell = new FastGridCellAddress();
-            if (_resizingColumn.HasValue)
-            {
-                _resizingColumn = null;
-                _resizingColumnOrigin = null;
-                _resizingColumnStartSize = null;
-                ReleaseMouseCapture();
-            }
-        }
-
-
         private void HideInlinEditor(bool saveCellValue = true)
         {
             using (var ctx = CreateInvalidationContext())
