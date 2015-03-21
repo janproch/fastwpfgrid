@@ -47,7 +47,7 @@ namespace FastWpfGrid
         private Point? _resizingColumnOrigin;
         private int? _resizingColumnStartSize;
 
-        private static Dictionary<string, WriteableBitmap> _imageCache = new Dictionary<string, WriteableBitmap>();
+        private static Dictionary<string, ImageHolder> _imageCache = new Dictionary<string, ImageHolder>();
 
         public FastGridControl()
         {

@@ -277,9 +277,9 @@ namespace FastWpfGrid
                     if (renderBlock)
                     {
                         var imgOrigin = new IntPoint(leftAlign ? leftPos : rightPos - block.ImageWidth, top);
-                        var wbmp = GetImage(block.ImageSource);
-                        _drawBuffer.Blit(new Rect(imgOrigin.X, imgOrigin.Y, block.ImageWidth, block.ImageHeight), wbmp, new Rect(0, 0, block.ImageWidth, block.ImageHeight),
-                                         WriteableBitmapExtensions.BlendMode.ColorKeying);
+                        var image = GetImage(block.ImageSource);
+                        _drawBuffer.Blit(new Rect(imgOrigin.X, imgOrigin.Y, block.ImageWidth, block.ImageHeight), image.Bitmap, new Rect(0, 0, block.ImageWidth, block.ImageHeight),
+                                         image.KeyColor, image.BlendMode);
                     }
                     break;
             }
@@ -338,7 +338,7 @@ namespace FastWpfGrid
             }
         }
 
-        private static WriteableBitmap GetImage(string source)
+        private static ImageHolder GetImage(string source)
         {
             lock (_imageCache)
             {
@@ -355,11 +355,12 @@ namespace FastWpfGrid
             if (wbmp.Format != PixelFormats.Bgra32)
                 wbmp = new WriteableBitmap(new FormatConvertedBitmap(wbmp, PixelFormats.Bgra32, null, 0));
 
+            var image = new ImageHolder(wbmp);
             lock (_imageCache)
             {
-                _imageCache[source] = wbmp;
+                _imageCache[source] = image;
             }
-            return wbmp;
+            return image;
         }
 
         private void ScrollContent(int row, int column)

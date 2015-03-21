@@ -301,9 +301,9 @@ namespace System.Windows.Media.Imaging
                                                      (((sb * sa + isa * db) >> 8) & 0xff);
 #else
                                         destPixel =                            ((da & 0xff) << 24) |
-                                                    (((((sr << 8) + isa * dr) >> 8) & 0xff) << 16) |
-                                                    (((((sg << 8) + isa * dg) >> 8) & 0xff) <<  8) |
-                                                     ((((sb << 8) + isa * db) >> 8) & 0xff);
+                                                    (((((sr * sa) + isa * dr) >> 8) & 0xff) << 16) |
+                                                    (((((sg * sa) + isa * dg) >> 8) & 0xff) << 8) |
+                                                     ((((sb * sa) + isa * db) >> 8) & 0xff);
 #endif
                                     }
                                     else if (BlendMode == BlendMode.Additive)
