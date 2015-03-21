@@ -41,6 +41,16 @@ namespace FastWpfGrid
             IsGridHeader = isGridHeader;
         }
 
+        public FastGridCellAddress ChangeRow(int? row)
+        {
+            return new FastGridCellAddress(row, Column, IsGridHeader);
+        }
+
+        public FastGridCellAddress ChangeColumn(int? col)
+        {
+            return new FastGridCellAddress(Row, col, IsGridHeader);
+        }
+
         public bool IsCell
         {
             get { return Row.HasValue && Column.HasValue; }

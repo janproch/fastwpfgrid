@@ -254,6 +254,7 @@ namespace FastWpfGrid
             RecountRowHeights();
             AdjustScrollbars();
             SetScrollbarMargin();
+            FixScrollPosition();
             InvalidateAll();
         }
 
@@ -400,8 +401,11 @@ namespace FastWpfGrid
         {
             if (_inplaceEditorCell.IsCell)
             {
-                edText.Visibility = _inplaceEditorCell.Row.Value - FirstVisibleRowScrollIndex >= 0 ? Visibility.Visible : Visibility.Hidden;
+                bool visible = _rowSizes.IsVisible(_inplaceEditorCell.Row.Value, FirstVisibleRowScrollIndex, GridScrollAreaHeight)
+                               && _columnSizes.IsVisible(_inplaceEditorCell.Column.Value, FirstVisibleColumnScrollIndex, GridScrollAreaWidth);
+                edText.Visibility = visible ? Visibility.Visible : Visibility.Hidden;
                 var rect = GetCellRect(_inplaceEditorCell.Row.Value, _inplaceEditorCell.Column.Value);
+
                 edText.Margin = new Thickness
                     {
                         Left = rect.Left,
@@ -569,6 +573,12 @@ namespace FastWpfGrid
                 if (cellModel.IsCell && IsModelCellInValidRange(cellModel)) res.Add(cellModel);
             }
             return res;
+        }
+
+        public FastGridCellAddress CurrentModelCell
+        {
+            get { return RealToModel(CurrentCell); }
+            set { CurrentCell = ModelToReal(value); }
         }
     }
 }

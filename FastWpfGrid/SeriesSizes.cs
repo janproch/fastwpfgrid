@@ -412,5 +412,14 @@ namespace FastWpfGrid
         {
             return _sizeOverridesByModelIndex.ContainsKey(modelIndex);
         }
+
+        public bool IsVisible(int testedRealIndex, int firstVisibleScrollIndex, int viewportSize)
+        {
+            if (testedRealIndex<0) return false;
+            if (testedRealIndex>=0 && testedRealIndex<FrozenCount) return true;
+            int scrollIndex = testedRealIndex - FrozenCount;
+            int onPageIndex = scrollIndex - firstVisibleScrollIndex;
+            return onPageIndex >= 0 && onPageIndex < GetVisibleScrollCount(firstVisibleScrollIndex, viewportSize);
+        }
     }
 }

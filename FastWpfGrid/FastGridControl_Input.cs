@@ -89,26 +89,6 @@ namespace FastWpfGrid
                 }
             }
 
-            //if (cell.IsCell) ShowTextEditor(
-            //    GetCellRect(cell.Row.Value, cell.Column.Value),
-            //    Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText());
-        }
-
-        protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
-        {
-            base.OnMouseLeftButtonUp(e);
-            _dragStartCell = new FastGridCellAddress();
-            if (_resizingColumn.HasValue)
-            {
-                _resizingColumn = null;
-                _resizingColumnOrigin = null;
-                _resizingColumnStartSize = null;
-                ReleaseMouseCapture();
-            }
-
-            var pt = e.GetPosition(image);
-            var cell = GetCellAddress(pt);
-
             if (_resizingColumn == null && cell.IsColumnHeader)
             {
                 if (IsTransposed)
@@ -131,6 +111,28 @@ namespace FastWpfGrid
                     OnModelRowClick(_columnSizes.RealToModel(cell.Row.Value));
                 }
             }
+
+            //if (cell.IsCell) ShowTextEditor(
+            //    GetCellRect(cell.Row.Value, cell.Column.Value),
+            //    Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText());
+        }
+
+        protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonUp(e);
+            _dragStartCell = new FastGridCellAddress();
+            //bool wasColumnResizing = false;
+            if (_resizingColumn.HasValue)
+            {
+                _resizingColumn = null;
+                _resizingColumnOrigin = null;
+                _resizingColumnStartSize = null;
+                //wasColumnResizing = true;
+                ReleaseMouseCapture();
+            }
+
+            //var pt = e.GetPosition(image);
+            //var cell = GetCellAddress(pt);
         }
 
         private void edTextChanged(object sender, TextChangedEventArgs e)
@@ -199,7 +201,7 @@ namespace FastWpfGrid
                     MoveCurrentCell(_currentCell.Row + 1, _currentCell.Column, e);
                 }
 
-                HandleCursorMove(e, false);
+                HandleCursorMove(e, true);
                 if (e.Handled) HideInlinEditor();
             }
         }
@@ -221,19 +223,19 @@ namespace FastWpfGrid
             get { return (Keyboard.Modifiers & ModifierKeys.Shift) != 0; }
         }
 
-        private bool HandleCursorMove(KeyEventArgs e, bool allowLeftRight = true)
+        private bool HandleCursorMove(KeyEventArgs e, bool isInTextBox = false)
         {
             if (e.Key == Key.Up) return MoveCurrentCell(_currentCell.Row - 1, _currentCell.Column, e);
             if (e.Key == Key.Down) return MoveCurrentCell(_currentCell.Row + 1, _currentCell.Column, e);
-            if (e.Key == Key.Left && allowLeftRight) return MoveCurrentCell(_currentCell.Row, _currentCell.Column - 1, e);
-            if (e.Key == Key.Right && allowLeftRight) return MoveCurrentCell(_currentCell.Row, _currentCell.Column + 1, e);
+            if (e.Key == Key.Left && !isInTextBox) return MoveCurrentCell(_currentCell.Row, _currentCell.Column - 1, e);
+            if (e.Key == Key.Right && !isInTextBox) return MoveCurrentCell(_currentCell.Row, _currentCell.Column + 1, e);
 
             if (e.Key == Key.Home && ControlPressed) return MoveCurrentCell(0, 0, e);
             if (e.Key == Key.End && ControlPressed) return MoveCurrentCell(_realRowCount - 1, _realColumnCount - 1, e);
             if (e.Key == Key.PageDown && ControlPressed) return MoveCurrentCell(_realRowCount - 1, _currentCell.Column, e);
             if (e.Key == Key.PageUp && ControlPressed) return MoveCurrentCell(0, _currentCell.Column, e);
-            if (e.Key == Key.Home) return MoveCurrentCell(_currentCell.Row, 0, e);
-            if (e.Key == Key.End) return MoveCurrentCell(_currentCell.Row, _realColumnCount - 1, e);
+            if (e.Key == Key.Home && !isInTextBox) return MoveCurrentCell(_currentCell.Row, 0, e);
+            if (e.Key == Key.End && !isInTextBox) return MoveCurrentCell(_currentCell.Row, _realColumnCount - 1, e);
             if (e.Key == Key.PageDown) return MoveCurrentCell(_currentCell.Row + VisibleRowCount, _currentCell.Column, e);
             if (e.Key == Key.PageUp) return MoveCurrentCell(_currentCell.Row - VisibleRowCount, _currentCell.Column, e);
             return false;

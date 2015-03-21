@@ -193,6 +193,7 @@ namespace FastWpfGrid
                 }
             }
 
+            AdjustInlineEditorPosition();
             AdjustScrollBarPositions();
         }
 
@@ -205,13 +206,13 @@ namespace FastWpfGrid
         public int? CurrentRow
         {
             get { return _currentCell.IsCell ? _currentCell.Row : null; }
-            set { CurrentCell = new FastGridCellAddress(value, CurrentColumn); }
+            set { CurrentCell = _currentCell.ChangeRow(value); }
         }
 
         public int? CurrentColumn
         {
             get { return _currentCell.IsCell ? _currentCell.Column : null; }
-            set { CurrentCell = new FastGridCellAddress(CurrentRow, value); }
+            set { CurrentCell = _currentCell.ChangeColumn(value); }
         }
 
         public void NotifyColumnArrangeChanged()
@@ -220,6 +221,7 @@ namespace FastWpfGrid
             FixCurrentCellAndSetSelectionToCurrentCell();
             AdjustScrollbars();
             SetScrollbarMargin();
+            FixScrollPosition();
             InvalidateAll();
         }
 
@@ -229,6 +231,7 @@ namespace FastWpfGrid
             FixCurrentCellAndSetSelectionToCurrentCell();
             AdjustScrollbars();
             SetScrollbarMargin();
+            FixScrollPosition();
             InvalidateAll();
         }
 
@@ -540,6 +543,26 @@ namespace FastWpfGrid
             _rowSizes.BuildIndex();
             //AdjustVerticalScrollBarRange();
             return changed;
+        }
+
+        private void FixScrollPosition()
+        {
+            if (FirstVisibleRowScrollIndex >= vscroll.Maximum) FirstVisibleRowScrollIndex = (int) vscroll.Maximum;
+            if (FirstVisibleColumnScrollIndex >= hscroll.Maximum) FirstVisibleColumnScrollIndex = (int) hscroll.Maximum;
+            _selectedCells.Clear();
+            if (_currentCell.Row.HasValue)
+            {
+                if (_currentCell.Row >= _realRowCount)
+                    _currentCell = _currentCell.ChangeRow(_realRowCount > 0 ? _realRowCount - 1 : (int?) null);
+            }
+            if (_currentCell.Column.HasValue)
+            {
+                if (_currentCell.Column >= _realColumnCount)
+                    _currentCell = _currentCell.ChangeColumn(_realColumnCount > 0 ? _realColumnCount - 1 : (int?) null);
+            }
+            if (_currentCell.IsCell) _selectedCells.Add(_currentCell);
+            AdjustScrollBarPositions();
+            OnChangeSelectedCells();
         }
 
         //public int FirstVisibleRowModelIndex
