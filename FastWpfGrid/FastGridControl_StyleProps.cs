@@ -67,7 +67,7 @@ namespace FastWpfGrid
             {
                 _cellFontSize = value;
                 RecalculateDefaultCellSize();
-                RenderGrid();
+                InvalidateAll();
             }
         }
 

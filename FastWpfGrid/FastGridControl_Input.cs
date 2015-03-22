@@ -208,9 +208,24 @@ namespace FastWpfGrid
 
         private void imageMouseWheel(object sender, MouseWheelEventArgs e)
         {
-            if (e.Delta < 0) vscroll.Value = vscroll.Value + vscroll.LargeChange/2;
-            if (e.Delta > 0) vscroll.Value = vscroll.Value - vscroll.LargeChange/2;
-            ScrollChanged();
+            if (ControlPressed)
+            {
+                if (e.Delta < 0 && CellFontSize < 20) CellFontSize++;
+                if (e.Delta > 0 && CellFontSize > 6) CellFontSize--;
+
+                RecountColumnWidths();
+                RecountRowHeights();
+                AdjustScrollbars();
+                SetScrollbarMargin();
+                FixScrollPosition();
+                InvalidateAll();
+            }
+            else
+            {
+                if (e.Delta < 0) vscroll.Value = vscroll.Value + vscroll.LargeChange/2;
+                if (e.Delta > 0) vscroll.Value = vscroll.Value - vscroll.LargeChange/2;
+                ScrollChanged();
+            }
         }
 
         private static bool ControlPressed
