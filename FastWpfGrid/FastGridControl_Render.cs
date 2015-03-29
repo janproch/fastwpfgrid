@@ -278,7 +278,7 @@ namespace FastWpfGrid
                     {
                         var imgOrigin = new IntPoint(leftAlign ? leftPos : rightPos - block.ImageWidth, top);
                         var image = GetImage(block.ImageSource);
-                        _drawBuffer.Blit(new Rect(imgOrigin.X, imgOrigin.Y, block.ImageWidth, block.ImageHeight), image.Bitmap, new Rect(0, 0, block.ImageWidth, block.ImageHeight),
+                        _drawBuffer.Blit(new Point(imgOrigin.X, imgOrigin.Y), image.Bitmap, new Rect(0, 0, block.ImageWidth, block.ImageHeight),
                                          image.KeyColor, image.BlendMode);
                     }
                     break;
