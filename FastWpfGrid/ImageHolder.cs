@@ -11,12 +11,14 @@ namespace FastWpfGrid
     public class ImageHolder
     {
         public WriteableBitmap Bitmap;
+        public BitmapImage Image;
         public WriteableBitmapExtensions.BlendMode BlendMode;
         public Color KeyColor = Colors.White;
 
-        public ImageHolder(WriteableBitmap bitmap)
+        public ImageHolder(WriteableBitmap bitmap, BitmapImage image)
         {
             Bitmap = bitmap;
+            Image = image;
 
             using (var context = Bitmap.GetBitmapContext())
             {

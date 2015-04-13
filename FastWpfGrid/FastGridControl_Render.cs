@@ -338,7 +338,7 @@ namespace FastWpfGrid
             }
         }
 
-        private static ImageHolder GetImage(string source)
+        public static ImageHolder GetImage(string source)
         {
             lock (_imageCache)
             {
@@ -355,7 +355,7 @@ namespace FastWpfGrid
             if (wbmp.Format != PixelFormats.Bgra32)
                 wbmp = new WriteableBitmap(new FormatConvertedBitmap(wbmp, PixelFormats.Bgra32, null, 0));
 
-            var image = new ImageHolder(wbmp);
+            var image = new ImageHolder(wbmp, bmImage);
             lock (_imageCache)
             {
                 _imageCache[source] = image;
