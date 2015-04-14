@@ -28,8 +28,6 @@ namespace FastWpfGrid
         //private double _lastvscroll;
         private IFastGridModel _model;
 
-
-
         private FastGridCellAddress _currentCell;
         private HashSet<FastGridCellAddress> _selectedCells = new HashSet<FastGridCellAddress>();
 
@@ -97,12 +95,22 @@ namespace FastWpfGrid
             _rowSizes.DefaultSize = rowHeight;
             _columnSizes.DefaultSize = columnWidth;
 
-            HeaderWidth = GetTextWidth("0000000", false, false);
-            HeaderHeight = rowHeight;
-
-            if (IsTransposed) CountTransposedHeaderWidth();
+            RecalculateHeaderSize();
 
             InvalidateAll();
+        }
+
+        private void RecalculateHeaderSize()
+        {
+            HeaderWidth = GetTextWidth("0000000", false, false);
+            HeaderHeight = _rowSizes.DefaultSize;
+
+            if (IsTransposed) CountTransposedHeaderWidth();
+            if (Model != null)
+            {
+                int width = GetCellContentWidth(Model.GetGridHeader(this));
+                if (width + 2 * CellPaddingHorizontal > HeaderWidth) HeaderWidth = width + 2 * CellPaddingHorizontal;
+            }
         }
 
         private void CountTransposedHeaderWidth()
@@ -247,7 +255,7 @@ namespace FastWpfGrid
             }
 
             UpdateSeriesCounts();
-
+            RecalculateHeaderSize();
             FixCurrentCellAndSetSelectionToCurrentCell();
 
             RecountColumnWidths();
