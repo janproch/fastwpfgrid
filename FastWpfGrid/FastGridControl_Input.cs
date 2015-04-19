@@ -62,19 +62,38 @@ namespace FastWpfGrid
             {
                 if (cell.IsCell)
                 {
-                    _selectedCells.ToList().ForEach(InvalidateCell);
-                    _selectedCells.Clear();
-                    if (_currentCell == cell)
+                    if (ControlPressed)
                     {
-                        ShowInlineEditor(_currentCell);
+                        HideInlinEditor();
+                        if (_selectedCells.Contains(cell)) _selectedCells.Remove(cell);
+                        else _selectedCells.Add(cell);
+                        InvalidateCell(cell);
+                    }
+                    else if (ShiftPressed)
+                    {
+                        HideInlinEditor();
+                        foreach(var cellItem in GetCellRange(_currentCell, cell))
+                        {
+                            _selectedCells.Add(cellItem);
+                            InvalidateCell(cellItem);
+                        }
                     }
                     else
                     {
-                        HideInlinEditor();
-                        SetCurrentCell(cell);
+                        _selectedCells.ToList().ForEach(InvalidateCell);
+                        _selectedCells.Clear();
+                        if (_currentCell == cell)
+                        {
+                            ShowInlineEditor(_currentCell);
+                        }
+                        else
+                        {
+                            HideInlinEditor();
+                            SetCurrentCell(cell);
+                        }
+                        _dragStartCell = cell;
+                        _selectedCells.Add(cell);
                     }
-                    _dragStartCell = cell;
-                    _selectedCells.Add(cell);
                     OnChangeSelectedCells();
                 }
 
