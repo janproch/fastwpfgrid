@@ -286,7 +286,7 @@ namespace FastWpfGrid
             _selectedCells.Clear();
             _currentCell = new FastGridCellAddress(row, col);
             if (_currentCell.IsCell) _selectedCells.Add(_currentCell);
-            OnChangeSelectedCells();
+            OnChangeSelectedCells(false);
         }
 
         public void NotifyAddedRows()
@@ -548,7 +548,7 @@ namespace FastWpfGrid
             if (_currentCell.IsCell) _selectedCells.Add(_currentCell);
             InvalidateCurrentCell();
             ScrollCurrentCellIntoView();
-            OnChangeSelectedCells();
+            OnChangeSelectedCells(true);
             return true;
         }
 

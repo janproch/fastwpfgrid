@@ -562,7 +562,7 @@ namespace FastWpfGrid
             }
             if (_currentCell.IsCell) _selectedCells.Add(_currentCell);
             AdjustScrollBarPositions();
-            OnChangeSelectedCells();
+            OnChangeSelectedCells(false);
         }
 
         //public int FirstVisibleRowModelIndex

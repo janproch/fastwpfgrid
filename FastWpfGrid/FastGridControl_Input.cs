@@ -25,7 +25,7 @@ namespace FastWpfGrid
 
         public event Action<object, ColumnClickEventArgs> ColumnHeaderClick;
         public event Action<object, RowClickEventArgs> RowHeaderClick;
-        public event EventHandler SelectedCellsChanged;
+        public event EventHandler<SelectionChangedEventArgs> SelectedCellsChanged;
         public List<ActiveRegion> CurrentCellActiveRegions = new List<ActiveRegion>();
         public ActiveRegion CurrentHoverRegion;
         private Point? _mouseCursorPoint;
@@ -94,7 +94,7 @@ namespace FastWpfGrid
                         _dragStartCell = cell;
                         _selectedCells.Add(cell);
                     }
-                    OnChangeSelectedCells();
+                    OnChangeSelectedCells(true);
                 }
 
                 int? resizingColumn = GetResizingColumn(pt);
@@ -176,7 +176,7 @@ namespace FastWpfGrid
                     _selectedCells.Add(cell);
                     _currentCell = cell;
                     InvalidateCell(_currentCell);
-                    OnChangeSelectedCells();
+                    OnChangeSelectedCells(true);
                 }
             }
         }
@@ -379,7 +379,7 @@ namespace FastWpfGrid
             }
             _selectedCells = newSelected;
             SetCurrentCell(cell);
-            OnChangeSelectedCells();
+            OnChangeSelectedCells(true);
         }
 
         private void HandleMouseMoveTooltip()
@@ -451,9 +451,9 @@ namespace FastWpfGrid
             _tooltipTimer.IsEnabled = false;
         }
 
-        private void OnChangeSelectedCells()
+        private void OnChangeSelectedCells(bool isInvokedByUser)
         {
-            if (SelectedCellsChanged != null) SelectedCellsChanged(this, EventArgs.Empty);
+            if (SelectedCellsChanged != null) SelectedCellsChanged(this, new SelectionChangedEventArgs {IsInvokedByUser = isInvokedByUser});
         }
 
         protected override void OnMouseLeave(MouseEventArgs e)
