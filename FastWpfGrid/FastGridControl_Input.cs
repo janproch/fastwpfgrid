@@ -44,10 +44,13 @@ namespace FastWpfGrid
         private bool _inlineTextChanged;
         public event EventHandler ScrolledModelRows;
         public event EventHandler ScrolledModelColumns;
+        private FastGridCellAddress _showCellEditorIfMouseUp;
 
         protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
         {
             base.OnMouseLeftButtonDown(e);
+            _showCellEditorIfMouseUp = FastGridCellAddress.Empty;
+
             var pt = e.GetPosition(image);
             var cell = GetCellAddress(pt);
 
@@ -84,7 +87,7 @@ namespace FastWpfGrid
                         _selectedCells.Clear();
                         if (_currentCell == cell)
                         {
-                            ShowInlineEditor(_currentCell);
+                            _showCellEditorIfMouseUp = _currentCell;
                         }
                         else
                         {
@@ -150,8 +153,14 @@ namespace FastWpfGrid
                 ReleaseMouseCapture();
             }
 
-            //var pt = e.GetPosition(image);
-            //var cell = GetCellAddress(pt);
+            var pt = e.GetPosition(image);
+            var cell = GetCellAddress(pt);
+
+            if (cell == _showCellEditorIfMouseUp)
+            {
+                ShowInlineEditor(_showCellEditorIfMouseUp);
+                _showCellEditorIfMouseUp = FastGridCellAddress.Empty;
+            }
         }
 
         private void edTextChanged(object sender, TextChangedEventArgs e)
@@ -259,6 +268,11 @@ namespace FastWpfGrid
 
         private bool HandleCursorMove(KeyEventArgs e, bool isInTextBox = false)
         {
+            if (e.Key == Key.Up && ControlPressed) return MoveCurrentCell(0, _currentCell.Column, e);
+            if (e.Key == Key.Down && ControlPressed) return MoveCurrentCell(_realRowCount - 1, _currentCell.Column, e);
+            if (e.Key == Key.Left && ControlPressed) return MoveCurrentCell(_currentCell.Row, 0, e);
+            if (e.Key == Key.Right && ControlPressed) return MoveCurrentCell(_currentCell.Row, _realColumnCount - 1, e);
+
             if (e.Key == Key.Up) return MoveCurrentCell(_currentCell.Row - 1, _currentCell.Column, e);
             if (e.Key == Key.Down) return MoveCurrentCell(_currentCell.Row + 1, _currentCell.Column, e);
             if (e.Key == Key.Left && !isInTextBox) return MoveCurrentCell(_currentCell.Row, _currentCell.Column - 1, e);
@@ -497,6 +511,11 @@ namespace FastWpfGrid
         private void OnScrolledModelColumns()
         {
             if (ScrolledModelColumns != null) ScrolledModelColumns(this, EventArgs.Empty);
+        }
+
+        private void edTextLostFocus(object sender, RoutedEventArgs e)
+        {
+            HideInlinEditor();
         }
     }
 }

@@ -20,7 +20,7 @@
                 x:Name="image" SnapsToDevicePixels="True" Focusable="True" KeyDown="imageKeyDown" MouseDown="imageMouseDown" 
                 Mouse.MouseLeave="imageMouseLeave"
                 RenderOptions.BitmapScalingMode="NearestNeighbor" TextInput="imageTextInput" MouseWheel="imageMouseWheel" />
-            <TextBox x:Name="edText" Visibility="Hidden" SnapsToDevicePixels="True" PreviewKeyDown="edTextKeyDown" TextChanged="edTextChanged" />
+            <TextBox x:Name="edText" Visibility="Hidden" SnapsToDevicePixels="True" PreviewKeyDown="edTextKeyDown" TextChanged="edTextChanged" LostFocus="edTextLostFocus" />
         </Grid>
         
 
