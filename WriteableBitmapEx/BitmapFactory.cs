@@ -44,7 +44,7 @@ namespace System.Windows.Media.Imaging
 #if SILVERLIGHT
          return new WriteableBitmap(pixelWidth, pixelHeight);
 #elif WPF
-            return new WriteableBitmap(pixelWidth, pixelHeight, 96.0, 96.0, PixelFormats.Pbgra32, null);
+            return new WriteableBitmap(pixelWidth, pixelHeight, DpiDetector.DpiXKoef * 96.0, DpiDetector.DpiYKoef * 96.0, PixelFormats.Pbgra32, null);
 #elif NETFX_CORE
          return new WriteableBitmap(pixelWidth, pixelHeight);
 #endif

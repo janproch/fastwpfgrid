@@ -52,6 +52,8 @@ namespace FastWpfGrid
             _showCellEditorIfMouseUp = FastGridCellAddress.Empty;
 
             var pt = e.GetPosition(image);
+            pt.X *= DpiDetector.DpiXKoef;
+            pt.Y *= DpiDetector.DpiYKoef;
             var cell = GetCellAddress(pt);
 
             var currentRegion = CurrentCellActiveRegions.FirstOrDefault(x => x.Rect.Contains(pt));
@@ -154,6 +156,8 @@ namespace FastWpfGrid
             }
 
             var pt = e.GetPosition(image);
+            pt.X *= DpiDetector.DpiXKoef;
+            pt.Y *= DpiDetector.DpiYKoef;
             var cell = GetCellAddress(pt);
 
             if (cell == _showCellEditorIfMouseUp)
@@ -173,6 +177,8 @@ namespace FastWpfGrid
             base.OnMouseRightButtonDown(e);
 
             var pt = e.GetPosition(image);
+            pt.X *= DpiDetector.DpiXKoef;
+            pt.Y *= DpiDetector.DpiYKoef;
             var cell = GetCellAddress(pt);
 
             if (!_selectedCells.Contains(cell))
@@ -335,6 +341,8 @@ namespace FastWpfGrid
             using (var ctx = CreateInvalidationContext())
             {
                 var pt = e.GetPosition(image);
+                pt.X *= DpiDetector.DpiXKoef;
+                pt.Y *= DpiDetector.DpiYKoef;
                 _mouseCursorPoint = pt;
                 var cell = GetCellAddress(pt);
 

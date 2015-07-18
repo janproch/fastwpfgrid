@@ -329,7 +329,7 @@ namespace System.Windows.Media.Imaging
 
         public int TextHeight
         {
-            get { return (int) Math.Ceiling(GlyphTypeface.Height*EmSize); }
+            get { return (int) Math.Ceiling(GlyphTypeface.Height*EmSize*DpiDetector.DpiYKoef); }
         }
     }
 }

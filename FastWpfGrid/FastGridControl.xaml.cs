@@ -54,6 +54,7 @@ namespace FastWpfGrid
             CellFontSize = 11;
         }
 
+
         public GlyphFont GetFont(bool isBold, bool isItalic)
         {
             var key = Tuple.Create(isBold, isItalic);
@@ -512,7 +513,7 @@ namespace FastWpfGrid
             int height = (int) imageGrid.ActualHeight - 2;
             if (width > 0 && height > 0)
             {
-                _drawBuffer = BitmapFactory.New(width, height);
+                _drawBuffer = BitmapFactory.New((int)Math.Ceiling(width * DpiDetector.DpiXKoef), (int)Math.Ceiling(height * DpiDetector.DpiYKoef));
             }
             else
             {

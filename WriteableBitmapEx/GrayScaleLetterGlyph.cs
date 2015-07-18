@@ -47,8 +47,8 @@ namespace System.Windows.Media.Imaging
                                                    size,
                                                    Brushes.White);
 
-            int width = (int) Math.Ceiling(text.Width);
-            int height = (int) Math.Ceiling(text.Height);
+            int width = (int)Math.Ceiling(DpiDetector.DpiXKoef * text.Width);
+            int height = (int)Math.Ceiling(DpiDetector.DpiYKoef * text.Height);
             if (width == 0 || height == 0) return null;
 
             DrawingVisual drawingVisual = new DrawingVisual();
@@ -57,7 +57,7 @@ namespace System.Windows.Media.Imaging
             drawingContext.DrawText(text, new Point(0, 0));
             drawingContext.Close();
 
-            RenderTargetBitmap bmp = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            RenderTargetBitmap bmp = new RenderTargetBitmap(width, height, DpiDetector.DpiXKoef * 96, DpiDetector.DpiYKoef * 96, PixelFormats.Pbgra32);
             bmp.Render(drawingVisual);
 
             var res = new List<Item>();

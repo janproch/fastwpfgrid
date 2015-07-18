@@ -130,7 +130,7 @@ namespace FastWpfGridTest
             tb.Measure(new Size(width, height));
             tb.Arrange(new Rect(new Point(0, 0), new Size(width, height)));
 
-            var bmp = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            var bmp = new RenderTargetBitmap(width, height, DpiDetector.DpiXKoef * 96, DpiDetector.DpiYKoef * 96, PixelFormats.Pbgra32);
 
             RenderOptions.SetBitmapScalingMode(bmp, BitmapScalingMode.NearestNeighbor);
             RenderOptions.SetClearTypeHint(bmp, ClearTypeHint.Enabled);

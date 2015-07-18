@@ -45,6 +45,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -57,6 +58,7 @@
     <Compile Include="BitmapContext.cs" />
     <Compile Include="BitmapFactory.cs" />
     <Compile Include="ClearTypeLetterGlyph.cs" />
+    <Compile Include="DpiDetector.cs" />
     <Compile Include="IntGeometry.cs" />
     <Compile Include="GrayScaleLetterGlyph.cs" />
     <Compile Include="LetterGlyphTool.cs" />

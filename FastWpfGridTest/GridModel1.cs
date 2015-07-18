@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using FastWpfGrid;
 
 namespace FastWpfGridTest
@@ -43,7 +44,15 @@ namespace FastWpfGridTest
             var btn = impl.AddImageBlock(view.IsTransposed ? "/Images/flip_horizontal_small.png" : "/Images/flip_vertical_small.png");
             btn.CommandParameter = FastWpfGrid.FastGridControl.ToggleTransposedCommand;
             btn.ToolTip = "Swap rows and columns";
+            impl.AddImageBlock("/Images/foreign_keysmall.png").CommandParameter = "FK";
+            impl.AddImageBlock("/Images/primary_keysmall.png").CommandParameter = "PK";
             return impl;
+        }
+
+        public override void HandleCommand(IFastGridView view, FastGridCellAddress address, object commandParameter)
+        {
+            base.HandleCommand(view, address, commandParameter);
+            if (commandParameter is string) MessageBox.Show(commandParameter.ToString());
         }
     }
 }
