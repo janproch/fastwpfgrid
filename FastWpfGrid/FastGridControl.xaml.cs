@@ -417,10 +417,10 @@ namespace FastWpfGrid
 
                 edText.Margin = new Thickness
                     {
-                        Left = rect.Left,
-                        Top = rect.Top,
-                        Right = imageGrid.ActualWidth - rect.Right,
-                        Bottom = imageGrid.ActualHeight - rect.Bottom,
+                        Left = rect.Left / DpiDetector.DpiXKoef,
+                        Top = rect.Top / DpiDetector.DpiYKoef,
+                        Right = imageGrid.ActualWidth - rect.Right / DpiDetector.DpiXKoef,
+                        Bottom = imageGrid.ActualHeight - rect.Bottom / DpiDetector.DpiYKoef,
                     };
             }
         }
