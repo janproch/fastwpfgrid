@@ -193,7 +193,7 @@ namespace FastWpfGrid
             return res;
         }
 
-        private int GetCellContentWidth(IFastGridCell cell)
+        private int GetCellContentWidth(IFastGridCell cell, int? maxSize = null)
         {
             if (cell == null) return 0;
             int count = cell.BlockCount;
@@ -210,7 +210,7 @@ namespace FastWpfGrid
                     case FastGridBlockType.Text:
                         string text = block.TextData;
                         var font = GetFont(block.IsBold, block.IsItalic);
-                        witdh += font.GetTextWidth(text);
+                        witdh += font.GetTextWidth(text, maxSize);
                         break;
                     case FastGridBlockType.Image:
                         witdh += block.ImageWidth;
@@ -232,7 +232,7 @@ namespace FastWpfGrid
                 case FastGridBlockType.Text:
                     var font = GetFont(block.IsBold, block.IsItalic);
                     int textHeight = font.GetTextHeight(block.TextData);
-                    width = font.GetTextWidth(block.TextData);
+                    width = font.GetTextWidth(block.TextData, _columnSizes.MaxSize);
                     height = textHeight;
                     top = rectContent.Top + (int) Math.Round(rectContent.Height/2.0 - textHeight/2.0);
                     break;

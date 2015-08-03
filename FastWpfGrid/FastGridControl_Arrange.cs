@@ -491,7 +491,7 @@ namespace FastWpfGrid
                 for (int col = 0; col < colCount; col++)
                 {
                     var cell = _isTransposed ? _model.GetCell(this, col, row) : _model.GetCell(this, row, col);
-                    _columnSizes.PutSizeOverride(col, GetCellContentWidth(cell) + 2 * CellPaddingHorizontal);
+                    _columnSizes.PutSizeOverride(col, GetCellContentWidth(cell, _columnSizes.MaxSize) + 2 * CellPaddingHorizontal);
                 }
             }
 

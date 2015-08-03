@@ -290,7 +290,7 @@ namespace System.Windows.Media.Imaging
             }
         }
 
-        public int GetTextWidth(string text)
+        public int GetTextWidth(string text, int? maxSize = null)
         {
             int maxLineWidth = 0;
             int curLineWidth = 0;
@@ -314,6 +314,14 @@ namespace System.Windows.Media.Imaging
                     var letter = GetGrayScaleLetter(ch);
                     if (letter == null) continue;
                     curLineWidth += letter.Width;
+                }
+                if (maxSize.HasValue && maxLineWidth >= maxSize.Value)
+                {
+                    return maxSize.Value;
+                }
+                if (maxSize.HasValue && curLineWidth >= maxSize.Value)
+                {
+                    return maxSize.Value;
                 }
             }
             if (curLineWidth > maxLineWidth) maxLineWidth = curLineWidth;
