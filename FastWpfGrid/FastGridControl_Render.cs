@@ -223,7 +223,8 @@ namespace FastWpfGrid
 
         private int RenderBlock(int leftPos, int rightPos, Color? selectedTextColor, Color bgColor, IntRect rectContent, IFastGridCellBlock block, FastGridCellAddress cellAddr, bool leftAlign, bool isHoverCell)
         {
-            bool renderBlock = block.ShowOnMouseHover ? isHoverCell : true;
+            bool renderBlock = true;
+            if (block.MouseHoverBehaviour == MouseHoverBehaviours.HideWhenMouseOut && !isHoverCell) renderBlock = false;
 
             int width = 0, top = 0, height = 0;
 
@@ -247,18 +248,22 @@ namespace FastWpfGrid
             {
                 var activeRect = new IntRect(new IntPoint(leftAlign ? leftPos : rightPos - width, top), new IntSize(width, height)).GrowSymmetrical(1, 1);
                 var region = new ActiveRegion
-                {
-                    CommandParameter = block.CommandParameter,
-                    Rect = activeRect,
-                    Tooltip = block.ToolTip,
-                };
+                    {
+                        CommandParameter = block.CommandParameter,
+                        Rect = activeRect,
+                        Tooltip = block.ToolTip,
+                    };
                 CurrentCellActiveRegions.Add(region);
                 if (_mouseCursorPoint.HasValue && activeRect.Contains(_mouseCursorPoint.Value))
                 {
                     _drawBuffer.FillRectangle(activeRect, ActiveRegionHoverFillColor);
                     CurrentHoverRegion = region;
                 }
-                _drawBuffer.DrawRectangle(activeRect, ActiveRegionFrameColor);
+
+                bool renderRectangle = true;
+                if (block.MouseHoverBehaviour == MouseHoverBehaviours.HideButtonWhenMouseOut && !isHoverCell) renderRectangle = false;
+
+                if (renderRectangle) _drawBuffer.DrawRectangle(activeRect, ActiveRegionFrameColor);
             }
 
             switch (block.BlockType)
@@ -268,7 +273,7 @@ namespace FastWpfGrid
                     {
                         var textOrigin = new IntPoint(leftAlign ? leftPos : rightPos - width, top);
                         var font = GetFont(block.IsBold, block.IsItalic);
-                        _drawBuffer.DrawString(textOrigin.X, textOrigin.Y, rectContent, selectedTextColor ?? block.FontColor ?? CellFontColor, UseClearType ? bgColor : (Color?)null,
+                        _drawBuffer.DrawString(textOrigin.X, textOrigin.Y, rectContent, selectedTextColor ?? block.FontColor ?? CellFontColor, UseClearType ? bgColor : (Color?) null,
                                                font,
                                                block.TextData);
                     }

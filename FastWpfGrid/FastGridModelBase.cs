@@ -237,9 +237,9 @@ namespace FastWpfGrid
             get { return 16; }
         }
 
-        public virtual bool ShowOnMouseHover
+        public virtual MouseHoverBehaviours MouseHoverBehaviour
         {
-            get { return false; }
+            get { return MouseHoverBehaviours.ShowAllWhenMouseOut; }
         }
 
         public virtual object CommandParameter

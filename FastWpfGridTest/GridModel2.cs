@@ -69,7 +69,7 @@ namespace FastWpfGridTest
             var impl = new FastGridCellImpl();
             impl.AddTextBlock(GetCellText(row, column));
             var btn = impl.AddImageBlock("/Images/foreign_keysmall.png");
-            btn.ShowOnMouseHover = true;
+            btn.MouseHoverBehaviour = MouseHoverBehaviours.HideWhenMouseOut;
             btn.CommandParameter = "TEST";
             impl.RightAlignBlockCount = 1;
             return impl;

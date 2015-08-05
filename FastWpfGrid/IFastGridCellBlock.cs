@@ -14,6 +14,13 @@ namespace FastWpfGrid
         Image,
     }
 
+    public enum MouseHoverBehaviours
+    {
+        HideWhenMouseOut,
+        HideButtonWhenMouseOut,
+        ShowAllWhenMouseOut,
+    }
+
     public interface IFastGridCellBlock
     {
         FastGridBlockType BlockType { get; }
@@ -27,7 +34,7 @@ namespace FastWpfGrid
         int ImageWidth { get; }
         int ImageHeight { get; }
 
-        bool ShowOnMouseHover { get; }
+        MouseHoverBehaviours MouseHoverBehaviour { get; }
         object CommandParameter { get; }
         string ToolTip { get; }
     }

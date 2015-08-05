@@ -17,9 +17,14 @@ namespace FastWpfGrid
         public string ImageSource { get; set; }
         public int ImageWidth { get; set; }
         public int ImageHeight { get; set; }
-        public bool ShowOnMouseHover { get; set; }
+        public MouseHoverBehaviours MouseHoverBehaviour { get; set; } 
         public object CommandParameter { get; set; }
         public string ToolTip { get; set; }
+
+        public FastGridBlockImpl()
+        {
+            MouseHoverBehaviour = MouseHoverBehaviours.ShowAllWhenMouseOut;
+        }
     }
 
     public class FastGridCellImpl : IFastGridCell
