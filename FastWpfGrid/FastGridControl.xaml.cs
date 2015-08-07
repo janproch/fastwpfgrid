@@ -374,7 +374,9 @@ namespace FastWpfGrid
         private void ShowInlineEditor(FastGridCellAddress cell, string textValueOverride = null)
         {
             if (!cell.IsCell) return;
-            string text = GetCell(cell.Row.Value, cell.Column.Value).GetEditText();
+            var cellObj = GetCell(cell.Row.Value, cell.Column.Value);
+            if (cellObj == null) return;
+            string text = cellObj.GetEditText();
             if (text == null) return;
 
             _inplaceEditorCell = cell;
