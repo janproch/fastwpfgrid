@@ -19,7 +19,7 @@
                         <CheckBox Content="Freeze column 5" x:Name="chbFreezeColumn5" Click="columnsCfgChanged" />
                     </StackPanel>
                     <FastWpfGrid:FastGridControl x:Name="grid1" Grid.Row="1" 
-                                                 IsTransposed="{Binding IsChecked, ElementName=chbIsTransposed1}"
+                                                 IsTransposed="{Binding IsChecked, ElementName=chbIsTransposed1, Mode=TwoWay}"
                                                  UseClearType="{Binding IsChecked, ElementName=chbClearType1}"
                                                  >
                         <FastWpfGrid:FastGridControl.ContextMenu>
