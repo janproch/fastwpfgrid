@@ -353,6 +353,7 @@ namespace FastWpfGrid
             string packUri = "pack://application:,,,/" + Assembly.GetEntryAssembly().GetName().Name + ";component/" + source.TrimStart('/');
             BitmapImage bmImage = new BitmapImage();
             bmImage.BeginInit();
+            bmImage.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
             bmImage.UriSource = new Uri(packUri, UriKind.Absolute);
             bmImage.EndInit();
             var wbmp = new WriteableBitmap(bmImage);
