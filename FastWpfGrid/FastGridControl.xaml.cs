@@ -449,10 +449,35 @@ namespace FastWpfGrid
         private HashSet<FastGridCellAddress> GetCellRange(FastGridCellAddress a, FastGridCellAddress b)
         {
             var res = new HashSet<FastGridCellAddress>();
-            int minrow = Math.Min(a.Row.Value, b.Row.Value);
-            int maxrow = Math.Max(a.Row.Value, b.Row.Value);
-            int mincol = Math.Min(a.Column.Value, b.Column.Value);
-            int maxcol = Math.Max(a.Column.Value, b.Column.Value);
+
+            int minrow;
+            int maxrow;
+            int mincol;
+            int maxcol;
+
+            if (a.IsRowHeader)
+            {
+                mincol = 0;
+                maxcol = _columnSizes.RealCount - 1;
+            }
+            else
+            {
+                if (a.Column == null || b.Column == null) return res;
+                mincol = Math.Min(a.Column.Value, b.Column.Value);
+                maxcol = Math.Max(a.Column.Value, b.Column.Value);
+            }
+
+            if (a.IsColumnHeader)
+            {
+                minrow = 0;
+                maxrow = _rowSizes.RealCount;
+            }
+            else
+            {
+                if (a.Row == null || b.Row == null) return res;
+                minrow = Math.Min(a.Row.Value, b.Row.Value);
+                maxrow = Math.Max(a.Row.Value, b.Row.Value);
+            }
 
             for (int row = minrow; row <= maxrow; row++)
             {

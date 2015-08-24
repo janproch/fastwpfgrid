@@ -27,6 +27,11 @@ namespace FastWpfGrid
                 int colsToRender = VisibleColumnCount;
                 int rowsToRender = VisibleRowCount;
 
+                if (_invalidatedCells.Count > 50)
+                {
+                    _isInvalidatedAll = true;
+                }
+
                 if (!_isInvalidated || _isInvalidatedAll)
                 {
                     _drawBuffer.Clear(Colors.White);

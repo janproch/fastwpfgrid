@@ -65,6 +65,39 @@ namespace FastWpfGrid
 
             using (var ctx = CreateInvalidationContext())
             {
+                int? resizingColumn = GetResizingColumn(pt);
+                if (resizingColumn != null)
+                {
+                    Cursor = Cursors.SizeWE;
+                    _resizingColumn = resizingColumn;
+                    _resizingColumnOrigin = pt;
+                    _resizingColumnStartSize = _columnSizes.GetSizeByRealIndex(_resizingColumn.Value);
+                    CaptureMouse();
+                }
+
+                if (_resizingColumn == null && cell.IsColumnHeader)
+                {
+                    if (IsTransposed)
+                    {
+                        OnModelRowClick(_columnSizes.RealToModel(cell.Column.Value));
+                    }
+                    else
+                    {
+                        OnModelColumnClick(_columnSizes.RealToModel(cell.Column.Value));
+                    }
+                }
+                if (cell.IsRowHeader)
+                {
+                    if (IsTransposed)
+                    {
+                        OnModelColumnClick(_rowSizes.RealToModel(cell.Row.Value));
+                    }
+                    else
+                    {
+                        OnModelRowClick(_rowSizes.RealToModel(cell.Row.Value));
+                    }
+                }
+
                 if (cell.IsCell)
                 {
                     if (ControlPressed)
@@ -76,8 +109,11 @@ namespace FastWpfGrid
                     }
                     else if (ShiftPressed)
                     {
+                        _selectedCells.ToList().ForEach(InvalidateCell);
+                        _selectedCells.Clear();
+
                         HideInlinEditor();
-                        foreach(var cellItem in GetCellRange(_currentCell, cell))
+                        foreach (var cellItem in GetCellRange(_currentCell, cell))
                         {
                             _selectedCells.Add(cellItem);
                             InvalidateCell(cellItem);
@@ -100,39 +136,6 @@ namespace FastWpfGrid
                         _selectedCells.Add(cell);
                     }
                     OnChangeSelectedCells(true);
-                }
-
-                int? resizingColumn = GetResizingColumn(pt);
-                if (resizingColumn != null)
-                {
-                    Cursor = Cursors.SizeWE;
-                    _resizingColumn = resizingColumn;
-                    _resizingColumnOrigin = pt;
-                    _resizingColumnStartSize = _columnSizes.GetSizeByRealIndex(_resizingColumn.Value);
-                    CaptureMouse();
-                }
-            }
-
-            if (_resizingColumn == null && cell.IsColumnHeader)
-            {
-                if (IsTransposed)
-                {
-                    OnModelRowClick(_rowSizes.RealToModel(cell.Column.Value));
-                }
-                else
-                {
-                    OnModelColumnClick(_columnSizes.RealToModel(cell.Column.Value));
-                }
-            }
-            if (cell.IsRowHeader)
-            {
-                if (IsTransposed)
-                {
-                    OnModelColumnClick(_rowSizes.RealToModel(cell.Row.Value));
-                }
-                else
-                {
-                    OnModelRowClick(_columnSizes.RealToModel(cell.Row.Value));
                 }
             }
 
@@ -210,13 +213,59 @@ namespace FastWpfGrid
 
         private void OnModelRowClick(int row)
         {
-            if (RowHeaderClick != null && row >= 0 && row < _modelRowCount)
+            if (row >= 0 && row < _modelRowCount)
             {
-                RowHeaderClick(this, new RowClickEventArgs
+                var args = new RowClickEventArgs
+                {
+                    Grid = this,
+                    Row = row,
+                };
+                if (RowHeaderClick != null)
+                {
+                    RowHeaderClick(this, args);
+                }
+                if (!args.Handled)
+                {
+                    HideInlinEditor();
+
+                    if (ControlPressed)
                     {
-                        Grid = this,
-                        Row = row,
-                    });
+                        foreach (var cell in GetCellRange(ModelToReal(new FastGridCellAddress(row, 0)), ModelToReal(new FastGridCellAddress(row, _modelColumnCount - 1))))
+                        {
+                            if (_selectedCells.Contains(cell)) _selectedCells.Remove(cell);
+                            else _selectedCells.Add(cell);
+                            InvalidateCell(cell);
+                        }
+                    }
+                    else if (ShiftPressed)
+                    {
+                        _selectedCells.ToList().ForEach(InvalidateCell);
+                        _selectedCells.Clear();
+                        var currentModel = RealToModel(_currentCell);
+
+                        foreach (var cell in GetCellRange(ModelToReal(new FastGridCellAddress(currentModel.Row, 0)), ModelToReal(new FastGridCellAddress(row, _modelColumnCount - 1))))
+                        {
+                            _selectedCells.Add(cell);
+                            InvalidateCell(cell);
+                        }
+                    }
+                    else
+                    {
+                        _selectedCells.ToList().ForEach(InvalidateCell);
+                        _selectedCells.Clear();
+                        if (_currentCell.IsCell)
+                        {
+                            var currentModel = RealToModel(_currentCell);
+                            SetCurrentCell(ModelToReal(new FastGridCellAddress(row, currentModel.Column)));
+                            _dragStartCell = ModelToReal(new FastGridCellAddress(row, null));
+                        }
+                        foreach (var cell in GetCellRange(ModelToReal(new FastGridCellAddress(row, 0)), ModelToReal(new FastGridCellAddress(row, _modelColumnCount - 1))))
+                        {
+                            _selectedCells.Add(cell);
+                            InvalidateCell(cell);
+                        }
+                    }
+                }
             }
         }
 
@@ -366,7 +415,9 @@ namespace FastWpfGrid
                     else Cursor = Cursors.Arrow;
                 }
 
-                if (_dragStartCell.IsCell && cell.IsCell)
+                if (_dragStartCell.IsCell && cell.IsCell 
+                    || _dragStartCell.IsRowHeader && cell.Row.HasValue
+                    || _dragStartCell.IsColumnHeader && cell.Column.HasValue)
                 {
                     SetSelectedRectangle(_dragStartCell, cell);
                 }
@@ -386,7 +437,7 @@ namespace FastWpfGrid
             HandleMouseMoveTooltip();
         }
 
-        private void SetSelectedRectangle(FastGridCellAddress origin,FastGridCellAddress cell)
+        private void SetSelectedRectangle(FastGridCellAddress origin, FastGridCellAddress cell)
         {
             var newSelected = GetCellRange(origin, cell);
             foreach (var added in newSelected)
