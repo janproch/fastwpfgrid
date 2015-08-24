@@ -438,6 +438,9 @@ namespace FastWpfGrid
 
         private void SetCurrentCell(FastGridCellAddress cell)
         {
+            if (cell.IsRowHeader && _currentCell.IsCell) cell = new FastGridCellAddress(cell.Row, _currentCell.Column);
+            if (cell.IsColumnHeader && _currentCell.IsCell) cell = new FastGridCellAddress(_currentCell.Row, cell.Column);
+
             using (var ctx = CreateInvalidationContext())
             {
                 InvalidateCurrentCell();
@@ -446,6 +449,9 @@ namespace FastWpfGrid
             }
         }
 
+        /// returns cell range. 
+        /// if a is row header, returns full rows.
+        /// if a is column header, returns full columns
         private HashSet<FastGridCellAddress> GetCellRange(FastGridCellAddress a, FastGridCellAddress b)
         {
             var res = new HashSet<FastGridCellAddress>();
