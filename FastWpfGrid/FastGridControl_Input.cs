@@ -33,6 +33,7 @@ namespace FastWpfGrid
         private object _tooltipTarget;
         private string _tooltipText;
         private DispatcherTimer _tooltipTimer;
+        private DispatcherTimer _dragTimer;
         private FastGridCellAddress _dragStartCell;
         private FastGridCellAddress _mouseOverCell;
         private bool _mouseOverCellIsTrimmed;
@@ -45,6 +46,15 @@ namespace FastWpfGrid
         public event EventHandler ScrolledModelRows;
         public event EventHandler ScrolledModelColumns;
         private FastGridCellAddress _showCellEditorIfMouseUp;
+
+        // mouse is scrolled and captured out of control are - force scroll
+        private bool _mouseIsBehindBottom;
+        private bool _mouseIsBehindTop;
+        private bool _mouseIsBehindLeft;
+        private bool _mouseIsBehindRight;
+
+        private int? _mouseMoveColumn;
+        private int? _mouseMoveRow;
 
         protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
         {
@@ -105,7 +115,7 @@ namespace FastWpfGrid
 
                     if (ControlPressed)
                     {
-                        foreach (var rangeCell in GetCellRange(cell, _currentCell))
+                        foreach (var rangeCell in GetCellRange(cell, cell))
                         {
                             if (_selectedCells.Contains(rangeCell)) _selectedCells.Remove(rangeCell);
                             else _selectedCells.Add(rangeCell);
@@ -137,6 +147,8 @@ namespace FastWpfGrid
                             InvalidateCell(rangeCell);
                         }
                         _dragStartCell = cell;
+                        _dragTimer.IsEnabled = true;
+                        CaptureMouse();
                     }
                 }
 
@@ -174,8 +186,10 @@ namespace FastWpfGrid
                             HideInlinEditor();
                             SetCurrentCell(cell);
                         }
-                        _dragStartCell = cell;
                         _selectedCells.Add(cell);
+                        _dragStartCell = cell;
+                        _dragTimer.IsEnabled = true;
+                        CaptureMouse();
                     }
                     OnChangeSelectedCells(true);
                 }
@@ -186,10 +200,69 @@ namespace FastWpfGrid
             //    Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText());
         }
 
+        private void _dragTimer_Tick(object sender, EventArgs e)
+        {
+            using (var ctx = CreateInvalidationContext())
+            {
+                if (_mouseIsBehindBottom)
+                {
+                    int newRow = FirstVisibleRowScrollIndex + 1;
+                    if (!_rowSizes.IsWholeInView(FirstVisibleRowScrollIndex, _rowSizes.ScrollCount - 1, GridScrollAreaHeight))
+                    {
+                        ScrollContent(newRow, FirstVisibleColumnScrollIndex);
+                        var row = FirstVisibleRowScrollIndex + VisibleRowCount - 1 + _rowSizes.FrozenCount;
+                        SetSelectedRectangle(_dragStartCell, new FastGridCellAddress(row, _mouseMoveColumn ?? _currentCell.Column));
+                        AdjustScrollBarPositions();
+                    }
+                }
+                if (_mouseIsBehindTop)
+                {
+                    int newRow = FirstVisibleRowScrollIndex - 1;
+                    if (newRow >= 0)
+                    {
+                        ScrollContent(newRow, FirstVisibleColumnScrollIndex);
+                        var row = newRow + _rowSizes.FrozenCount;
+                        SetSelectedRectangle(_dragStartCell, new FastGridCellAddress(row, _mouseMoveColumn ?? _currentCell.Column));
+                        AdjustScrollBarPositions();
+                    }
+                }
+            }
+            using (var ctx = CreateInvalidationContext())
+            {
+                if (_mouseIsBehindRight)
+                {
+                    int newColumn = FirstVisibleColumnScrollIndex + 1;
+                    if (!_columnSizes.IsWholeInView(FirstVisibleColumnScrollIndex, _columnSizes.ScrollCount - 1, GridScrollAreaWidth))
+                    {
+                        ScrollContent(FirstVisibleRowScrollIndex, newColumn);
+                        var col = FirstVisibleColumnScrollIndex + VisibleColumnCount - 1 + _columnSizes.FrozenCount;
+                        SetSelectedRectangle(_dragStartCell, new FastGridCellAddress(_mouseMoveRow ?? _currentCell.Row, col));
+                        AdjustScrollBarPositions();
+                    }
+                }
+                if (_mouseIsBehindLeft)
+                {
+                    int newColumn = FirstVisibleColumnScrollIndex - 1;
+                    if (newColumn >= 0)
+                    {
+                        ScrollContent(FirstVisibleRowScrollIndex, newColumn);
+                        var col = newColumn + _columnSizes.FrozenCount;
+                        SetSelectedRectangle(_dragStartCell, new FastGridCellAddress(_mouseMoveRow ?? _currentCell.Row, col));
+                        AdjustScrollBarPositions();
+                    }
+                }
+            }
+        }
+
         protected override void OnMouseLeftButtonUp(System.Windows.Input.MouseButtonEventArgs e)
         {
             base.OnMouseLeftButtonUp(e);
-            _dragStartCell = new FastGridCellAddress();
+            if (!_dragStartCell.IsEmpty)
+            {
+                _dragStartCell = new FastGridCellAddress();
+                _dragTimer.IsEnabled = false;
+                ReleaseMouseCapture();
+            }
             //bool wasColumnResizing = false;
             if (_resizingColumn.HasValue)
             {
@@ -440,10 +513,18 @@ namespace FastWpfGrid
             using (var ctx = CreateInvalidationContext())
             {
                 var pt = e.GetPosition(image);
+
+                _mouseIsBehindLeft = pt.X < 0;
+                _mouseIsBehindRight = pt.X > image.ActualWidth;
+                _mouseIsBehindTop = pt.Y < 0;
+                _mouseIsBehindBottom = pt.Y > image.ActualHeight;
+
                 pt.X *= DpiDetector.DpiXKoef;
                 pt.Y *= DpiDetector.DpiYKoef;
                 _mouseCursorPoint = pt;
                 var cell = GetCellAddress(pt);
+                _mouseMoveRow = GetSeriesIndexOnPosition(pt.Y, HeaderHeight, _rowSizes, FirstVisibleRowScrollIndex);
+                _mouseMoveColumn = GetSeriesIndexOnPosition(pt.X, HeaderWidth, _columnSizes, FirstVisibleColumnScrollIndex);
 
                 if (_resizingColumn.HasValue)
                 {

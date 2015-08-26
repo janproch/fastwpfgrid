@@ -52,8 +52,11 @@ namespace FastWpfGrid
             InitializeComponent();
             //gridCore.Grid = this;
             CellFontSize = 11;
+            _dragTimer = new DispatcherTimer();
+            _dragTimer.IsEnabled = false;
+            _dragTimer.Interval = TimeSpan.FromSeconds(0.05);
+            _dragTimer.Tick += _dragTimer_Tick;
         }
-
 
         public GlyphFont GetFont(bool isBold, bool isItalic)
         {
@@ -586,7 +589,6 @@ namespace FastWpfGrid
             OnChangeSelectedCells(true);
             return true;
         }
-
 
         private void RenderChanged()
         {

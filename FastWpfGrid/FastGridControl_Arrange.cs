@@ -16,8 +16,8 @@ namespace FastWpfGrid
         private int _modelColumnCount;
         private int _realRowCount;
         private int _realColumnCount;
-        private int _frozenRowCount;
-        private int _frozenColumnCount;
+        //private int _frozenRowCount;
+        //private int _frozenColumnCount;
 
         private SeriesSizes _rowSizes = new SeriesSizes();
         private SeriesSizes _columnSizes = new SeriesSizes();
