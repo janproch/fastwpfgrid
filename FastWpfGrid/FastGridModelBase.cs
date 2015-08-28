@@ -77,7 +77,7 @@ namespace FastWpfGrid
             _grids.Remove(view);
         }
 
-        public virtual void HandleCommand(IFastGridView view, FastGridCellAddress address, object commandParameter)
+        public virtual void HandleCommand(IFastGridView view, FastGridCellAddress address, object commandParameter, ref bool handled)
         {
         }
 
@@ -258,6 +258,16 @@ namespace FastWpfGrid
         }
 
         public virtual Color? DecorationColor
+        {
+            get { return null; }
+        }
+
+        public virtual int? SelectedRowCountLimit
+        {
+            get { return null; }
+        }
+
+        public virtual int? SelectedColumnCountLimit
         {
             get { return null; }
         }

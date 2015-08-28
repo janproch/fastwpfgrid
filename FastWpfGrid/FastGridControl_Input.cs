@@ -15,6 +15,7 @@ namespace FastWpfGrid
     {
         public static readonly object ToggleTransposedCommand = new object();
         public static readonly object ToggleAllowFlexibleRowsCommand = new object();
+        public static readonly object SelectAllCommand = new object();
 
         public class ActiveRegion
         {
@@ -25,7 +26,6 @@ namespace FastWpfGrid
 
         public event Action<object, ColumnClickEventArgs> ColumnHeaderClick;
         public event Action<object, RowClickEventArgs> RowHeaderClick;
-        public event EventHandler<SelectionChangedEventArgs> SelectedCellsChanged;
         public List<ActiveRegion> CurrentCellActiveRegions = new List<ActiveRegion>();
         public ActiveRegion CurrentHoverRegion;
         private Point? _mouseCursorPoint;
@@ -117,39 +117,40 @@ namespace FastWpfGrid
                     {
                         foreach (var rangeCell in GetCellRange(cell, cell))
                         {
-                            if (_selectedCells.Contains(rangeCell)) _selectedCells.Remove(rangeCell);
-                            else _selectedCells.Add(rangeCell);
+                            if (_selectedCells.Contains(rangeCell)) RemoveSelectedCell(rangeCell);
+                            else AddSelectedCell(rangeCell);
                             InvalidateCell(rangeCell);
                         }
                     }
                     else if (ShiftPressed)
                     {
                         _selectedCells.ToList().ForEach(InvalidateCell);
-                        _selectedCells.Clear();
+                        ClearSelectedCells();
 
                         foreach (var rangeCell in GetCellRange(cell, _currentCell))
                         {
-                            _selectedCells.Add(rangeCell);
+                            AddSelectedCell(rangeCell);
                             InvalidateCell(rangeCell);
                         }
                     }
                     else
                     {
                         _selectedCells.ToList().ForEach(InvalidateCell);
-                        _selectedCells.Clear();
+                        ClearSelectedCells();
                         if (_currentCell.IsCell)
                         {
                             SetCurrentCell(cell);
                         }
                         foreach (var rangeCell in GetCellRange(cell, cell))
                         {
-                            _selectedCells.Add(rangeCell);
+                            AddSelectedCell(rangeCell);
                             InvalidateCell(rangeCell);
                         }
                         _dragStartCell = cell;
                         _dragTimer.IsEnabled = true;
                         CaptureMouse();
                     }
+                    OnChangeSelectedCells(true);
                 }
 
                 if (cell.IsCell)
@@ -157,26 +158,26 @@ namespace FastWpfGrid
                     if (ControlPressed)
                     {
                         HideInlinEditor();
-                        if (_selectedCells.Contains(cell)) _selectedCells.Remove(cell);
-                        else _selectedCells.Add(cell);
+                        if (_selectedCells.Contains(cell)) RemoveSelectedCell(cell);
+                        else AddSelectedCell(cell);
                         InvalidateCell(cell);
                     }
                     else if (ShiftPressed)
                     {
                         _selectedCells.ToList().ForEach(InvalidateCell);
-                        _selectedCells.Clear();
+                        ClearSelectedCells();
 
                         HideInlinEditor();
                         foreach (var cellItem in GetCellRange(_currentCell, cell))
                         {
-                            _selectedCells.Add(cellItem);
+                            AddSelectedCell(cellItem);
                             InvalidateCell(cellItem);
                         }
                     }
                     else
                     {
                         _selectedCells.ToList().ForEach(InvalidateCell);
-                        _selectedCells.Clear();
+                        ClearSelectedCells();
                         if (_currentCell == cell)
                         {
                             _showCellEditorIfMouseUp = _currentCell;
@@ -186,7 +187,7 @@ namespace FastWpfGrid
                             HideInlinEditor();
                             SetCurrentCell(cell);
                         }
-                        _selectedCells.Add(cell);
+                        AddSelectedCell(cell);
                         _dragStartCell = cell;
                         _dragTimer.IsEnabled = true;
                         CaptureMouse();
@@ -305,8 +306,8 @@ namespace FastWpfGrid
                 {
                     InvalidateCell(_currentCell);
                     _selectedCells.ToList().ForEach(InvalidateCell);
-                    _selectedCells.Clear();
-                    _selectedCells.Add(cell);
+                    ClearSelectedCells();
+                    AddSelectedCell(cell);
                     _currentCell = cell;
                     InvalidateCell(_currentCell);
                     OnChangeSelectedCells(true);
@@ -490,6 +491,10 @@ namespace FastWpfGrid
                 {
                     ShowInlineEditor(_currentCell);
                 }
+                if (e.Key == Key.A && ControlPressed && AllowSelectAll)
+                {
+                    SelectAll();
+                }
             }
         }
 
@@ -568,24 +573,6 @@ namespace FastWpfGrid
             HandleMouseMoveTooltip();
         }
 
-        private void SetSelectedRectangle(FastGridCellAddress origin, FastGridCellAddress cell)
-        {
-            var newSelected = GetCellRange(origin, cell);
-            foreach (var added in newSelected)
-            {
-                if (_selectedCells.Contains(added)) continue;
-                InvalidateCell(added);
-            }
-            foreach (var removed in _selectedCells)
-            {
-                if (newSelected.Contains(removed)) continue;
-                InvalidateCell(removed);
-            }
-            _selectedCells = newSelected;
-            SetCurrentCell(cell);
-            OnChangeSelectedCells(true);
-        }
-
         private void HandleMouseMoveTooltip()
         {
             if (CurrentHoverRegion != null && CurrentHoverRegion.Tooltip != null)
@@ -655,11 +642,6 @@ namespace FastWpfGrid
             _tooltipTimer.IsEnabled = false;
         }
 
-        private void OnChangeSelectedCells(bool isInvokedByUser)
-        {
-            if (SelectedCellsChanged != null) SelectedCellsChanged(this, new SelectionChangedEventArgs {IsInvokedByUser = isInvokedByUser});
-        }
-
         protected override void OnMouseLeave(MouseEventArgs e)
         {
             base.OnMouseLeave(e);
@@ -673,6 +655,13 @@ namespace FastWpfGrid
 
         private void HandleCommand(FastGridCellAddress address, object commandParameter)
         {
+            bool handled = false;
+            if (Model != null)
+            {
+                var addressModel = RealToModel(address);
+                Model.HandleCommand(this, addressModel, commandParameter, ref handled);
+            }
+            if (handled) return;
             if (commandParameter == ToggleTransposedCommand)
             {
                 IsTransposed = !IsTransposed;
@@ -681,12 +670,50 @@ namespace FastWpfGrid
             {
                 AllowFlexibleRows = !AllowFlexibleRows;
             }
-            if (Model != null)
+            if (commandParameter == SelectAllCommand)
             {
-                var addressModel = RealToModel(address);
-                Model.HandleCommand(this, addressModel, commandParameter);
+                DoSelectAll();
             }
         }
+
+        private void SelectAll()
+        {
+            HandleCommand(FastGridCellAddress.Empty, SelectAllCommand);
+        }
+
+        private void DoSelectAll()
+        {
+            SetSelectedRectangle(new FastGridCellAddress(0, 0), new FastGridCellAddress(_rowSizes.RealCount - 1, _columnSizes.RealCount - 1));
+        }
+
+        //public void SelectAll(int? rowCountLimit, int? columnCountLimit)
+        //{
+        //    var rows = _rowSizes.RealCount;
+        //    var cols = _columnSizes.RealCount;
+        //    if (rowCountLimit != null)
+        //    {
+        //        if (IsTransposed)
+        //        {
+        //            if (rowCountLimit.Value < cols) cols = rowCountLimit.Value;
+        //        }
+        //        else
+        //        {
+        //            if (rowCountLimit.Value < rows) rows = rowCountLimit.Value;
+        //        }
+        //    }
+        //    if (columnCountLimit != null)
+        //    {
+        //        if (IsTransposed)
+        //        {
+        //            if (columnCountLimit.Value < rows) rows = columnCountLimit.Value;
+        //        }
+        //        else
+        //        {
+        //            if (columnCountLimit.Value < cols) cols = columnCountLimit.Value;
+        //        }
+        //    }
+        //    SetSelectedRectangle(new FastGridCellAddress(0, 0), new FastGridCellAddress(rows - 1, cols - 1));
+        //}
 
         private void imageMouseLeave(object sender, MouseEventArgs e)
         {

@@ -269,12 +269,14 @@ namespace FastWpfGrid
         {
             if (_isTransposed != IsTransposed)
             {
+                _selectedRealRowCountLimitLoaded = false;
+                _selectedRealColumnCountLimitLoaded = false;
                 _isTransposed = IsTransposed;
                 Exchange(ref FirstVisibleColumnScrollIndex, ref FirstVisibleRowScrollIndex);
                 if (_currentCell.IsCell) _currentCell = new FastGridCellAddress(_currentCell.Column, _currentCell.Row);
                 var oldSelected = _selectedCells.ToList();
-                _selectedCells.Clear();
-                foreach (var cell in oldSelected) _selectedCells.Add(new FastGridCellAddress(cell.Column, cell.Row, cell.IsColumnHeader));
+                ClearSelectedCells();
+                foreach (var cell in oldSelected) AddSelectedCell(new FastGridCellAddress(cell.Column, cell.Row, cell.IsColumnHeader));
                 _mouseOverCell = FastGridCellAddress.Empty;
                 _mouseOverRow = null;
                 _mouseOverRowHeader = null;
@@ -549,7 +551,7 @@ namespace FastWpfGrid
         {
             if (FirstVisibleRowScrollIndex >= vscroll.Maximum) FirstVisibleRowScrollIndex = (int) vscroll.Maximum;
             if (FirstVisibleColumnScrollIndex >= hscroll.Maximum) FirstVisibleColumnScrollIndex = (int) hscroll.Maximum;
-            _selectedCells.Clear();
+            ClearSelectedCells();
             if (_currentCell.Row.HasValue)
             {
                 if (_currentCell.Row >= _realRowCount)
@@ -560,7 +562,7 @@ namespace FastWpfGrid
                 if (_currentCell.Column >= _realColumnCount)
                     _currentCell = _currentCell.ChangeColumn(_realColumnCount > 0 ? _realColumnCount - 1 : (int?) null);
             }
-            if (_currentCell.IsCell) _selectedCells.Add(_currentCell);
+            if (_currentCell.IsCell) AddSelectedCell(_currentCell);
             AdjustScrollBarPositions();
             OnChangeSelectedCells(false);
         }

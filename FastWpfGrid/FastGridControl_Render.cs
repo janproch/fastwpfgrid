@@ -27,7 +27,7 @@ namespace FastWpfGrid
                 int colsToRender = VisibleColumnCount;
                 int rowsToRender = VisibleRowCount;
 
-                if (_invalidatedCells.Count > 50)
+                if (_invalidatedCells.Count > 250)
                 {
                     _isInvalidatedAll = true;
                 }
@@ -162,8 +162,8 @@ namespace FastWpfGrid
             Color? hoverRowColor = null;
             if (_currentCell.TestCell(row, col) || _selectedCells.Contains(new FastGridCellAddress(row, col)))
             {
-                selectedBgColor = SelectedColor;
-                selectedTextColor = SelectedTextColor;
+                selectedBgColor = _isLimitedSelection ? LimitedSelectedColor : SelectedColor;
+                selectedTextColor = _isLimitedSelection ? LimitedSelectedTextColor : SelectedTextColor;
             }
             if (row == _mouseOverRow)
             {

@@ -29,7 +29,6 @@ namespace FastWpfGrid
         private IFastGridModel _model;
 
         private FastGridCellAddress _currentCell;
-        private HashSet<FastGridCellAddress> _selectedCells = new HashSet<FastGridCellAddress>();
 
         private int _headerHeight;
         private int _headerWidth;
@@ -56,7 +55,10 @@ namespace FastWpfGrid
             _dragTimer.IsEnabled = false;
             _dragTimer.Interval = TimeSpan.FromSeconds(0.05);
             _dragTimer.Tick += _dragTimer_Tick;
+            AllowSelectAll = true;
         }
+
+        public bool AllowSelectAll { get; set; }
 
         public GlyphFont GetFont(bool isBold, bool isItalic)
         {
@@ -287,9 +289,9 @@ namespace FastWpfGrid
                 if (row < 0) row = null;
             }
 
-            _selectedCells.Clear();
+            ClearSelectedCells();
             _currentCell = new FastGridCellAddress(row, col);
-            if (_currentCell.IsCell) _selectedCells.Add(_currentCell);
+            if (_currentCell.IsCell) AddSelectedCell(_currentCell);
             OnChangeSelectedCells(false);
         }
 
@@ -488,6 +490,16 @@ namespace FastWpfGrid
                 maxrow = Math.Max(a.Row.Value, b.Row.Value);
             }
 
+            const int LIMIT_RESERVE = 3;
+            if (SelectedRealRowCountLimit.HasValue && maxrow - minrow > SelectedRealRowCountLimit.Value + LIMIT_RESERVE)
+            {
+                maxrow = minrow + SelectedRealRowCountLimit.Value + LIMIT_RESERVE;
+            }
+            if (SelectedRealColumnCountLimit.HasValue && maxcol - mincol > SelectedRealColumnCountLimit.Value + LIMIT_RESERVE)
+            {
+                maxcol = mincol + SelectedRealColumnCountLimit.Value + LIMIT_RESERVE;
+            }
+
             for (int row = minrow; row <= maxrow; row++)
             {
                 for (int col = mincol; col <= maxcol; col++)
@@ -572,8 +584,11 @@ namespace FastWpfGrid
         private bool MoveCurrentCell(int? row, int? col, KeyEventArgs e = null)
         {
             if (e != null) e.Handled = true;
-            _selectedCells.ToList().ForEach(InvalidateCell);
-            _selectedCells.Clear();
+            if (!ShiftPressed)
+            {
+                _selectedCells.ToList().ForEach(InvalidateCell);
+                ClearSelectedCells();
+            }
 
             InvalidateCurrentCell();
 
@@ -583,7 +598,7 @@ namespace FastWpfGrid
             if (col >= _realColumnCount) col = _realColumnCount - 1;
 
             _currentCell = new FastGridCellAddress(row, col);
-            if (_currentCell.IsCell) _selectedCells.Add(_currentCell);
+            if (_currentCell.IsCell) AddSelectedCell(_currentCell);
             InvalidateCurrentCell();
             ScrollCurrentCellIntoView();
             OnChangeSelectedCells(true);

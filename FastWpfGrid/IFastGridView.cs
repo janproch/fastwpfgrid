@@ -101,5 +101,12 @@ namespace FastWpfGrid
         /// </summary>
         /// <returns></returns>
         ActiveSeries GetActiveColumns();
+
+        ///// <summary>
+        ///// selects all cells in grid (with given limits)
+        ///// </summary>
+        ///// <param name="rowCountLimit"></param>
+        ///// <param name="columnCountLimit"></param>
+        //void SelectAll(int? rowCountLimit, int? columnCountLimit);
     }
 }

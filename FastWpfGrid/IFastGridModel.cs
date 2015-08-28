@@ -16,11 +16,14 @@ namespace FastWpfGrid
         IFastGridCell GetGridHeader(IFastGridView view);
         void AttachView(IFastGridView view);
         void DetachView(IFastGridView view);
-        void HandleCommand(IFastGridView view, FastGridCellAddress address, object commandParameter);
+        void HandleCommand(IFastGridView view, FastGridCellAddress address, object commandParameter, ref bool handled);
 
         HashSet<int> GetHiddenColumns(IFastGridView view);
         HashSet<int> GetFrozenColumns(IFastGridView view);
         HashSet<int> GetHiddenRows(IFastGridView view);
         HashSet<int> GetFrozenRows(IFastGridView view);
+
+        int? SelectedRowCountLimit { get; }
+        int? SelectedColumnCountLimit { get; }
     }
 }

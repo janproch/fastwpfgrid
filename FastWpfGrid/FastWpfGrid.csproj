@@ -54,6 +54,7 @@
     <Compile Include="FastGridControl_Input.cs" />
     <Compile Include="FastGridControl_Invalidation.cs" />
     <Compile Include="FastGridControl_Render.cs" />
+    <Compile Include="FastGridControl_Selection.cs" />
     <Compile Include="FastGridControl_StyleProps.cs" />
     <Compile Include="FastGridCellImpl.cs" />
     <Compile Include="FastGridModelBase.cs" />

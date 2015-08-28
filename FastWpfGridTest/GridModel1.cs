@@ -49,10 +49,15 @@ namespace FastWpfGridTest
             return impl;
         }
 
-        public override void HandleCommand(IFastGridView view, FastGridCellAddress address, object commandParameter)
+        public override void HandleCommand(IFastGridView view, FastGridCellAddress address, object commandParameter, ref bool handled)
         {
-            base.HandleCommand(view, address, commandParameter);
+            base.HandleCommand(view, address, commandParameter, ref handled);
             if (commandParameter is string) MessageBox.Show(commandParameter.ToString());
+        }
+
+        public override int? SelectedRowCountLimit
+        {
+            get { return 100; }
         }
     }
 }
