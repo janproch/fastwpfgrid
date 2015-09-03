@@ -40,10 +40,6 @@ namespace FastWpfGrid
 
         private bool _isTransposed;
 
-        private int? _resizingColumn;
-        private Point? _resizingColumnOrigin;
-        private int? _resizingColumnStartSize;
-
         private static Dictionary<string, ImageHolder> _imageCache = new Dictionary<string, ImageHolder>();
 
         public FastGridControl()

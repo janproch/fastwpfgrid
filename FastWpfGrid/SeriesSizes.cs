@@ -204,6 +204,11 @@ namespace FastWpfGrid
             return GetSizeByModelIndex(modelIndex);
         }
 
+        public void RemoveSizeOverride(int realIndex)
+        {
+            int modelIndex = RealToModel(realIndex);
+            _sizeOverridesByModelIndex.Remove(modelIndex);
+        }
 
         public int GetScroll(int sourceScrollIndex, int targetScrollIndex)
         {

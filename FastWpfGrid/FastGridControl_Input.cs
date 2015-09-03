@@ -16,6 +16,7 @@ namespace FastWpfGrid
         public static readonly object ToggleTransposedCommand = new object();
         public static readonly object ToggleAllowFlexibleRowsCommand = new object();
         public static readonly object SelectAllCommand = new object();
+        public static readonly object AdjustColumnSizesCommand = new object();
 
         public class ActiveRegion
         {
@@ -55,6 +56,13 @@ namespace FastWpfGrid
 
         private int? _mouseMoveColumn;
         private int? _mouseMoveRow;
+
+        private int? _resizingColumn;
+        private Point? _resizingColumnOrigin;
+        private int? _resizingColumnStartSize;
+        private int? _lastResizingColumn;
+        private DateTime _lastResizingColumnSet;
+        private DateTime? _lastDblClickResize;
 
         protected override void OnMouseLeftButtonDown(System.Windows.Input.MouseButtonEventArgs e)
         {
@@ -109,7 +117,8 @@ namespace FastWpfGrid
                     }
                 }
 
-                if (!isHeaderClickHandled && ((_resizingColumn == null && cell.IsColumnHeader) || cell.IsRowHeader))
+                if (!isHeaderClickHandled && ((_resizingColumn == null && cell.IsColumnHeader) || cell.IsRowHeader) 
+                    && (_lastDblClickResize == null || DateTime.Now - _lastDblClickResize.Value > TimeSpan.FromSeconds(1)))
                 {
                     HideInlinEditor();
 
@@ -201,6 +210,39 @@ namespace FastWpfGrid
             //    Model.GetCell(cell.Row.Value, cell.Column.Value).GetEditText());
         }
 
+        protected override void OnMouseDoubleClick(MouseButtonEventArgs e)
+        {
+            base.OnMouseDoubleClick(e);
+            if (e.ChangedButton == MouseButton.Left && (_lastResizingColumn.HasValue && (DateTime.Now - _lastResizingColumnSet) < TimeSpan.FromSeconds(1)))
+            {
+                _lastDblClickResize = DateTime.Now;
+                int col = _lastResizingColumn.Value;
+
+                _columnSizes.RemoveSizeOverride(col);
+
+                if (_model == null) return;
+                int rowCount = _isTransposed ? _modelColumnCount : _modelRowCount;
+                int colCount = _isTransposed ? _modelRowCount : _modelColumnCount;
+                {
+                    var cell = _isTransposed ? _model.GetRowHeader(this, col) : _model.GetColumnHeader(this, col);
+                    _columnSizes.PutSizeOverride(col, GetCellContentWidth(cell) + 2 * CellPaddingHorizontal);
+                }
+                int visRows = VisibleRowCount;
+                int row0 = FirstVisibleRowScrollIndex + _rowSizes.FrozenCount;
+                for (int row = row0; row < Math.Min(row0 + visRows, rowCount); row++)
+                {
+                    var cell = _isTransposed ? _model.GetCell(this, col, row) : _model.GetCell(this, row, col);
+                    _columnSizes.PutSizeOverride(col, GetCellContentWidth(cell, _columnSizes.MaxSize) + 2 * CellPaddingHorizontal);
+                }
+
+                _columnSizes.BuildIndex();
+                AdjustScrollbars();
+                SetScrollbarMargin();
+                FixScrollPosition();
+                InvalidateAll();
+            }
+        }
+
         private void _dragTimer_Tick(object sender, EventArgs e)
         {
             using (var ctx = CreateInvalidationContext())
@@ -267,6 +309,8 @@ namespace FastWpfGrid
             //bool wasColumnResizing = false;
             if (_resizingColumn.HasValue)
             {
+                _lastResizingColumnSet = DateTime.Now;
+                _lastResizingColumn = _resizingColumn;
                 _resizingColumn = null;
                 _resizingColumnOrigin = null;
                 _resizingColumnStartSize = null;
@@ -429,8 +473,8 @@ namespace FastWpfGrid
             }
             else
             {
-                if (e.Delta < 0) vscroll.Value = vscroll.Value + vscroll.LargeChange/2;
-                if (e.Delta > 0) vscroll.Value = vscroll.Value - vscroll.LargeChange/2;
+                if (e.Delta < 0) vscroll.Value = vscroll.Value + vscroll.LargeChange / 2;
+                if (e.Delta > 0) vscroll.Value = vscroll.Value - vscroll.LargeChange / 2;
                 ScrollChanged();
             }
         }
@@ -533,7 +577,7 @@ namespace FastWpfGrid
 
                 if (_resizingColumn.HasValue)
                 {
-                    int newSize = _resizingColumnStartSize.Value + (int) Math.Round(pt.X - _resizingColumnOrigin.Value.X);
+                    int newSize = _resizingColumnStartSize.Value + (int)Math.Round(pt.X - _resizingColumnOrigin.Value.X);
                     if (newSize < MinColumnWidth) newSize = MinColumnWidth;
                     if (newSize > GridScrollAreaWidth) newSize = GridScrollAreaWidth;
                     _columnSizes.Resize(_resizingColumn.Value, newSize);
@@ -551,16 +595,16 @@ namespace FastWpfGrid
                     else Cursor = Cursors.Arrow;
                 }
 
-                if (_dragStartCell.IsCell && cell.IsCell 
+                if (_dragStartCell.IsCell && cell.IsCell
                     || _dragStartCell.IsRowHeader && cell.Row.HasValue
                     || _dragStartCell.IsColumnHeader && cell.Column.HasValue)
                 {
                     SetSelectedRectangle(_dragStartCell, cell);
                 }
 
-                SetHoverRow(cell.IsCell ? cell.Row.Value : (int?) null);
-                SetHoverRowHeader(cell.IsRowHeader ? cell.Row.Value : (int?) null);
-                SetHoverColumnHeader(cell.IsColumnHeader ? cell.Column.Value : (int?) null);
+                SetHoverRow(cell.IsCell ? cell.Row.Value : (int?)null);
+                SetHoverRowHeader(cell.IsRowHeader ? cell.Row.Value : (int?)null);
+                SetHoverColumnHeader(cell.IsColumnHeader ? cell.Column.Value : (int?)null);
                 SetHoverCell(cell);
 
                 var currentRegion = CurrentCellActiveRegions.FirstOrDefault(x => x.Rect.Contains(pt));
@@ -673,6 +717,14 @@ namespace FastWpfGrid
             if (commandParameter == SelectAllCommand)
             {
                 DoSelectAll();
+            }
+            if (commandParameter == AdjustColumnSizesCommand)
+            {
+                RecountColumnWidths();
+                AdjustScrollbars();
+                SetScrollbarMargin();
+                FixScrollPosition();
+                InvalidateAll();
             }
         }
 

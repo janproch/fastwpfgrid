@@ -488,7 +488,8 @@ namespace FastWpfGrid
             }
 
             int visRows = VisibleRowCount;
-            for (int row = 0; row < Math.Min(visRows, rowCount); row++)
+            int row0 = FirstVisibleRowScrollIndex + _rowSizes.FrozenCount;
+            for (int row = row0; row < Math.Min(row0 + visRows, rowCount); row++)
             {
                 for (int col = 0; col < colCount; col++)
                 {
