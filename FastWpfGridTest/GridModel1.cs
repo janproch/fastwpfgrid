@@ -59,5 +59,10 @@ namespace FastWpfGridTest
         {
             get { return 100; }
         }
+
+        public override void HandleSelectionCommand(IFastGridView view, string command)
+        {
+            MessageBox.Show(command);
+        }
     }
 }

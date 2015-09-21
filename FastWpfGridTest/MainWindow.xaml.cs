@@ -178,5 +178,18 @@ namespace FastWpfGridTest
 
             _model1.SetColumnArrange(hidden, frozen);
         }
+
+        private void grid1_SelectedCellsChanged(object sender, FastWpfGrid.SelectionChangedEventArgs e)
+        {
+            var view = (FastWpfGrid.IFastGridView)grid1;
+            if (view.GetSelectedModelCells().Count > 1)
+            {
+                view.ShowSelectionMenu(new string[] { "CMD1", "CMD2" });
+            }
+            else
+            {
+                view.ShowSelectionMenu(null);
+            }
+        }
     }
 }

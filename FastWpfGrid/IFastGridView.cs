@@ -102,6 +102,12 @@ namespace FastWpfGrid
         /// <returns></returns>
         ActiveSeries GetActiveColumns();
 
+        /// <summary>
+        /// shows quick acces menu to selection
+        /// </summary>
+        /// <param name="commands"></param>
+        void ShowSelectionMenu(IEnumerable<string> commands);
+
         ///// <summary>
         ///// selects all cells in grid (with given limits)
         ///// </summary>

@@ -194,6 +194,7 @@ namespace FastWpfGrid
             }
 
             AdjustInlineEditorPosition();
+            AdjustSelectionMenuPosition();
             AdjustScrollBarPositions();
         }
 
@@ -288,6 +289,7 @@ namespace FastWpfGrid
                 AdjustScrollbars();
                 AdjustScrollBarPositions();
                 AdjustInlineEditorPosition();
+                AdjustSelectionMenuPosition();
             }
         }
 
@@ -393,6 +395,7 @@ namespace FastWpfGrid
             AdjustScrollbars();
             AdjustScrollBarPositions();
             AdjustInlineEditorPosition();
+            AdjustSelectionMenuPosition();
             InvalidateAll();
         }
 

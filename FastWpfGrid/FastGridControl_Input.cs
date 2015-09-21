@@ -786,5 +786,12 @@ namespace FastWpfGrid
         {
             HideInlinEditor();
         }
+
+        private void selectionCommandClick(object sender, RoutedEventArgs e)
+        {
+            dynamic button = sender;
+            SelectionQuickCommand cmd = button.DataContext;
+            cmd.Model.HandleSelectionCommand(this, cmd.Text);
+        }
     }
 }

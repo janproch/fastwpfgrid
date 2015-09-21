@@ -23,6 +23,8 @@ namespace FastWpfGrid
         HashSet<int> GetHiddenRows(IFastGridView view);
         HashSet<int> GetFrozenRows(IFastGridView view);
 
+        void HandleSelectionCommand(IFastGridView view, string command);
+
         int? SelectedRowCountLimit { get; }
         int? SelectedColumnCountLimit { get; }
     }

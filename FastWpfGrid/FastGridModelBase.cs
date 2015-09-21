@@ -180,6 +180,10 @@ namespace FastWpfGrid
             SetCellText(_requestedRow.Value, _requestedColumn.Value, value);
         }
 
+        public virtual void HandleSelectionCommand(IFastGridView view, string command)
+        {
+        }
+
         public virtual string ToolTipText
         {
             get { return null; }

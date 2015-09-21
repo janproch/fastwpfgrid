@@ -21,6 +21,22 @@
                 Mouse.MouseLeave="imageMouseLeave"
                 RenderOptions.BitmapScalingMode="NearestNeighbor" TextInput="imageTextInput" MouseWheel="imageMouseWheel" />
             <TextBox x:Name="edText" Visibility="Hidden" SnapsToDevicePixels="True" PreviewKeyDown="edTextKeyDown" TextChanged="edTextChanged" LostFocus="edTextLostFocus" Margin="-1,0,1,0" AcceptsReturn="True" />
+            <ItemsControl Visibility="Hidden" SnapsToDevicePixels="True" x:Name="mnuSelection" >
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Background="Wheat"><Hyperlink Click="selectionCommandClick"><Run Text="{Binding Text}"/></Hyperlink></TextBlock>
+                        </Grid>
+                        <!--
+                        <Button Content="{Binding Text}" Click="selectionCommandClick" Width="100" HorizontalAlignment="Left"/>
+                        -->
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </Grid>
         
 
