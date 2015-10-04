@@ -140,6 +140,11 @@ namespace FastWpfGrid
             _grids.ForEach(x => x.NotifyAddedRows());
         }
 
+        public void NotifyRefresh()
+        {
+            _grids.ForEach(x => x.NotifyRefresh());
+        }
+
         public void NotifyColumnArrangeChanged()
         {
             _grids.ForEach(x => x.NotifyColumnArrangeChanged());
