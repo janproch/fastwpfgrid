@@ -120,7 +120,7 @@ namespace FastWpfGrid
                 if (!isHeaderClickHandled && ((_resizingColumn == null && cell.IsColumnHeader) || cell.IsRowHeader) 
                     && (_lastDblClickResize == null || DateTime.Now - _lastDblClickResize.Value > TimeSpan.FromSeconds(1)))
                 {
-                    HideInlinEditor();
+                    HideInlineEditor();
 
                     if (ControlPressed)
                     {
@@ -166,7 +166,7 @@ namespace FastWpfGrid
                 {
                     if (ControlPressed)
                     {
-                        HideInlinEditor();
+                        HideInlineEditor();
                         if (_selectedCells.Contains(cell)) RemoveSelectedCell(cell);
                         else AddSelectedCell(cell);
                         InvalidateCell(cell);
@@ -176,7 +176,7 @@ namespace FastWpfGrid
                         _selectedCells.ToList().ForEach(InvalidateCell);
                         ClearSelectedCells();
 
-                        HideInlinEditor();
+                        HideInlineEditor();
                         foreach (var cellItem in GetCellRange(_currentCell, cell))
                         {
                             AddSelectedCell(cellItem);
@@ -193,7 +193,7 @@ namespace FastWpfGrid
                         }
                         else
                         {
-                            HideInlinEditor();
+                            HideInlineEditor();
                             SetCurrentCell(cell);
                         }
                         AddSelectedCell(cell);
@@ -443,17 +443,17 @@ namespace FastWpfGrid
             {
                 if (e.Key == Key.Escape)
                 {
-                    HideInlinEditor(false);
+                    HideInlineEditor(false);
                     e.Handled = true;
                 }
                 if (e.Key == Key.Enter)
                 {
-                    HideInlinEditor();
+                    HideInlineEditor();
                     MoveCurrentCell(_currentCell.Row + 1, _currentCell.Column, e);
                 }
 
                 HandleCursorMove(e, true);
-                if (e.Handled) HideInlinEditor();
+                if (e.Handled) HideInlineEditor();
             }
         }
 
@@ -784,7 +784,7 @@ namespace FastWpfGrid
 
         private void edTextLostFocus(object sender, RoutedEventArgs e)
         {
-            HideInlinEditor();
+            HideInlineEditor();
         }
 
         private void selectionCommandClick(object sender, RoutedEventArgs e)

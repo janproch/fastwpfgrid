@@ -108,6 +108,12 @@ namespace FastWpfGrid
         /// <param name="commands"></param>
         void ShowSelectionMenu(IEnumerable<string> commands);
 
+        /// <summary>
+        /// hides inline editor
+        /// </summary>
+        /// <param name="saveCellValue"></param>
+        void HideInlineEditor(bool saveCellValue = true);
+
         ///// <summary>
         ///// selects all cells in grid (with given limits)
         ///// </summary>

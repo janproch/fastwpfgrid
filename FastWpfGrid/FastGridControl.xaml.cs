@@ -356,7 +356,7 @@ namespace FastWpfGrid
             return null;
         }
 
-        private void HideInlinEditor(bool saveCellValue = true)
+        public void HideInlineEditor(bool saveCellValue = true)
         {
             using (var ctx = CreateInvalidationContext())
             {
