@@ -577,8 +577,8 @@ namespace FastWpfGrid
         private void imageGridResized(object sender, SizeChangedEventArgs e)
         {
             bool wasEmpty = _drawBuffer == null;
-            int width = (int) imageGrid.ActualWidth - 3;
-            int height = (int) imageGrid.ActualHeight - 3;
+            int width = (int) imageGrid.ActualWidth - 2;
+            int height = (int) imageGrid.ActualHeight - 2;
             if (width > 0 && height > 0)
             {
                 _drawBuffer = BitmapFactory.New((int)Math.Ceiling(width * DpiDetector.DpiXKoef), (int)Math.Ceiling(height * DpiDetector.DpiYKoef));
@@ -588,15 +588,18 @@ namespace FastWpfGrid
                 _drawBuffer = null;
             }
             image.Source = _drawBuffer;
+            image.Margin = new Thickness(0);
             image.Width = Math.Max(0, width);
             image.Height = Math.Max(0, height);
 
-            var screenPos = imageGrid.PointToScreen(new Point(0, 0));
-            double fracX = screenPos.X - Math.Truncate(screenPos.X);
-            double fracY = screenPos.Y - Math.Truncate(screenPos.Y);
-            double dleft = 1 - fracX;
-            double dtop = 1 - fracY;
-            image.Margin = new Thickness(dleft, dtop, imageGrid.ActualWidth - width - dleft, imageGrid.ActualHeight - height - dtop);
+            //var screenPos = imageGrid.PointToScreen(new Point(0, 0));
+            //double fracX = screenPos.X - Math.Truncate(screenPos.X);
+            //double fracY = screenPos.Y - Math.Truncate(screenPos.Y);
+            //double dleft = 1 - fracX;
+            //double dtop = 1 - fracY;
+            //if (fracX == 0) dleft = 0;
+            //if (fracY == 0) dtop = 0;
+            //image.Margin = new Thickness(dleft, dtop, imageGrid.ActualWidth - width - dleft - 1, imageGrid.ActualHeight - height - dtop - 25);
 
             if (wasEmpty && _drawBuffer != null)
             {
