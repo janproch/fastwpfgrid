@@ -45,6 +45,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActiveSeries.cs" />
+    <Compile Include="DataTableGridModel.cs" />
+    <Compile Include="ExplicitColumnDefinition.cs" />
     <Compile Include="FastGridCellAddress.cs" />
     <Compile Include="FastGridControl.xaml.cs">
       <DependentUpon>FastGridControl.xaml</DependentUpon>
