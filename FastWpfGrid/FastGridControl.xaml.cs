@@ -40,6 +40,8 @@ namespace FastWpfGrid
 
         private bool _isTransposed;
 
+        private bool _isReadOnly;
+
         private static Dictionary<string, ImageHolder> _imageCache = new Dictionary<string, ImageHolder>();
 
         public FastGridControl()
@@ -55,6 +57,15 @@ namespace FastWpfGrid
         }
 
         public bool AllowSelectAll { get; set; }
+
+        /// <summary>
+        /// Prevents the inline editor from being used if the control is in a read-only state.
+        /// </summary>
+        public bool IsReadOnly
+        {
+            get { return _isReadOnly; }
+            set { _isReadOnly = value; }
+        }
 
         public GlyphFont GetFont(bool isBold, bool isItalic)
         {
@@ -375,6 +386,7 @@ namespace FastWpfGrid
 
         private void ShowInlineEditor(FastGridCellAddress cell, string textValueOverride = null)
         {
+            if (_isReadOnly) return;
             if (!cell.IsCell) return;
             var cellObj = GetCell(cell.Row.Value, cell.Column.Value);
             if (cellObj == null) return;
