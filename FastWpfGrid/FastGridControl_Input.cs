@@ -509,6 +509,10 @@ namespace FastWpfGrid
             if (e.Key == Key.End && !isInTextBox) return MoveCurrentCell(_currentCell.Row, _realColumnCount - 1, e);
             if (e.Key == Key.PageDown) return MoveCurrentCell(_currentCell.Row + VisibleRowCount, _currentCell.Column, e);
             if (e.Key == Key.PageUp) return MoveCurrentCell(_currentCell.Row - VisibleRowCount, _currentCell.Column, e);
+
+            if (e.Key == Key.Enter && !isInTextBox) return MoveCurrentCell(_currentCell.Row + 1, _currentCell.Column, e);
+            if (e.Key == Key.Return && !isInTextBox) return MoveCurrentCell(_currentCell.Row + 1, _currentCell.Column, e);
+            if (e.Key == Key.Tab) return MoveCurrentCell(_currentCell.Row, _currentCell.Column + 1, e);
             return false;
         }
 
