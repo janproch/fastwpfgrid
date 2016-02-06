@@ -12,160 +12,153 @@ namespace System.Windows.Media.Imaging
     {
         public static Dictionary<PortableFontDesc, GlyphFont> FontCache = new Dictionary<PortableFontDesc, GlyphFont>();
 
-        public static unsafe void DrawLetter(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, Color fontColor, GrayScaleLetterGlyph glyph)
+        public static unsafe void DrawLetter(this BitmapContext context, int x0, int y0, IntRect cliprect, Color fontColor, GrayScaleLetterGlyph glyph)
         {
             if (glyph.Items == null) return;
 
-            using (var context = bmp.GetBitmapContext())
+            // Use refs for faster access (really important!) speeds up a lot!
+            int w = context.Width;
+            int h = context.Height;
+            var pixels = context.Pixels;
+
+            int fr = fontColor.R;
+            int fg = fontColor.G;
+            int fb = fontColor.B;
+
+            int xmin = cliprect.Left;
+            int ymin = cliprect.Top;
+            int xmax = cliprect.Right;
+            int ymax = cliprect.Bottom;
+
+            if (xmin < 0) xmin = 0;
+            if (ymin < 0) ymin = 0;
+            if (xmax >= w) xmax = w - 1;
+            if (ymax >= h) ymax = h - 1;
+
+            fixed (GrayScaleLetterGlyph.Item* items = glyph.Items)
             {
-                // Use refs for faster access (really important!) speeds up a lot!
-                int w = context.Width;
-                int h = context.Height;
-                var pixels = context.Pixels;
-
-                int fr = fontColor.R;
-                int fg = fontColor.G;
-                int fb = fontColor.B;
-
-                int xmin = cliprect.Left;
-                int ymin = cliprect.Top;
-                int xmax = cliprect.Right;
-                int ymax = cliprect.Bottom;
-
-                if (xmin < 0) xmin = 0;
-                if (ymin < 0) ymin = 0;
-                if (xmax >= w) xmax = w - 1;
-                if (ymax >= h) ymax = h - 1;
-
-                fixed (GrayScaleLetterGlyph.Item* items = glyph.Items)
+                int itemCount = glyph.Items.Length;
+                GrayScaleLetterGlyph.Item* currentItem = items;
+                for (int i = 0; i < itemCount; i++, currentItem++)
                 {
-                    int itemCount = glyph.Items.Length;
-                    GrayScaleLetterGlyph.Item* currentItem = items;
-                    for (int i = 0; i < itemCount; i++, currentItem++)
-                    {
-                        int x = x0 + currentItem->X;
-                        int y = y0 + currentItem->Y;
-                        int alpha = currentItem->Alpha;
-                        if (x < xmin || y < ymin || x > xmax || y > ymax) continue;
+                    int x = x0 + currentItem->X;
+                    int y = y0 + currentItem->Y;
+                    int alpha = currentItem->Alpha;
+                    if (x < xmin || y < ymin || x > xmax || y > ymax) continue;
 
-                        int color = pixels[y*w + x];
-                        int r = ((color >> 16) & 0xFF);
-                        int g = ((color >> 8) & 0xFF);
-                        int b = ((color) & 0xFF);
+                    int color = pixels[y * w + x];
+                    int r = ((color >> 16) & 0xFF);
+                    int g = ((color >> 8) & 0xFF);
+                    int b = ((color) & 0xFF);
 
-                        r = (((r << 12) + (fr - r)*alpha) >> 12) & 0xFF;
-                        g = (((g << 12) + (fg - g)*alpha) >> 12) & 0xFF;
-                        b = (((b << 12) + (fb - b)*alpha) >> 12) & 0xFF;
+                    r = (((r << 12) + (fr - r) * alpha) >> 12) & 0xFF;
+                    g = (((g << 12) + (fg - g) * alpha) >> 12) & 0xFF;
+                    b = (((b << 12) + (fb - b) * alpha) >> 12) & 0xFF;
 
-                        pixels[y*w + x] = (0xFF << 24) | (r << 16) | (g << 8) | (b);
-                    }
+                    pixels[y * w + x] = (0xFF << 24) | (r << 16) | (g << 8) | (b);
                 }
             }
         }
 
-        public static unsafe void DrawLetter(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, ClearTypeLetterGlyph glyph)
+        public static unsafe void DrawLetter(this BitmapContext context, int x0, int y0, IntRect cliprect, ClearTypeLetterGlyph glyph)
         {
             //if (glyph.Instructions == null) return;
             if (glyph.Items == null) return;
 
-            using (var context = bmp.GetBitmapContext())
+            // Use refs for faster access (really important!) speeds up a lot!
+            int w = context.Width;
+            int h = context.Height;
+            var pixels = context.Pixels;
+
+            int xmin = cliprect.Left;
+            int ymin = cliprect.Top;
+            int xmax = cliprect.Right;
+            int ymax = cliprect.Bottom;
+
+            if (xmin < 0) xmin = 0;
+            if (ymin < 0) ymin = 0;
+            if (xmax >= w) xmax = w - 1;
+            if (ymax >= h) ymax = h - 1;
+
+            fixed (ClearTypeLetterGlyph.Item* items = glyph.Items)
             {
-                // Use refs for faster access (really important!) speeds up a lot!
-                int w = context.Width;
-                int h = context.Height;
-                var pixels = context.Pixels;
-
-                int xmin = cliprect.Left;
-                int ymin = cliprect.Top;
-                int xmax = cliprect.Right;
-                int ymax = cliprect.Bottom;
-
-                if (xmin < 0) xmin = 0;
-                if (ymin < 0) ymin = 0;
-                if (xmax >= w) xmax = w - 1;
-                if (ymax >= h) ymax = h - 1;
-
-
-                fixed (ClearTypeLetterGlyph.Item* items = glyph.Items)
-                {
-                    int itemCount = glyph.Items.Length;
-                    ClearTypeLetterGlyph.Item* currentItem = items;
-                    //if (x0 >= xmin && y0 >= ymin && x0 + glyph.Width < xmax && y0 + glyph.Height < ymax)
-                    //{
-                    //    for (int i = 0; i < itemCount; i++, currentItem++)
-                    //    {
-                    //        pixels[(y0 + currentItem->Y) * w + x0 + currentItem->X] = currentItem->Color;
-                    //    }
-                    //}
-                    //else
-                    //{
-                        for (int i = 0; i < itemCount; i++, currentItem++)
-                        {
-                            int x = x0 + currentItem->X;
-                            int y = y0 + currentItem->Y;
-                            int color = currentItem->Color;
-                            if (x < xmin || y < ymin || x > xmax || y > ymax) continue;
-
-                            pixels[y * w + x] = color;
-                        }
-                    //}
-                }
-
-                //fixed (int *instructions = glyph.Instructions)
+                int itemCount = glyph.Items.Length;
+                ClearTypeLetterGlyph.Item* currentItem = items;
+                //if (x0 >= xmin && y0 >= ymin && x0 + glyph.Width < xmax && y0 + glyph.Height < ymax)
                 //{
-                //    int* current = instructions;
-                //    while (*current != -1)
+                //    for (int i = 0; i < itemCount; i++, currentItem++)
                 //    {
-                //        int dy = *current++;
-                //        int dx = *current++;
-                //        int count0 = *current++;
-
-                //        int y = y0 + dy;
-                //        if (y >= ymin && y <= ymax)
-                //        {
-                //            int x = x0 + dx;
-                //            int* dst = pixels + y*w + x;
-                //            int* src = current;
-                //            int count = count0;
-
-                //            if (x < xmin)
-                //            {
-                //                int dmin = xmin - x;
-                //                x += dmin;
-                //                dst += dmin;
-                //                src += dmin;
-                //                count -= dmin;
-                //            }
-
-                //            if (x + count - 1 > xmax)
-                //            {
-                //                int dmax = x + count - 1 - xmax;
-                //                count -= dmax;
-                //            }
-
-                //            if (count > 0)
-                //            {
-                //                NativeMethods.memcpy(dst, src, count * 4);
-
-                //                //if (count < 10)
-                //                //{
-                //                //    while (count > 0)
-                //                //    {
-                //                //        *dst++ = *src++;
-                //                //        count--;
-                //                //    }
-                //                //}
-                //                //else
-                //                //{
-                //                //    NativeMethods.memcpy(dst, src, count*4);
-                //                //}
-                //            }
-                //        }
-
-                //        current += count0;
+                //        pixels[(y0 + currentItem->Y) * w + x0 + currentItem->X] = currentItem->Color;
                 //    }
                 //}
+                //else
+                //{
+                for (int i = 0; i < itemCount; i++, currentItem++)
+                {
+                    int x = x0 + currentItem->X;
+                    int y = y0 + currentItem->Y;
+                    int color = currentItem->Color;
+                    if (x < xmin || y < ymin || x > xmax || y > ymax) continue;
+
+                    pixels[y * w + x] = color;
+                }
+                //}
             }
+
+            //fixed (int *instructions = glyph.Instructions)
+            //{
+            //    int* current = instructions;
+            //    while (*current != -1)
+            //    {
+            //        int dy = *current++;
+            //        int dx = *current++;
+            //        int count0 = *current++;
+
+            //        int y = y0 + dy;
+            //        if (y >= ymin && y <= ymax)
+            //        {
+            //            int x = x0 + dx;
+            //            int* dst = pixels + y*w + x;
+            //            int* src = current;
+            //            int count = count0;
+
+            //            if (x < xmin)
+            //            {
+            //                int dmin = xmin - x;
+            //                x += dmin;
+            //                dst += dmin;
+            //                src += dmin;
+            //                count -= dmin;
+            //            }
+
+            //            if (x + count - 1 > xmax)
+            //            {
+            //                int dmax = x + count - 1 - xmax;
+            //                count -= dmax;
+            //            }
+
+            //            if (count > 0)
+            //            {
+            //                NativeMethods.memcpy(dst, src, count * 4);
+
+            //                //if (count < 10)
+            //                //{
+            //                //    while (count > 0)
+            //                //    {
+            //                //        *dst++ = *src++;
+            //                //        count--;
+            //                //    }
+            //                //}
+            //                //else
+            //                //{
+            //                //    NativeMethods.memcpy(dst, src, count*4);
+            //                //}
+            //            }
+            //        }
+
+            //        current += count0;
+            //    }
+            //}
         }
 
         public static int DrawString(this WriteableBitmap bmp, int x0, int y0, IntRect cliprect, Color fontColor, GlyphFont font, string text)
@@ -178,33 +171,39 @@ namespace System.Windows.Media.Imaging
             if (text == null) return 0;
             int dx = 0, dy = 0;
             int textwi = 0;
-            foreach (char ch in text)
+
+            using (var context = bmp.GetBitmapContext())
             {
-                if (ch == '\n')
+                foreach (char ch in text)
                 {
-                    if (dx > textwi) textwi = dx;
-                    dx = 0;
-                    dy += font.TextHeight;
-                }
-                if (x0 + dx <= cliprect.Right)
-                {
-                    if (font.IsClearType)
+                    if (ch == '\n')
                     {
-                        if (!bgColor.HasValue) throw new Exception("Clear type fonts must have background specified");
-                        var letter = font.GetClearTypeLetter(ch, fontColor, bgColor.Value);
-                        if (letter == null) continue;
-                        bmp.DrawLetter(x0 + dx, y0 + dy, cliprect, letter);
-                        dx += letter.Width;
+                        if (dx > textwi) textwi = dx;
+                        dx = 0;
+                        dy += font.TextHeight;
                     }
-                    else
+                    if (x0 + dx <= cliprect.Right)
                     {
-                        var letter = font.GetGrayScaleLetter(ch);
-                        if (letter == null) continue;
-                        bmp.DrawLetter(x0 + dx, y0 + dy, cliprect, fontColor, letter);
-                        dx += letter.Width;
+                        if (font.IsClearType)
+                        {
+                            if (!bgColor.HasValue)
+                                throw new Exception("Clear type fonts must have background specified");
+                            var letter = font.GetClearTypeLetter(ch, fontColor, bgColor.Value);
+                            if (letter == null) continue;
+                            context.DrawLetter(x0 + dx, y0 + dy, cliprect, letter);
+                            dx += letter.Width;
+                        }
+                        else
+                        {
+                            var letter = font.GetGrayScaleLetter(ch);
+                            if (letter == null) continue;
+                            context.DrawLetter(x0 + dx, y0 + dy, cliprect, fontColor, letter);
+                            dx += letter.Width;
+                        }
                     }
                 }
             }
+
             if (dx > textwi) textwi = dx;
             return textwi;
         }
@@ -237,15 +236,15 @@ namespace System.Windows.Media.Imaging
             if (typeface.IsItalic) fontFlags |= System.Drawing.FontStyle.Italic;
             if (typeface.IsBold) fontFlags |= System.Drawing.FontStyle.Bold;
             var font = new GlyphFont
-                {
-                    Typeface = new Typeface(new FontFamily(typeface.FontName),
+            {
+                Typeface = new Typeface(new FontFamily(typeface.FontName),
                                             typeface.IsItalic ? FontStyles.Italic : FontStyles.Normal,
                                             typeface.IsBold ? FontWeights.Bold : FontWeights.Normal,
                                             FontStretches.Normal),
-                    EmSize = typeface.EmSize,
-                    Font = new Font(typeface.FontName, typeface.EmSize*76.0f/92.0f, fontFlags),
-                    IsClearType = typeface.IsClearType,
-                };
+                EmSize = typeface.EmSize,
+                Font = new Font(typeface.FontName, typeface.EmSize * 76.0f / 92.0f, fontFlags),
+                IsClearType = typeface.IsClearType,
+            };
             font.Typeface.TryGetGlyphTypeface(out font.GlyphTypeface);
             lock (FontCache)
             {
@@ -332,12 +331,12 @@ namespace System.Windows.Media.Imaging
         {
             if (text == null) return 0;
             int lines = text.Count(x => x == '\n') + 1;
-            return lines*TextHeight;
+            return lines * TextHeight;
         }
 
         public int TextHeight
         {
-            get { return (int) Math.Ceiling(GlyphTypeface.Height*EmSize*DpiDetector.DpiYKoef); }
+            get { return (int)Math.Ceiling(GlyphTypeface.Height * EmSize * DpiDetector.DpiYKoef); }
         }
     }
 }
