@@ -254,10 +254,46 @@ namespace System.Windows.Media.Imaging
         }
     }
 
+    public struct ColorGlyphKey : IEquatable<ColorGlyphKey>
+    {
+        public int FontColor;
+        public int BackgroundColor;
+        public char Char;
+
+        public ColorGlyphKey(Color fontColor, Color backgroundColor, char @char)
+        {
+            FontColor = (fontColor.A << 24) | (fontColor.R << 16) | (fontColor.G << 8) | fontColor.B;
+            BackgroundColor = (backgroundColor.A << 24) | (backgroundColor.R << 16) | (backgroundColor.G << 8) | backgroundColor.B;
+            Char = @char;
+        }
+
+        public bool Equals(ColorGlyphKey other)
+        {
+            return FontColor.Equals(other.FontColor) && BackgroundColor.Equals(other.BackgroundColor) && Char == other.Char;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            return obj is ColorGlyphKey && Equals((ColorGlyphKey)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = FontColor.GetHashCode();
+                hashCode = (hashCode * 397) ^ BackgroundColor.GetHashCode();
+                hashCode = (hashCode * 397) ^ Char.GetHashCode();
+                return hashCode;
+            }
+        }
+    }
+
     public class GlyphFont
     {
         public Dictionary<char, GrayScaleLetterGlyph> Glyphs = new Dictionary<char, GrayScaleLetterGlyph>();
-        public Dictionary<Tuple<Color, Color, char>, ClearTypeLetterGlyph> ColorGlyphs = new Dictionary<Tuple<Color, Color, char>, ClearTypeLetterGlyph>();
+        public Dictionary<ColorGlyphKey, ClearTypeLetterGlyph> ColorGlyphs = new Dictionary<ColorGlyphKey, ClearTypeLetterGlyph>();
         public Typeface Typeface;
         public double EmSize;
         public GlyphTypeface GlyphTypeface;
@@ -280,12 +316,15 @@ namespace System.Windows.Media.Imaging
         {
             lock (ColorGlyphs)
             {
-                var key = Tuple.Create(fontColor, bgColor, ch);
-                if (!ColorGlyphs.ContainsKey(key))
+                var key = new ColorGlyphKey(fontColor, bgColor, ch);
+                ClearTypeLetterGlyph glyph;
+
+                if (!ColorGlyphs.TryGetValue(key, out glyph))
                 {
-                    ColorGlyphs[key] = ClearTypeLetterGlyph.CreateGlyph(GlyphTypeface, Font, EmSize, ch, fontColor, bgColor);
+                    glyph = ClearTypeLetterGlyph.CreateGlyph(GlyphTypeface, Font, EmSize, ch, fontColor, bgColor);
+                    ColorGlyphs[key] = glyph;
                 }
-                return ColorGlyphs[key];
+                return glyph;
             }
         }
 
