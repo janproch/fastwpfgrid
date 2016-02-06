@@ -25,6 +25,7 @@ namespace FastWpfGrid
         private int _cellPaddingVertical = 1;
         private int _blockPadding = 2;
         private int _columnResizeTheresold = 2;
+        private int? _minColumnWidthOverride;
 
         private Color[] _alternatingColors = new Color[]
             {
@@ -57,9 +58,20 @@ namespace FastWpfGrid
             }
         }
 
+        public int? MinColumnWidthOverride
+        {
+            get { return _minColumnWidthOverride; }
+            set
+            {
+                _minColumnWidthOverride = value;
+                RecalculateDefaultCellSize();
+                InvalidateAll();                
+            }
+        }
+
         public int MinColumnWidth
         {
-            get { return _rowSizes.DefaultSize; }
+            get { return _minColumnWidthOverride ?? _columnSizes.DefaultSize; }
         }
 
         public int CellFontSize

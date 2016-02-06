@@ -92,7 +92,7 @@ namespace FastWpfGrid
         {
             ClearCaches();
             int rowHeight = GetFont(false, false).TextHeight + CellPaddingVertical*2 + 2 + RowHeightReserve;
-            int columnWidth = rowHeight*4;
+            int columnWidth = MinColumnWidthOverride ?? rowHeight*4;
 
             _rowSizes.DefaultSize = rowHeight;
             _columnSizes.DefaultSize = columnWidth;
