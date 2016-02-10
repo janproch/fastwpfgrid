@@ -593,7 +593,14 @@ namespace FastWpfGrid
             int height = (int) imageGrid.ActualHeight - 2;
             if (width > 0 && height > 0)
             {
-                _drawBuffer = BitmapFactory.New((int)Math.Ceiling(width * DpiDetector.DpiXKoef), (int)Math.Ceiling(height * DpiDetector.DpiYKoef));
+				//To avoid flicker (blank image) while resizing, crop the current buffer and set it as the image source instead of using a new one.
+				//This will be shown during the refresh.
+				int pixelWidth = (int) Math.Ceiling(width*DpiDetector.DpiXKoef);
+	            int pixelHeight = (int) Math.Ceiling(height*DpiDetector.DpiYKoef);
+	            if (_drawBuffer == null)
+		            _drawBuffer = BitmapFactory.New(pixelWidth, pixelHeight);
+	            else
+		            _drawBuffer = _drawBuffer.Crop(0, 0, pixelWidth, pixelHeight);
             }
             else
             {

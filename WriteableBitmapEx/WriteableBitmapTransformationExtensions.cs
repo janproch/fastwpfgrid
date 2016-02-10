@@ -91,27 +91,29 @@ namespace System.Windows.Media.Imaging
                 var srcWidth = srcContext.Width;
                 var srcHeight = srcContext.Height;
 
-                // If the rectangle is completly out of the bitmap
-                if (x > srcWidth || y > srcHeight)
-                {
-                    return BitmapFactory.New(0, 0);
-                }
+				var result = BitmapFactory.New(width, height);
+				
+				if (x < 0) 
+					x = 0;
+                if (y < 0) 
+					y = 0;
 
-                // Clamp to boundaries
-                if (x < 0) x = 0;
-                if (x + width > srcWidth) width = srcWidth - x;
-                if (y < 0) y = 0;
-                if (y + height > srcHeight) height = srcHeight - y;
+				// If the rectangle is completely out of the bitmap
+	            if (x > srcWidth || y > srcHeight)
+		            return result;
 
-                // Copy the pixels line by line using fast BlockCopy
-                var result = BitmapFactory.New(width, height);
+				// Clamp to boundaries
+	            int copyWidth = (x + width) > srcWidth ? srcWidth - x : width;
+	            int copyHeight = (y + height) > srcHeight ? srcHeight - y : height;
+
+				// Copy the pixels line by line using fast BlockCopy
                 using (var destContext = result.GetBitmapContext())
                 {
-                    for (var line = 0; line < height; line++)
+                    for (var line = 0; line < copyHeight; line++)
                     {
                         var srcOff = ((y + line) * srcWidth + x) * SizeOfArgb;
                         var dstOff = line * width * SizeOfArgb;
-                        BitmapContext.BlockCopy(srcContext, srcOff, destContext, dstOff, width * SizeOfArgb);
+                        BitmapContext.BlockCopy(srcContext, srcOff, destContext, dstOff, copyWidth * SizeOfArgb);
                     }
 
                     return result;
