@@ -598,13 +598,23 @@ namespace FastWpfGrid
 				int pixelWidth = (int) Math.Ceiling(width*DpiDetector.DpiXKoef);
 	            int pixelHeight = (int) Math.Ceiling(height*DpiDetector.DpiYKoef);
 	            if (_drawBuffer == null)
+	            {
 		            _drawBuffer = BitmapFactory.New(pixelWidth, pixelHeight);
+	            }
 	            else
-		            _drawBuffer = _drawBuffer.Crop(0, 0, pixelWidth, pixelHeight);
+	            {
+		            var oldBuffer = _drawBuffer;
+		            _drawBuffer = oldBuffer.Crop(0, 0, pixelWidth, pixelHeight);
+					
+					//The unmanaged memory when crating new WritableBitmaps doesn't reliably garbage collect and can still cause out of memory exceptions
+					//Profiling revealed handles on the object that aren't able to be collected.
+					//Freezing the object removes all handles and should help in garbage collection.
+					oldBuffer.Freeze();
+	            }
             }
             else
             {
-                _drawBuffer = null;
+				_drawBuffer = null;
             }
             image.Source = _drawBuffer;
             image.Margin = new Thickness(0);
