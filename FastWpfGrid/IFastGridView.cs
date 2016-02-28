@@ -114,6 +114,13 @@ namespace FastWpfGrid
         /// <param name="saveCellValue"></param>
         void HideInlineEditor(bool saveCellValue = true);
 
+        /// <summary>
+        /// handles command
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="command"></param>
+        void HandleCommand(FastGridCellAddress address, object command);
+
         ///// <summary>
         ///// selects all cells in grid (with given limits)
         ///// </summary>

@@ -701,7 +701,7 @@ namespace FastWpfGrid
             }
         }
 
-        private void HandleCommand(FastGridCellAddress address, object commandParameter)
+        public void HandleCommand(FastGridCellAddress address, object commandParameter)
         {
             bool handled = false;
             if (Model != null)
