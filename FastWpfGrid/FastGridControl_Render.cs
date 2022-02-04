@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -348,6 +348,18 @@ namespace FastWpfGrid
             }
         }
 
+
+        static BitmapImage InitBitmap(string uri)
+        {
+            BitmapImage bmImage = new BitmapImage();
+            bmImage.BeginInit();
+            bmImage.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
+            bmImage.UriSource = new Uri(uri, UriKind.Absolute);
+            bmImage.EndInit();
+
+            return bmImage;
+        }
+
         public static ImageHolder GetImage(string source)
         {
             lock (_imageCache)
@@ -355,18 +367,13 @@ namespace FastWpfGrid
                 if (_imageCache.ContainsKey(source)) return _imageCache[source];
             }
 
-            string packUri = "pack://application:,,,/" + Assembly.GetEntryAssembly().GetName().Name + ";component/" + source.TrimStart('/');
-            BitmapImage bmImage = new BitmapImage();
-            bmImage.BeginInit();
-            bmImage.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
-            bmImage.UriSource = new Uri(packUri, UriKind.Absolute);
-            bmImage.EndInit();
-            var wbmp = new WriteableBitmap(bmImage);
+            var bitmap = InitBitmap(source);
+            var wbmp = new WriteableBitmap(bitmap);
 
             if (wbmp.Format != PixelFormats.Bgra32)
                 wbmp = new WriteableBitmap(new FormatConvertedBitmap(wbmp, PixelFormats.Bgra32, null, 0));
 
-            var image = new ImageHolder(wbmp, bmImage);
+            var image = new ImageHolder(wbmp, bitmap);
             lock (_imageCache)
             {
                 _imageCache[source] = image;
