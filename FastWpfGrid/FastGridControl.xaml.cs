@@ -78,6 +78,8 @@ namespace FastWpfGrid
                 SizeChanged += imageGridResized;
         }
 
+        public ScrollBar[] GetScrollBars() =>
+            new[] { hscroll, vscroll };
 
         public GlyphFont GetFont(
             bool isBold,
