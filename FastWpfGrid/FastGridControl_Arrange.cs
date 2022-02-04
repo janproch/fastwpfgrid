@@ -42,6 +42,8 @@ namespace FastWpfGrid
             get { return !IsWide && AllowFlexibleRows; }
         }
 
+        public bool IsHorizontalScrollBarDisabled { get; set; } = true;
+
         private int GetRowTop(int row)
         {
             if (row < _rowSizes.FrozenCount) return _rowSizes.GetFrozenPosition(row) + HeaderHeight;

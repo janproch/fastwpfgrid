@@ -54,6 +54,12 @@ namespace FastWpfGrid
             _dragTimer.Interval = TimeSpan.FromSeconds(0.05);
             _dragTimer.Tick += _dragTimer_Tick;
             AllowSelectAll = true;
+
+            if (IsHorizontalScrollBarDisabled)
+            {
+                hscroll.IsEnabled = false;
+                hscroll.Visibility = Visibility.Collapsed;
+            }
         }
 
         public bool AllowSelectAll { get; set; }
