@@ -15,7 +15,7 @@
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <Grid x:Name="imageGrid" Grid.Row="0" Grid.Column="0" SizeChanged="imageGridResized">
+        <Grid x:Name="imageGrid" Grid.Row="0" Grid.Column="0">
             <Image 
                 x:Name="image" SnapsToDevicePixels="True" Focusable="True" KeyDown="imageKeyDown" MouseDown="imageMouseDown" 
                 Mouse.MouseLeave="imageMouseLeave"
