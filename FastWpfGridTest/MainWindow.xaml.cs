@@ -33,6 +33,10 @@ namespace FastWpfGridTest
             grid1.Model = _model1 = new GridModel1();
             grid2.Model = _model2 = new GridModel2();
             grid3.Model = _model3 = new GridModel3();
+
+            grid1.HeaderFontColor = Colors.Blue;
+            grid1.HeaderFontIsBold = true;
+            grid1.HeaderFontIsItalic = true;
         }
 
         private void tabChanged(object sender, SelectionChangedEventArgs e)
