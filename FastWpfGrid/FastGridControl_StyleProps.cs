@@ -41,6 +41,7 @@ namespace FastWpfGrid
         private Color _activeRegionHoverFillColor = Color.FromRgb(0xAA, 0xFF, 0xFF);
         private int _wideColumnsLimit = 250;
 
+        public bool SelectedTextColorIsDisabled { get; set; }
         public int ColumnResizeTheresold
         {
             get { return _columnResizeTheresold; }

@@ -163,7 +163,9 @@ namespace FastWpfGrid
             if (_currentCell.TestCell(row, col) || _selectedCells.Contains(new FastGridCellAddress(row, col)))
             {
                 selectedBgColor = _isLimitedSelection ? LimitedSelectedColor : SelectedColor;
-                selectedTextColor = _isLimitedSelection ? LimitedSelectedTextColor : SelectedTextColor;
+                Color? selectedTextColorSelector = _isLimitedSelection ? LimitedSelectedTextColor : SelectedTextColor;
+
+                selectedTextColor = SelectedTextColorIsDisabled ? null : selectedTextColorSelector;
             }
             if (row == _mouseOverRow)
             {
@@ -174,11 +176,16 @@ namespace FastWpfGrid
             Color? cellBackground = null;
             if (cell != null) cellBackground = cell.BackgroundColor;
 
-            RenderCell(cell, rect, selectedTextColor, selectedBgColor
-                                                      ?? hoverRowColor
-                                                      ?? cellBackground
-                                                      ?? GetAlternateBackground(row),
-                                                      new FastGridCellAddress(row, col));
+            RenderCell(
+                cell,
+                rect,
+                selectedTextColor,
+                selectedBgColor ??
+                hoverRowColor ??
+                cellBackground ??
+                GetAlternateBackground(row),
+                new FastGridCellAddress(row, col)
+            );
         }
 
         private int GetCellContentHeight(IFastGridCell cell)
