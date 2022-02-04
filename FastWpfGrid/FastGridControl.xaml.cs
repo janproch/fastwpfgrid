@@ -586,6 +586,24 @@ namespace FastWpfGrid
             }
         }
 
+        public void SetGridContentSize(
+            double width,
+            double height = 700)
+        {
+            var pixelHeight = (int)Math.Ceiling(height * DpiDetector.DpiYKoef);
+            var pixelWidth = (int)Convert.ToInt32(width * DpiDetector.DpiXKoef);
+
+            _drawBuffer = BitmapFactory.New(pixelWidth, pixelHeight);
+
+            image.Source = _drawBuffer;
+            image.Margin = new Thickness(0);
+            image.Width = Math.Max(0, width);
+            image.Height = Math.Max(0, height);
+
+            AdjustScrollbars();
+            InvalidateAll();
+        }
+
         private void imageGridResized(object sender, SizeChangedEventArgs e)
         {
             bool wasEmpty = _drawBuffer == null;
