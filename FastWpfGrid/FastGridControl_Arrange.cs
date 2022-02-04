@@ -10,6 +10,7 @@ namespace FastWpfGrid
 {
     partial class FastGridControl
     {
+        public bool CanResizeColumns { get; set; } = true;
         public int FirstVisibleColumnScrollIndex;
         public int FirstVisibleRowScrollIndex;
         private int _modelRowCount;
@@ -107,6 +108,9 @@ namespace FastWpfGrid
 
         public int? GetResizingColumn(Point pt)
         {
+            if (!CanResizeColumns)
+                return null;
+
             if (pt.Y > HeaderHeight) return null;
 
             int frozenWidth = FrozenWidth;
