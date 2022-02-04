@@ -235,22 +235,24 @@ namespace FastWpfGrid
 
         private int RenderBlock(int leftPos, int rightPos, Color? selectedTextColor, Color bgColor, IntRect rectContent, IFastGridCellBlock block, FastGridCellAddress cellAddr, bool leftAlign, bool isHoverCell)
         {
-            bool renderBlock = true;
-            if (block.MouseHoverBehaviour == MouseHoverBehaviours.HideWhenMouseOut && !isHoverCell) renderBlock = false;
+            var renderBlock = !(block.MouseHoverBehaviour == MouseHoverBehaviours.HideWhenMouseOut && !isHoverCell);
 
             int width = 0, top = 0, height = 0;
 
             switch (block.BlockType)
             {
                 case FastGridBlockType.Text:
-                    var font = GetFont(block.IsBold, block.IsItalic);
+                    var font = cellAddr.IsColumnHeader ?
+                        GetFont(block.IsBold, block.IsItalic, true) :
+                        GetFont(block.IsBold, block.IsItalic);
+
                     int textHeight = font.GetTextHeight(block.TextData);
                     width = font.GetTextWidth(block.TextData, _columnSizes.MaxSize);
                     height = textHeight;
-                    top = rectContent.Top + (int) Math.Round(rectContent.Height/2.0 - textHeight/2.0);
+                    top = rectContent.Top + (int)Math.Round(rectContent.Height / 2.0 - textHeight / 2.0);
                     break;
                 case FastGridBlockType.Image:
-                    top = rectContent.Top + (int) Math.Round(rectContent.Height/2.0 - block.ImageHeight/2.0);
+                    top = rectContent.Top + (int)Math.Round(rectContent.Height / 2.0 - block.ImageHeight / 2.0);
                     height = block.ImageHeight;
                     width = block.ImageWidth;
                     break;
@@ -260,11 +262,11 @@ namespace FastWpfGrid
             {
                 var activeRect = new IntRect(new IntPoint(leftAlign ? leftPos : rightPos - width, top), new IntSize(width, height)).GrowSymmetrical(1, 1);
                 var region = new ActiveRegion
-                    {
-                        CommandParameter = block.CommandParameter,
-                        Rect = activeRect,
-                        Tooltip = block.ToolTip,
-                    };
+                {
+                    CommandParameter = block.CommandParameter,
+                    Rect = activeRect,
+                    Tooltip = block.ToolTip,
+                };
                 CurrentCellActiveRegions.Add(region);
                 if (_mouseCursorPoint.HasValue && activeRect.Contains(_mouseCursorPoint.Value))
                 {
@@ -272,10 +274,10 @@ namespace FastWpfGrid
                     CurrentHoverRegion = region;
                 }
 
-                bool renderRectangle = true;
-                if (block.MouseHoverBehaviour == MouseHoverBehaviours.HideButtonWhenMouseOut && !isHoverCell) renderRectangle = false;
+                var renderRectangle = !(block.MouseHoverBehaviour == MouseHoverBehaviours.HideButtonWhenMouseOut && !isHoverCell);
 
-                if (renderRectangle) _drawBuffer.DrawRectangle(activeRect, ActiveRegionFrameColor);
+                if (renderRectangle) 
+                    _drawBuffer.DrawRectangle(activeRect, ActiveRegionFrameColor);
             }
 
             switch (block.BlockType)
@@ -284,10 +286,12 @@ namespace FastWpfGrid
                     if (renderBlock)
                     {
                         var textOrigin = new IntPoint(leftAlign ? leftPos : rightPos - width, top);
-                        var font = GetFont(block.IsBold, block.IsItalic);
-                        _drawBuffer.DrawString(textOrigin.X, textOrigin.Y, rectContent, selectedTextColor ?? block.FontColor ?? CellFontColor, UseClearType ? bgColor : (Color?) null,
-                                               font,
-                                               block.TextData);
+                        var font = cellAddr.IsColumnHeader ? GetFont(block.IsBold, block.IsItalic, true) : GetFont(block.IsBold, block.IsItalic);
+                        var fontColor = cellAddr.IsColumnHeader ? HeaderFontColor : block.FontColor ?? CellFontColor;
+
+                        _drawBuffer.DrawString(textOrigin.X, textOrigin.Y, rectContent, fontColor, UseClearType ? bgColor : (Color?)null,
+                            font,
+                            block.TextData);
                     }
                     break;
                 case FastGridBlockType.Image:
@@ -296,7 +300,7 @@ namespace FastWpfGrid
                         var imgOrigin = new IntPoint(leftAlign ? leftPos : rightPos - block.ImageWidth, top);
                         var image = GetImage(block.ImageSource);
                         _drawBuffer.Blit(new Point(imgOrigin.X, imgOrigin.Y), image.Bitmap, new Rect(0, 0, block.ImageWidth, block.ImageHeight),
-                                         image.KeyColor, image.BlendMode);
+                            image.KeyColor, image.BlendMode);
                     }
                     break;
             }

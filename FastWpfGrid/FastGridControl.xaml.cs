@@ -32,7 +32,7 @@ namespace FastWpfGrid
 
         private int _headerHeight;
         private int _headerWidth;
-        private Dictionary<Tuple<bool, bool>, GlyphFont> _glyphFonts = new Dictionary<Tuple<bool, bool>, GlyphFont>();
+        private Dictionary<string, GlyphFont> _glyphFonts = new Dictionary<string, GlyphFont>();
         private Dictionary<Color, Brush> _solidBrushes = new Dictionary<Color, Brush>();
         private int _rowHeightReserve = 5;
         //private Color _headerBackground = Color.FromRgb(0xDD, 0xDD, 0xDD);
@@ -43,6 +43,19 @@ namespace FastWpfGrid
         private bool _isReadOnly;
 
         private static Dictionary<string, ImageHolder> _imageCache = new Dictionary<string, ImageHolder>();
+
+        public bool AllowSelectAll { get; set; }
+
+        /// <summary>
+        /// Prevents the inline editor from being used if the control is in a read-only state.
+        /// </summary>
+        public bool IsReadOnly
+        {
+            get { return _isReadOnly; }
+            set { _isReadOnly = value; }
+        }
+
+        public bool DisableAutoScale { get; set; }
 
         public FastGridControl()
         {
@@ -60,25 +73,34 @@ namespace FastWpfGrid
                 hscroll.IsEnabled = false;
                 hscroll.Visibility = Visibility.Collapsed;
             }
+
+            if (!DisableAutoScale)
+                SizeChanged += imageGridResized;
         }
 
-        public bool AllowSelectAll { get; set; }
 
-        /// <summary>
-        /// Prevents the inline editor from being used if the control is in a read-only state.
-        /// </summary>
-        public bool IsReadOnly
+        public GlyphFont GetFont(
+            bool isBold,
+            bool isItalic,
+            bool isHeader = false)
         {
-            get { return _isReadOnly; }
-            set { _isReadOnly = value; }
-        }
+            var key = isHeader ? "headerFont" : "cellFont";
 
-        public GlyphFont GetFont(bool isBold, bool isItalic)
-        {
-            var key = Tuple.Create(isBold, isItalic);
             if (!_glyphFonts.ContainsKey(key))
             {
-                var font = LetterGlyphTool.GetFont(new PortableFontDesc(CellFontName, CellFontSize, isBold, isItalic, UseClearType));
+                var fontSizeProp = isHeader ? HeaderFontSize : CellFontSize;
+                var isBoldProp = isHeader ? HeaderFontIsBold : isBold;
+                var isItalicProp = isHeader ? HeaderFontIsItalic : isItalic;
+
+                var font = LetterGlyphTool.GetFont(
+                    new PortableFontDesc(
+                        CellFontName,
+                        fontSizeProp,
+                        isBoldProp,
+                        isItalicProp,
+                        UseClearType)
+                    );
+
                 _glyphFonts[key] = font;
             }
             return _glyphFonts[key];

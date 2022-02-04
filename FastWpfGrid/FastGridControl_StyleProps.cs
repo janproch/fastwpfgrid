@@ -148,6 +148,52 @@ namespace FastWpfGrid
             }
         }
 
+        // Header Text Styles 
+        Color _headerFontColor;
+        public Color HeaderFontColor
+        {
+            get => _headerFontColor;
+            set
+            {
+                _headerFontColor = value;
+                RenderGrid();
+            }
+        }
+
+        int _headerFontSize = 16;
+        public int HeaderFontSize
+        {
+            get => _headerFontSize;
+            set
+            {
+                _headerFontSize = value;
+                RenderGrid();
+            }
+        }
+
+        bool _headerFontIsBold;
+        public bool HeaderFontIsBold
+        {
+            get => _headerFontIsBold;
+            set
+            {
+                _headerFontIsBold = value;
+                RenderGrid();
+            }
+        }
+
+        bool _headerFontIsItalic;
+        public bool HeaderFontIsItalic
+        {
+            get => _headerFontIsItalic;
+            set
+            {
+                _headerFontIsItalic = value;
+                RenderGrid();
+            }
+        }
+
+
         public Color MouseOverRowColor
         {
             get { return _mouseOverRowColor; }
