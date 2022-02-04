@@ -470,6 +470,18 @@ namespace FastWpfGrid
             }
         }
 
+        public void ResizeColumns(int[] sizes)
+        {
+            _columnSizes.Clear();
+
+            for (var i = 0; i < sizes.Length; i++)
+            {
+                _columnSizes.PutSizeOverride(i, sizes[i]);
+            }
+
+            _columnSizes.BuildIndex();
+        }
+
         private void RecountColumnWidths()
         {
             _columnSizes.Clear();
