@@ -42,6 +42,7 @@ namespace FastWpfGrid
         private int _wideColumnsLimit = 250;
 
         public bool SelectedTextColorIsDisabled { get; set; }
+        public Color? HeaderTextColor { get; set; }
         public int ColumnResizeTheresold
         {
             get { return _columnResizeTheresold; }
