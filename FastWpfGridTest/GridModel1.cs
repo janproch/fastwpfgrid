@@ -40,12 +40,22 @@ namespace FastWpfGridTest
 
         public override IFastGridCell GetGridHeader(IFastGridView view)
         {
+            var flipVerticalImg = GridModelFunctions.PathFromOutputDir("flip_vertical_small.png", "Images");
+            var flipHorizontalImg = GridModelFunctions.PathFromOutputDir("flip_horizontal_small.png", "Images");
+            var primaryKeyImg = GridModelFunctions.PathFromOutputDir("primary_keysmall.png", "Images");
+            var foreignKeyImg = GridModelFunctions.PathFromOutputDir("foreign_keysmall.png", "Images");
+
             var impl = new FastGridCellImpl();
-            var btn = impl.AddImageBlock(view.IsTransposed ? "/Images/flip_horizontal_small.png" : "/Images/flip_vertical_small.png");
+
+            var btn = impl.AddImageBlock(
+                view.IsTransposed ?
+                    flipHorizontalImg :
+                    flipVerticalImg);
+
             btn.CommandParameter = FastWpfGrid.FastGridControl.ToggleTransposedCommand;
             btn.ToolTip = "Swap rows and columns";
-            impl.AddImageBlock("/Images/foreign_keysmall.png").CommandParameter = "FK";
-            impl.AddImageBlock("/Images/primary_keysmall.png").CommandParameter = "PK";
+            impl.AddImageBlock(foreignKeyImg).CommandParameter = "FK";
+            impl.AddImageBlock(primaryKeyImg).CommandParameter = "PK";
             return impl;
         }
 

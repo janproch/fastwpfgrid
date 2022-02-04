@@ -22,27 +22,37 @@ namespace FastWpfGridTest
 
         public override IFastGridCell GetColumnHeader(IFastGridView view, int column)
         {
+            var primaryKeyImg = GridModelFunctions.PathFromOutputDir("primary_keysmall.png", "Images");
+            var foreignKeyImg = GridModelFunctions.PathFromOutputDir("foreign_keysmall.png", "Images");
             string image = null;
-            if (column == 0) image = "/Images/primary_keysmall.png";
-            if (column == 2) image = "/Images/foreign_keysmall.png";
+
+            if (column == 0)
+                image = primaryKeyImg;
+
+            if (column == 2)
+                image = foreignKeyImg;
 
             var res = new FastGridCellImpl();
             if (image != null)
             {
                 res.Blocks.Add(new FastGridBlockImpl
-                    {
-                        BlockType = FastGridBlockType.Image,
-                        ImageWidth = 16,
-                        ImageHeight = 16,
-                        ImageSource = image,
-                    });
+                {
+                    BlockType = FastGridBlockType.Image,
+                    ImageWidth = 16,
+                    ImageHeight = 16,
+                    ImageSource = image,
+                });
             }
 
             res.Blocks.Add(new FastGridBlockImpl
-                {
-                    IsBold = true,
-                    TextData = String.Format("Column {0}", column),
-                });
+            {
+                IsBold = true,
+                TextData = $"Column {column}",
+            });
+
+            var btn = res.AddImageBlock(foreignKeyImg);
+            btn.MouseHoverBehaviour = MouseHoverBehaviours.HideWhenMouseOut;
+            btn.CommandParameter = "TEST";
 
             return res;
         }
